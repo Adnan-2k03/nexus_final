@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MatchRequestCard } from "./MatchRequestCard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { MatchRequestWithUser } from "@shared/schema";
+import type { MatchRequestWithUser, MatchConnection } from "@shared/schema";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { GameFilters } from "./GameFilters";
 import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye } from "lucide-react";
@@ -87,6 +87,28 @@ export function MatchFeed({
     retry: false,
   });
 
+  // Fetch user connections to filter out matches they've already applied to
+  const { data: userConnections = [] } = useQuery<MatchConnection[]>({
+    queryKey: ['/api/user/connections'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/connections');
+      if (!response.ok) {
+        if (response.status === 401) {
+          return [];
+        }
+        throw new Error('Failed to fetch connections');
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
+  // Get list of match request IDs that user has already applied to
+  const appliedMatchIds = useMemo(() => 
+    userConnections.map(conn => conn.requestId),
+    [userConnections]
+  );
+
   // Transform backend data to display format (memoized to prevent infinite re-renders)
   const transformedMatches: MatchRequestDisplay[] = useMemo(() => 
     fetchedMatches
@@ -141,6 +163,11 @@ export function MatchFeed({
 
 
   const filteredMatches = transformedMatches.filter(match => {
+    // Don't show matches user has already applied to
+    if (appliedMatchIds.includes(match.id)) {
+      return false;
+    }
+    
     // Filter by hidden status
     if (!showHidden && hiddenMatchIds.includes(match.id)) {
       return false;

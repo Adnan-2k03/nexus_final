@@ -64,10 +64,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
   const updateConnectionMutation = useMutation({
     mutationFn: async ({ connectionId, status }: { connectionId: string; status: string }) => {
-      return await apiRequest(`/api/match-connections/${connectionId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status }),
-      });
+      return await apiRequest('PATCH', `/api/match-connections/${connectionId}/status`, { status });
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
