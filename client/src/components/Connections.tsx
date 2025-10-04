@@ -1,18 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Calendar, Users, Trophy, Phone } from "lucide-react";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { MatchConnection } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
+import { useToast } from "@/hooks/use-toast";
 
 interface ConnectionsProps {
   currentUserId?: string;
@@ -36,6 +37,7 @@ function formatTimeAgo(date: string | Date | null): string {
 export function Connections({ currentUserId }: ConnectionsProps) {
   const { lastMessage } = useWebSocket();
   const [openChatId, setOpenChatId] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const { data: connections = [], isLoading, refetch } = useQuery<MatchConnection[]>({
     queryKey: ['/api/user/connections'],
@@ -56,10 +58,47 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     const { type } = lastMessage;
     
     if (type === 'match_connection_created' || type === 'match_connection_updated') {
-      // Invalidate and refetch connections when they're created or updated
       queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
     }
   }, [lastMessage]);
+
+  const updateConnectionMutation = useMutation({
+    mutationFn: async ({ connectionId, status }: { connectionId: string; status: string }) => {
+      return await apiRequest(`/api/match-connections/${connectionId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
+      toast({
+        title: variables.status === 'accepted' ? "Application Accepted" : "Application Declined",
+        description: variables.status === 'accepted' 
+          ? "You can now chat and join voice channels with this player"
+          : "The application has been declined",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update application status",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Split connections into three categories
+  const incomingApplications = connections.filter(
+    c => c.status === 'pending' && c.accepterId === currentUserId
+  );
+  
+  const yourApplications = connections.filter(
+    c => c.status === 'pending' && c.requesterId === currentUserId
+  );
+  
+  const acceptedConnections = connections.filter(
+    c => c.status === 'accepted'
+  );
 
   const LoadingSkeleton = () => (
     <div className="space-y-4">
@@ -107,6 +146,146 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     );
   }
 
+  const renderConnectionCard = (connection: MatchConnection, showActions: 'confirm' | 'waiting' | 'chat', isRequester: boolean) => {
+    const timeAgo = formatTimeAgo(connection.createdAt);
+    const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+    
+    return (
+      <Card key={connection.id} className="hover:shadow-md transition-shadow" data-testid={`connection-card-${connection.id}`}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={""} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {isRequester ? "A" : "R"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground">
+                    {otherUserId}
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {isRequester ? "Applied to your match" : "You applied to their match"}
+                </p>
+              </div>
+            </div>
+            <Badge 
+              variant={
+                connection.status === 'accepted' ? 'default' : 'secondary'
+              }
+              className="text-xs"
+              data-testid={`connection-status-${connection.id}`}
+            >
+              {connection.status}
+            </Badge>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{timeAgo}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Trophy className="h-3 w-3" />
+                <span>Match ID: {connection.requestId.slice(-6)}</span>
+              </div>
+            </div>
+            
+            {showActions === 'confirm' && (
+              <div className="flex gap-2">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => updateConnectionMutation.mutate({ connectionId: connection.id, status: 'accepted' })}
+                  disabled={updateConnectionMutation.isPending}
+                  data-testid={`button-confirm-${connection.id}`}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Confirm
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => updateConnectionMutation.mutate({ connectionId: connection.id, status: 'declined' })}
+                  disabled={updateConnectionMutation.isPending}
+                  data-testid={`button-decline-${connection.id}`}
+                >
+                  <X className="h-4 w-4" />
+                  Decline
+                </Button>
+              </div>
+            )}
+            
+            {showActions === 'waiting' && (
+              <Badge variant="secondary" className="text-xs">
+                Waiting for confirmation
+              </Badge>
+            )}
+            
+            {showActions === 'chat' && (
+              <Dialog open={openChatId === connection.id} onOpenChange={(open) => setOpenChatId(open ? connection.id : null)}>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-1 text-primary hover:text-primary"
+                  onClick={() => setOpenChatId(connection.id)}
+                  data-testid={`button-open-connection-${connection.id}`}
+                >
+                  <MessageCircle className="h-4 w-4" />
+                  <Phone className="h-4 w-4" />
+                  <span className="text-xs">Chat & Voice</span>
+                </Button>
+                <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
+                  <DialogHeader className="p-4 pb-3 border-b">
+                    <DialogTitle>
+                      Connect with {otherUserId}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
+                    <TabsList className="mx-4 mt-2">
+                      <TabsTrigger value="chat" className="flex-1" data-testid="tab-chat">
+                        <MessageCircle className="h-4 w-4 mr-1" />
+                        Chat
+                      </TabsTrigger>
+                      <TabsTrigger value="voice" className="flex-1" data-testid="tab-voice">
+                        <Phone className="h-4 w-4 mr-1" />
+                        Voice
+                      </TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="chat" className="flex-1 overflow-hidden m-0">
+                      <Chat
+                        connectionId={connection.id}
+                        currentUserId={currentUserId || ""}
+                        otherUserId={otherUserId}
+                        otherUserName={otherUserId}
+                      />
+                    </TabsContent>
+                    <TabsContent value="voice" className="p-4">
+                      <VoiceChannel
+                        connectionId={connection.id}
+                        currentUserId={currentUserId || ""}
+                        otherUserId={otherUserId}
+                        otherUserName={otherUserId}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
   if (connections.length === 0) {
     return (
       <div className="max-w-2xl mx-auto">
@@ -123,7 +302,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No connections yet</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            When you accept match requests or others accept yours, your gaming connections will appear here.
+            When you apply to matches or others apply to yours, your gaming connections will appear here.
           </p>
         </div>
       </div>
@@ -138,121 +317,70 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           <h1 className="text-2xl font-bold text-foreground">My Connections</h1>
         </div>
         <Badge variant="secondary" className="text-sm">
-          {connections.length} connection{connections.length !== 1 ? 's' : ''}
+          {connections.length} total
         </Badge>
       </div>
 
-      <div className="space-y-4">
-        {connections.map((connection) => {
-          const isRequester = connection.requesterId === currentUserId;
-          const timeAgo = formatTimeAgo(connection.createdAt);
-          
-          return (
-            <Card key={connection.id} className="hover:shadow-md transition-shadow" data-testid={`connection-card-${connection.id}`}>
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={""} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {isRequester ? "A" : "R"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-foreground">
-                          {isRequester ? `Accepter: ${connection.accepterId}` : `Requester: ${connection.requesterId}`}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {isRequester ? "You requested to connect" : "They requested to connect"}
-                      </p>
-                    </div>
-                  </div>
-                  <Badge 
-                    variant={
-                      connection.status === 'accepted' ? 'default' : 
-                      connection.status === 'pending' ? 'secondary' : 
-                      'destructive'
-                    }
-                    className="text-xs"
-                    data-testid={`connection-status-${connection.id}`}
-                  >
-                    {connection.status}
-                  </Badge>
-                </div>
-              </CardHeader>
-              
-              <CardContent>
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      <span>{timeAgo}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Trophy className="h-3 w-3" />
-                      <span>Match ID: {connection.requestId.slice(-6)}</span>
-                    </div>
-                  </div>
-                  {connection.status === 'accepted' && (
-                    <Dialog open={openChatId === connection.id} onOpenChange={(open) => setOpenChatId(open ? connection.id : null)}>
-                      <DialogTrigger asChild>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="gap-1 text-primary hover:text-primary"
-                            data-testid={`button-open-connection-${connection.id}`}
-                          >
-                            <MessageCircle className="h-4 w-4" />
-                            <Phone className="h-4 w-4" />
-                            <span className="text-xs">Chat & Voice</span>
-                          </Button>
-                        </div>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
-                        <DialogHeader className="p-4 pb-3 border-b">
-                          <DialogTitle>
-                            Connect with {isRequester ? connection.accepterId : connection.requesterId}
-                          </DialogTitle>
-                        </DialogHeader>
-                        <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
-                          <TabsList className="mx-4 mt-2">
-                            <TabsTrigger value="chat" className="flex-1" data-testid="tab-chat">
-                              <MessageCircle className="h-4 w-4 mr-1" />
-                              Chat
-                            </TabsTrigger>
-                            <TabsTrigger value="voice" className="flex-1" data-testid="tab-voice">
-                              <Phone className="h-4 w-4 mr-1" />
-                              Voice
-                            </TabsTrigger>
-                          </TabsList>
-                          <TabsContent value="chat" className="flex-1 overflow-hidden m-0">
-                            <Chat
-                              connectionId={connection.id}
-                              currentUserId={currentUserId || ""}
-                              otherUserId={isRequester ? connection.accepterId : connection.requesterId}
-                              otherUserName={isRequester ? connection.accepterId : connection.requesterId}
-                            />
-                          </TabsContent>
-                          <TabsContent value="voice" className="p-4">
-                            <VoiceChannel
-                              connectionId={connection.id}
-                              currentUserId={currentUserId || ""}
-                              otherUserId={isRequester ? connection.accepterId : connection.requesterId}
-                              otherUserName={isRequester ? connection.accepterId : connection.requesterId}
-                            />
-                          </TabsContent>
-                        </Tabs>
-                      </DialogContent>
-                    </Dialog>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <div className="space-y-8">
+        {/* Incoming Applications Section */}
+        {incomingApplications.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-primary" />
+                Incoming Applications
+              </h2>
+              <Badge variant="default" className="text-xs">
+                {incomingApplications.length} pending
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {incomingApplications.map((connection) => 
+                renderConnectionCard(connection, 'confirm', false)
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Your Connections Section */}
+        {acceptedConnections.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Your Connections
+              </h2>
+              <Badge variant="default" className="text-xs">
+                {acceptedConnections.length} active
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {acceptedConnections.map((connection) => 
+                renderConnectionCard(connection, 'chat', connection.requesterId === currentUserId)
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Your Applications Section */}
+        {yourApplications.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Your Applications
+              </h2>
+              <Badge variant="secondary" className="text-xs">
+                {yourApplications.length} pending
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {yourApplications.map((connection) => 
+                renderConnectionCard(connection, 'waiting', true)
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

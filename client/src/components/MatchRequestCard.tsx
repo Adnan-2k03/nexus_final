@@ -184,7 +184,7 @@ export function MatchRequestCard({
             className="flex-1"
             data-testid={`button-accept-${id}`}
           >
-            Accept Request
+            Apply to Match
           </Button>
           <Button
             size="sm"
