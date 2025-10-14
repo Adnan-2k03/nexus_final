@@ -23,9 +23,10 @@ import { randomUUID } from "crypto";
 
 // Gaming-focused storage interface with real-time capabilities
 export interface IStorage {
-  // User operations (required for Replit Auth)
+  // User operations
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
+  upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
   updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
   
   // Match request operations
@@ -66,6 +67,30 @@ export class DatabaseStorage implements IStorage {
         target: users.id,
         set: {
           ...userData,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return user;
+  }
+
+  async upsertUserByGoogleId(userData: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        googleId: userData.googleId,
+        email: userData.email,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
+        profileImageUrl: userData.profileImageUrl || null,
+      })
+      .onConflictDoUpdate({
+        target: users.googleId,
+        set: {
+          email: userData.email,
+          firstName: userData.firstName || null,
+          lastName: userData.lastName || null,
+          profileImageUrl: userData.profileImageUrl || null,
           updatedAt: new Date(),
         },
       })
@@ -284,102 +309,5 @@ export class DatabaseStorage implements IStorage {
 
 export const storage = new DatabaseStorage();
 
-// Seed some mock data for development
-// TODO: Remove mock data when implementing real backend
-if (process.env.NODE_ENV === 'development') {
-  const seedData = async () => {
-    // Check if we already have match requests to avoid duplicating seed data
-    const existingRequests = await storage.getMatchRequests();
-    if (existingRequests.length > 0) {
-      console.log('Seed data already exists, skipping initialization');
-      return;
-    }
-
-    // Create sample users
-    const users = [
-      {
-        id: 'user1',
-        email: 'alex@example.com',
-        firstName: 'Alex',
-        lastName: 'Chen',
-        gamertag: 'AlexGamer',
-        bio: 'Competitive FPS player looking for ranked teammates',
-        location: 'San Francisco, CA',
-        age: 24,
-        preferredGames: ['Valorant', 'CS2', 'Apex Legends'],
-      },
-      {
-        id: 'user2',
-        email: 'sam@example.com',
-        firstName: 'Sam',
-        lastName: 'Rivera',
-        gamertag: 'SamTheSniper',
-        bio: 'Casual gamer, loves team-based strategy games',
-        location: 'Austin, TX',
-        age: 28,
-        preferredGames: ['League of Legends', 'Overwatch 2', 'Rocket League'],
-      },
-      {
-        id: 'user3',
-        email: 'jordan@example.com',
-        firstName: 'Jordan',
-        lastName: 'Park',
-        gamertag: 'JordanPro',
-        bio: 'MOBA enthusiast and tournament organizer',
-        location: 'Seattle, WA',
-        age: 22,
-        preferredGames: ['Dota 2', 'League of Legends', 'Heroes of the Storm'],
-      },
-    ];
-
-    for (const userData of users) {
-      await storage.upsertUser(userData);
-    }
-
-    // Create sample match requests
-    const matchRequests = [
-      {
-        userId: 'user1',
-        gameName: 'Valorant',
-        gameMode: '5v5',
-        description: 'Looking for Diamond+ players for ranked queue. Need good comms!',
-        region: 'NA West',
-      },
-      {
-        userId: 'user2',
-        gameName: 'Rocket League',
-        gameMode: '3v3',
-        description: 'Casual 3v3 matches, just for fun. All skill levels welcome!',
-        region: 'NA Central',
-      },
-      {
-        userId: 'user3',
-        gameName: 'League of Legends',
-        gameMode: '5v5',
-        tournamentName: 'Spring Tournament',
-        description: 'Forming team for upcoming tournament. Looking for experienced support and jungle.',
-        region: 'NA West',
-      },
-      {
-        userId: 'user1',
-        gameName: 'CS2',
-        gameMode: '5v5',
-        description: 'Faceit Level 8+ only. Serious players for competitive matches.',
-        region: 'NA West',
-      },
-      {
-        userId: 'user2',
-        gameName: 'Apex Legends',
-        gameMode: '3v3',
-        description: 'Ranked Arenas, looking for consistent teammates. Currently Platinum.',
-        region: 'NA Central',
-      },
-    ];
-
-    for (const requestData of matchRequests) {
-      await storage.createMatchRequest(requestData);
-    }
-  };
-
-  seedData().catch(console.error);
-}
+// Note: Seed data removed - users will sign in with Google OAuth
+// Real match requests will be created by authenticated users

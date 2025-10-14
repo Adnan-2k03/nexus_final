@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated, getSession } from "./replitAuth";
+import { setupAuth, isAuthenticated, getSession } from "./googleAuth";
 import { insertMatchRequestSchema } from "@shared/schema";
 import { z } from "zod";
 
@@ -13,7 +13,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/match-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedData = insertMatchRequestSchema.parse(req.body);
       
       const matchRequest = await storage.createMatchRequest({
@@ -67,7 +67,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       if (!['waiting', 'connected', 'declined'].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
@@ -104,7 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/match-requests/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       // First check if the match request exists and verify ownership
       const existingRequest = await storage.getMatchRequests();
@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Match connection routes
   app.post('/api/match-connections', isAuthenticated, async (req: any, res) => {
     try {
-      const requesterId = req.user.claims.sub;
+      const requesterId = req.user.id;
       const { requestId, accepterId } = req.body;
       
       // Validation
@@ -197,7 +197,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { id } = req.params;
       const { status } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       if (!['pending', 'accepted', 'declined'].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
@@ -229,7 +229,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/user/connections', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const connections = await storage.getUserConnections(userId);
       res.json(connections);
     } catch (error) {
@@ -257,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const profileData = req.body;
       
       const updatedUser = await storage.updateUserProfile(userId, profileData);
@@ -271,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Hidden matches routes
   app.get('/api/hidden-matches', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const hiddenIds = await storage.getHiddenMatchIds(userId);
       res.json(hiddenIds);
     } catch (error) {
@@ -282,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/hidden-matches', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { matchRequestId } = req.body;
       
       if (!matchRequestId) {
@@ -299,7 +299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.delete('/api/hidden-matches/:matchRequestId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { matchRequestId } = req.params;
       
       await storage.unhideMatchRequest(userId, matchRequestId);
@@ -313,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Chat message routes
   app.get('/api/messages/:connectionId', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const { connectionId } = req.params;
       
       // Verify user is part of this connection
@@ -334,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/messages', isAuthenticated, async (req: any, res) => {
     try {
-      const senderId = req.user.claims.sub;
+      const senderId = req.user.id;
       const { connectionId, receiverId, message } = req.body;
       
       if (!connectionId || !receiverId || !message) {
