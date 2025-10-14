@@ -67,8 +67,8 @@ function Router() {
   }
 
   const handleLogin = () => {
-    // Redirect to Replit Auth endpoint
-    window.location.href = '/api/login';
+    // Redirect to Google OAuth endpoint
+    window.location.href = '/api/auth/google';
   };
 
   const handleLogout = () => {
