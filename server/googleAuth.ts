@@ -44,8 +44,12 @@ export async function setupAuth(app: Express) {
 
   // Determine callback URL based on environment
   const callbackURL = process.env.NODE_ENV === "production" 
-    ? `${process.env.FRONTEND_URL || 'https://your-production-domain.com'}/api/auth/google/callback`
+    ? `${process.env.FRONTEND_URL}/api/auth/google/callback`
     : `http://localhost:5000/api/auth/google/callback`;
+  
+  if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
+    throw new Error("FRONTEND_URL must be set in production for Google OAuth callback");
+  }
 
   passport.use(
     new GoogleStrategy(
