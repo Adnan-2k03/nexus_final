@@ -11,8 +11,6 @@ COPY package.json package-lock.json* ./
 # Install dependencies
 RUN npm ci
 
-RUN npm run db:push
-
 # Build the application
 FROM base AS builder
 WORKDIR /app
