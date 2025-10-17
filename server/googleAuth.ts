@@ -53,6 +53,10 @@ export async function setupAuth(app: Express) {
     throw new Error("FRONTEND_URL must be set in production for Google OAuth callback");
   }
 
+  console.log(`[OAuth Debug] Callback URL: ${callbackURL}`);
+  console.log(`[OAuth Debug] Client ID: ${process.env.GOOGLE_CLIENT_ID?.substring(0, 20)}...`);
+  console.log(`[OAuth Debug] Client Secret exists: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
+
   passport.use(
     new GoogleStrategy(
       {
