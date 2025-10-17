@@ -40,6 +40,10 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 
+# Copy files needed for database migrations
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/shared ./shared
+
 # Change ownership to non-root user
 RUN chown -R appuser:nodejs /app
 
