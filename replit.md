@@ -4,6 +4,16 @@
 
 GameMatch is a social gaming web application that enables real-time matchmaking between gamers. The platform allows users to create and browse match requests, find teammates, and form gaming groups across various popular games. Built with a mobile-first approach, the application provides instant notifications and real-time updates for seamless gaming coordination.
 
+## Recent Changes
+
+**October 21, 2025**
+- Successfully migrated application to Replit environment
+- Configured PostgreSQL database with Drizzle ORM
+- Set up Google OAuth 2.0 authentication with all required credentials
+- Application running on development server (port 5000)
+- Real-time WebSocket functionality operational
+- All core features functional: match requests, user profiles, chat, and real-time notifications
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -26,10 +36,10 @@ Preferred communication style: Simple, everyday language.
 - **API Design**: RESTful endpoints with real-time WebSocket supplements
 
 ### Authentication System
-- **Provider**: Replit Authentication using OpenID Connect
+- **Provider**: Google OAuth 2.0 authentication
 - **Session Storage**: PostgreSQL-backed session store with connect-pg-simple
-- **Authorization**: Session-based authentication with middleware protection
-- **User Management**: Automatic user profile creation and management
+- **Authorization**: Session-based authentication with Passport.js middleware protection
+- **User Management**: Automatic user profile creation on first login with Google account
 
 ### Database Design
 - **Primary Database**: PostgreSQL with Neon serverless hosting
@@ -50,8 +60,8 @@ Preferred communication style: Simple, everyday language.
 - **Drizzle ORM**: Type-safe database operations with automatic migrations
 
 ### Authentication
-- **Replit Auth**: OpenID Connect authentication provider integrated with Replit platform
-- **Passport.js**: Authentication middleware for Express with OpenID Connect strategy
+- **Google OAuth 2.0**: OAuth authentication using Google accounts for secure user login
+- **Passport.js**: Authentication middleware for Express with Google OAuth strategy (passport-google-oauth20)
 
 ### UI and Styling
 - **Radix UI**: Headless component primitives for accessibility and functionality
