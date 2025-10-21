@@ -29,7 +29,7 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" || !!process.env.REPLIT_DEV_DOMAIN,
+      secure: process.env.NODE_ENV === "production" || !!process.env.REPL_ID,
       sameSite: "lax",
       maxAge: sessionTtl,
     },
