@@ -10,7 +10,8 @@ import {
   LogOut,
   Menu,
   X,
-  Users
+  Users,
+  Search
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ export function GameNavigation({
 
   const navigationItems = [
     { id: "home", label: "Feed", icon: Home },
+    { id: "search", label: "Discover", icon: Search },
     { id: "connections", label: "Connections", icon: Users },
     { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages },
     { id: "profile", label: "Profile", icon: User },
