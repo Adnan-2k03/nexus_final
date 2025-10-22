@@ -61,9 +61,9 @@ const DISTANCES = [
 
 export function Discover({ currentUserId }: DiscoverProps) {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedGender, setSelectedGender] = useState<string>("");
-  const [selectedLanguage, setSelectedLanguage] = useState<string>("");
-  const [selectedGame, setSelectedGame] = useState<string>("");
+  const [selectedGender, setSelectedGender] = useState<string>("all");
+  const [selectedLanguage, setSelectedLanguage] = useState<string>("all");
+  const [selectedGame, setSelectedGame] = useState<string>("all");
   const [selectedDistance, setSelectedDistance] = useState<string>("global");
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -97,9 +97,9 @@ export function Discover({ currentUserId }: DiscoverProps) {
   // Build query parameters
   const queryParams = new URLSearchParams();
   if (searchTerm) queryParams.append("search", searchTerm);
-  if (selectedGender) queryParams.append("gender", selectedGender);
-  if (selectedLanguage) queryParams.append("language", selectedLanguage);
-  if (selectedGame) queryParams.append("game", selectedGame);
+  if (selectedGender && selectedGender !== "all") queryParams.append("gender", selectedGender);
+  if (selectedLanguage && selectedLanguage !== "all") queryParams.append("language", selectedLanguage);
+  if (selectedGame && selectedGame !== "all") queryParams.append("game", selectedGame);
   if (selectedDistance !== "global" && userLocation) {
     queryParams.append("latitude", userLocation.latitude.toString());
     queryParams.append("longitude", userLocation.longitude.toString());
@@ -117,9 +117,9 @@ export function Discover({ currentUserId }: DiscoverProps) {
 
   const handleClearFilters = () => {
     setSearchTerm("");
-    setSelectedGender("");
-    setSelectedLanguage("");
-    setSelectedGame("");
+    setSelectedGender("all");
+    setSelectedLanguage("all");
+    setSelectedGame("all");
     setSelectedDistance("global");
   };
 
@@ -165,7 +165,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
                 <SelectValue placeholder="Gender" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Genders</SelectItem>
+                <SelectItem value="all">All Genders</SelectItem>
                 {GENDERS.map((gender) => (
                   <SelectItem key={gender.value} value={gender.value}>
                     {gender.label}
@@ -180,7 +180,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
                 <SelectValue placeholder="Language" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Languages</SelectItem>
+                <SelectItem value="all">All Languages</SelectItem>
                 {LANGUAGES.map((language) => (
                   <SelectItem key={language} value={language}>
                     {language}
@@ -195,7 +195,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
                 <SelectValue placeholder="Game" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Games</SelectItem>
+                <SelectItem value="all">All Games</SelectItem>
                 {GAMES.map((game) => (
                   <SelectItem key={game} value={game}>
                     {game}
