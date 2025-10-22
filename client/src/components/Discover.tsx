@@ -6,7 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Search, MapPin, Users, MessageCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Search, MapPin, Users, MessageCircle, Loader2 } from "lucide-react";
+import { UserProfile } from "./UserProfile";
 import type { User } from "@shared/schema";
 
 interface DiscoverProps {
@@ -309,6 +311,29 @@ export function Discover({ currentUserId }: DiscoverProps) {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Profile View Dialog */}
+      {selectedUser && (
+        <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Player Profile</DialogTitle>
+            </DialogHeader>
+            <UserProfile
+              id={selectedUser.id}
+              gamertag={selectedUser.gamertag || "Unknown"}
+              firstName={selectedUser.firstName ?? undefined}
+              lastName={selectedUser.lastName ?? undefined}
+              profileImageUrl={selectedUser.profileImageUrl ?? undefined}
+              bio={selectedUser.bio ?? undefined}
+              location={selectedUser.location ?? undefined}
+              age={selectedUser.age ?? undefined}
+              preferredGames={selectedUser.preferredGames ?? undefined}
+              isOwn={selectedUser.id === currentUserId}
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
