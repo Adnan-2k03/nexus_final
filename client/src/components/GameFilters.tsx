@@ -6,8 +6,8 @@ import { Search, Filter, X } from "lucide-react";
 import { useState } from "react";
 
 interface GameFiltersProps {
-  onFilterChange: (filters: { search?: string; game?: string; mode?: string; region?: string }) => void;
-  activeFilters?: { search?: string; game?: string; mode?: string; region?: string };
+  onFilterChange: (filters: { search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string }) => void;
+  activeFilters?: { search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string };
 }
 
 export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersProps) {
@@ -21,6 +21,20 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
 
   const gameModes = ["1v1", "2v2", "3v3", "5v5", "Team"];
   const regions = ["NA West", "NA East", "NA Central", "EU West", "EU East", "Asia", "Oceania"];
+  const genders = [
+    { value: "male", label: "Male" },
+    { value: "female", label: "Female" },
+    { value: "custom", label: "Custom" },
+    { value: "prefer_not_to_say", label: "Prefer not to say" }
+  ];
+  const languages = ["English", "Spanish", "French", "German", "Italian", "Portuguese", "Chinese", "Japanese", "Korean", "Arabic", "Hindi", "Russian"];
+  const distances = [
+    { value: "5", label: "Within 5km" },
+    { value: "10", label: "Within 10km" },
+    { value: "25", label: "Within 25km" },
+    { value: "50", label: "Within 50km" },
+    { value: "100", label: "Within 100km" }
+  ];
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -135,12 +149,54 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
               </Button>
             </Badge>
           )}
+          {activeFilters.gender && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              Gender: {genders.find(g => g.value === activeFilters.gender)?.label || activeFilters.gender}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 hover:bg-transparent"
+                onClick={() => clearFilter('gender')}
+                data-testid={`button-clear-gender-filter`}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
+          {activeFilters.language && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              Language: {activeFilters.language}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 hover:bg-transparent"
+                onClick={() => clearFilter('language')}
+                data-testid={`button-clear-language-filter`}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
+          {activeFilters.distance && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              Distance: {distances.find(d => d.value === activeFilters.distance)?.label || `Within ${activeFilters.distance}km`}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 hover:bg-transparent"
+                onClick={() => clearFilter('distance')}
+                data-testid={`button-clear-distance-filter`}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
         </div>
       )}
 
       {/* Filter Controls */}
       {showFilters && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-card rounded-lg border">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-card rounded-lg border">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Game</label>
             <Select value={activeFilters.game || "all"} onValueChange={(value) => handleFilterChange('game', value)}>
@@ -186,6 +242,57 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
                 {regions.map((region) => (
                   <SelectItem key={region} value={region}>
                     {region}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Gender</label>
+            <Select value={activeFilters.gender || "all"} onValueChange={(value) => handleFilterChange('gender', value)}>
+              <SelectTrigger data-testid="select-gender-filter">
+                <SelectValue placeholder="All genders" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All genders</SelectItem>
+                {genders.map((gender) => (
+                  <SelectItem key={gender.value} value={gender.value}>
+                    {gender.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Language</label>
+            <Select value={activeFilters.language || "all"} onValueChange={(value) => handleFilterChange('language', value)}>
+              <SelectTrigger data-testid="select-language-filter">
+                <SelectValue placeholder="All languages" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All languages</SelectItem>
+                {languages.map((language) => (
+                  <SelectItem key={language} value={language}>
+                    {language}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Distance</label>
+            <Select value={activeFilters.distance || "all"} onValueChange={(value) => handleFilterChange('distance', value)}>
+              <SelectTrigger data-testid="select-distance-filter">
+                <SelectValue placeholder="All distances" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All distances</SelectItem>
+                {distances.map((distance) => (
+                  <SelectItem key={distance.value} value={distance.value}>
+                    {distance.label}
                   </SelectItem>
                 ))}
               </SelectContent>

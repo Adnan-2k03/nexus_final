@@ -18,19 +18,33 @@ import {
   type InsertChatMessage,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, ilike, desc } from "drizzle-orm";
+import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
+
+// Helper function to calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371; // Radius of Earth in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
 
 // Gaming-focused storage interface with real-time capabilities
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
   updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
   
   // Match request operations
-  getMatchRequests(filters?: { game?: string; mode?: string; region?: string }): Promise<MatchRequestWithUser[]>;
+  getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<MatchRequestWithUser[]>;
   createMatchRequest(request: InsertMatchRequest): Promise<MatchRequest>;
   updateMatchRequestStatus(id: string, status: "waiting" | "connected" | "declined"): Promise<MatchRequest>;
   deleteMatchRequest(id: string): Promise<void>;
@@ -57,6 +71,62 @@ export class DatabaseStorage implements IStorage {
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
+  }
+
+  async getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<User[]> {
+    const conditions = [];
+    
+    // Search filter (by name or gamertag)
+    if (filters?.search) {
+      conditions.push(
+        or(
+          ilike(users.gamertag, `%${filters.search}%`),
+          ilike(users.firstName, `%${filters.search}%`),
+          ilike(users.lastName, `%${filters.search}%`)
+        )
+      );
+    }
+    
+    // Gender filter
+    if (filters?.gender) {
+      conditions.push(eq(users.gender, filters.gender as any));
+    }
+    
+    // Language filter
+    if (filters?.language) {
+      conditions.push(eq(users.language, filters.language));
+    }
+    
+    // Game filter (check if game is in preferredGames array)
+    if (filters?.game) {
+      conditions.push(sql`${filters.game} = ANY(${users.preferredGames})`);
+    }
+    
+    // Fetch users
+    let query = db.select().from(users);
+    let allUsers: User[];
+    
+    if (conditions.length > 0) {
+      allUsers = await query.where(and(...conditions));
+    } else {
+      allUsers = await query;
+    }
+    
+    // Apply distance filter if coordinates are provided
+    if (filters?.latitude != null && filters?.longitude != null && filters?.maxDistance != null) {
+      allUsers = allUsers.filter(user => {
+        if (user.latitude == null || user.longitude == null) return false;
+        const distance = calculateDistance(
+          filters.latitude!,
+          filters.longitude!,
+          user.latitude,
+          user.longitude
+        );
+        return distance <= filters.maxDistance!;
+      });
+    }
+    
+    return allUsers;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
@@ -113,20 +183,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Match request operations
-  async getMatchRequests(filters?: { game?: string; mode?: string; region?: string }): Promise<MatchRequestWithUser[]> {
-    const conditions = [];
+  async getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<MatchRequestWithUser[]> {
+    const matchConditions = [];
+    const userConditions = [];
     
+    // Match request filters
     if (filters?.game) {
-      conditions.push(ilike(matchRequests.gameName, `%${filters.game}%`));
+      matchConditions.push(ilike(matchRequests.gameName, `%${filters.game}%`));
     }
     if (filters?.mode) {
-      conditions.push(eq(matchRequests.gameMode, filters.mode));
+      matchConditions.push(eq(matchRequests.gameMode, filters.mode));
     }
     if (filters?.region) {
-      conditions.push(eq(matchRequests.region, filters.region));
+      matchConditions.push(eq(matchRequests.region, filters.region));
     }
     
-    // Join with users table to get gamertag and profile data
+    // User profile filters
+    if (filters?.gender) {
+      userConditions.push(eq(users.gender, filters.gender as any));
+    }
+    if (filters?.language) {
+      userConditions.push(eq(users.language, filters.language));
+    }
+    
+    // Join with users table to get gamertag and profile data plus location
     const query = db
       .select({
         id: matchRequests.id,
@@ -141,20 +221,41 @@ export class DatabaseStorage implements IStorage {
         updatedAt: matchRequests.updatedAt,
         gamertag: users.gamertag,
         profileImageUrl: users.profileImageUrl,
+        latitude: users.latitude,
+        longitude: users.longitude,
       })
       .from(matchRequests)
       .leftJoin(users, eq(matchRequests.userId, users.id));
     
-    if (conditions.length > 0) {
-      const requests = await query
-        .where(and(...conditions))
+    // Combine all conditions
+    const allConditions = [...matchConditions, ...userConditions];
+    
+    let requests;
+    if (allConditions.length > 0) {
+      requests = await query
+        .where(and(...allConditions))
         .orderBy(desc(matchRequests.createdAt));
-      return requests;
     } else {
-      const requests = await query
+      requests = await query
         .orderBy(desc(matchRequests.createdAt));
-      return requests;
     }
+    
+    // Apply distance filter if coordinates are provided
+    if (filters?.latitude != null && filters?.longitude != null && filters?.maxDistance != null) {
+      requests = requests.filter(request => {
+        if (request.latitude == null || request.longitude == null) return false;
+        const distance = calculateDistance(
+          filters.latitude!,
+          filters.longitude!,
+          request.latitude,
+          request.longitude
+        );
+        return distance <= filters.maxDistance!;
+      });
+    }
+    
+    // Remove latitude/longitude from results (they were only needed for filtering)
+    return requests.map(({ latitude, longitude, ...rest }) => rest) as MatchRequestWithUser[];
   }
 
   async createMatchRequest(requestData: InsertMatchRequest): Promise<MatchRequest> {

@@ -19,6 +19,7 @@ import { ProfileSetup } from "@/components/ProfileSetup";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Connections } from "@/components/Connections";
 import { Messages } from "@/components/Messages";
+import { Discover } from "@/components/Discover";
 import NotFound from "@/pages/not-found";
 
 // Types
@@ -243,13 +244,7 @@ function Router() {
       case "search":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <div className="max-w-2xl mx-auto">
-              <h1 className="text-2xl font-bold text-foreground mb-6">Search Players</h1>
-              <div className="text-center text-muted-foreground py-12">
-                <p>Search functionality coming soon!</p>
-                <p className="text-sm mt-2">Find players by game, skill level, or region</p>
-              </div>
-            </div>
+            <Discover currentUserId={user?.id || ""} />
           </div>
         );
       case "messages":

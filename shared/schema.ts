@@ -7,6 +7,7 @@ import {
   varchar,
   text,
   integer,
+  real,
   pgEnum,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
@@ -14,6 +15,7 @@ import { z } from "zod";
 
 // Enums
 export const matchRequestStatusEnum = pgEnum("match_request_status", ["waiting", "connected", "declined"]);
+export const genderEnum = pgEnum("gender", ["male", "female", "custom", "prefer_not_to_say"]);
 
 // Session storage table for authentication
 export const sessions = pgTable(
@@ -38,7 +40,11 @@ export const users = pgTable("users", {
   gamertag: varchar("gamertag").unique(),
   bio: text("bio"),
   location: varchar("location"),
+  latitude: real("latitude"),
+  longitude: real("longitude"),
   age: integer("age"),
+  gender: genderEnum("gender"),
+  language: varchar("language"),
   preferredGames: text("preferred_games").array(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

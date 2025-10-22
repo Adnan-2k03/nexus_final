@@ -22,11 +22,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User discovery routes
+  app.get('/api/users', async (req, res) => {
+    try {
+      const { search, gender, language, game, latitude, longitude, maxDistance } = req.query as Record<string, string>;
+      const filters: any = { search, gender, language, game };
+      
+      // Parse location filters
+      if (latitude) filters.latitude = parseFloat(latitude);
+      if (longitude) filters.longitude = parseFloat(longitude);
+      if (maxDistance) filters.maxDistance = parseFloat(maxDistance);
+      
+      const users = await storage.getAllUsers(filters);
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
   // Match request routes
   app.get('/api/match-requests', async (req, res) => {
     try {
-      const { game, mode, region } = req.query as Record<string, string>;
-      const filters = { game, mode, region };
+      const { game, mode, region, gender, language, latitude, longitude, maxDistance } = req.query as Record<string, string>;
+      const filters: any = { game, mode, region, gender, language };
+      
+      // Parse location filters
+      if (latitude) filters.latitude = parseFloat(latitude);
+      if (longitude) filters.longitude = parseFloat(longitude);
+      if (maxDistance) filters.maxDistance = parseFloat(maxDistance);
+      
       const matchRequests = await storage.getMatchRequests(filters);
       res.json(matchRequests);
     } catch (error) {

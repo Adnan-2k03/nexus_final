@@ -49,17 +49,51 @@ export function MatchFeed({
 }: MatchFeedProps) {
   const queryClient = useQueryClient();
   const { isConnected, lastMessage } = useWebSocket();
-  const [filters, setFilters] = useState<{ search?: string; game?: string; mode?: string; region?: string }>({});
+  const [filters, setFilters] = useState<{ search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string }>({});
   const [showHidden, setShowHidden] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+
+  // Request user's location for distance-based filtering
+  useEffect(() => {
+    if (filters.distance && !userLocation) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setUserLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            setLocationError(null);
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            setLocationError("Unable to get your location. Distance filter disabled.");
+            setFilters(prev => ({ ...prev, distance: undefined }));
+          }
+        );
+      } else {
+        setLocationError("Geolocation not supported. Distance filter disabled.");
+        setFilters(prev => ({ ...prev, distance: undefined }));
+      }
+    }
+  }, [filters.distance, userLocation]);
 
   // Fetch match requests from API
   const { data: fetchedMatches = [], isLoading: isFetchingMatches, refetch } = useQuery<MatchRequestWithUser[]>({
-    queryKey: ['/api/match-requests', filters],
+    queryKey: ['/api/match-requests', filters, userLocation],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters.game) params.append('game', filters.game);
       if (filters.mode) params.append('mode', filters.mode);
       if (filters.region) params.append('region', filters.region);
+      if (filters.gender) params.append('gender', filters.gender);
+      if (filters.language) params.append('language', filters.language);
+      if (filters.distance && userLocation) {
+        params.append('latitude', userLocation.latitude.toString());
+        params.append('longitude', userLocation.longitude.toString());
+        params.append('maxDistance', filters.distance);
+      }
       
       const response = await fetch(`/api/match-requests?${params}`);
       if (!response.ok) {
@@ -136,7 +170,7 @@ export function MatchFeed({
       
       case 'match_request_updated':
         // Update specific match request in the cache
-        queryClient.setQueryData(['/api/match-requests', filters], (oldData: MatchRequestWithUser[] | undefined) => {
+        queryClient.setQueryData(['/api/match-requests', filters, userLocation], (oldData: MatchRequestWithUser[] | undefined) => {
           if (!oldData || !data) return oldData;
           
           return oldData.map(match => 
@@ -147,7 +181,7 @@ export function MatchFeed({
       
       case 'match_request_deleted':
         // Remove the deleted match request from cache
-        queryClient.setQueryData(['/api/match-requests', filters], (oldData: MatchRequestWithUser[] | undefined) => {
+        queryClient.setQueryData(['/api/match-requests', filters, userLocation], (oldData: MatchRequestWithUser[] | undefined) => {
           if (!oldData || !data?.id) return oldData;
           
           return oldData.filter(match => match.id !== data.id);
@@ -280,6 +314,13 @@ export function MatchFeed({
           </Button>
         </div>
       </div>
+
+      {/* Location Error Alert */}
+      {locationError && (
+        <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+          <p className="text-sm text-yellow-600 dark:text-yellow-400">{locationError}</p>
+        </div>
+      )}
 
       {/* Filters */}
       <GameFilters 
