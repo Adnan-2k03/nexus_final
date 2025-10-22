@@ -6,13 +6,21 @@ GameMatch is a social gaming web application that enables real-time matchmaking 
 
 ## Recent Changes
 
-**October 21, 2025**
-- Successfully migrated application to Replit environment
-- Configured PostgreSQL database with Drizzle ORM
-- Set up Google OAuth 2.0 authentication with all required credentials
-- Application running on development server (port 5000)
-- Real-time WebSocket functionality operational
-- All core features functional: match requests, user profiles, chat, and real-time notifications
+**October 22, 2025**
+- Successfully migrated application from Railway to Replit environment
+- Configured PostgreSQL database with Drizzle ORM (Neon serverless)
+- Set up Google OAuth 2.0 authentication
+- Application server running on port 5000 with Express + Vite
+- WebSocket real-time functionality configured
+- Development workflow configured: `npm run dev` for local development
+- Deployment configuration: Autoscale deployment target for production
+
+**Current Status**
+- Application is running and accessible
+- Frontend displaying correctly with GameMatch branding and UI
+- Google OAuth integration configured (troubleshooting callback authentication)
+- Database schema applied with all tables: users, matchRequests, matchConnections, hiddenMatches, chatMessages
+- Session management using PostgreSQL session store
 
 ## User Preferences
 
@@ -53,15 +61,41 @@ Preferred communication style: Simple, everyday language.
 - **Touch Optimization**: Large touch targets and gesture-friendly interactions
 - **Performance**: Optimized bundle sizes and lazy loading for mobile networks
 
+## Core Features
+
+### Matchmaking System
+- **Match Requests**: Users create match requests for specific games and game modes (1v1, 2v2, 3v3, etc.)
+- **Match Feed**: Real-time feed of available match requests with filtering by game
+- **Match Connections**: Accept/decline system for connecting with other players
+- **Hidden Matches**: Ability to hide unwanted match requests from feed
+
+### User Profiles
+- **Gamertag System**: Unique gamertag for each user
+- **Profile Information**: Bio, location, age, gender, language preferences
+- **Gaming Preferences**: List of preferred games
+- **Profile Images**: Integration with Google account profile pictures
+
+### Communication
+- **Messages**: Direct messaging between matched players
+- **Connections**: View and manage active connections with other players
+- **Real-time Updates**: WebSocket-powered live notifications for matches and messages
+
+### Discovery
+- **Discover Page**: Browse and search for players and match requests
+- **Game Filters**: Filter matches by game type and mode
+- **User Search**: Find players by gamertag or preferences
+
 ## External Dependencies
 
 ### Database Services
-- **Neon PostgreSQL**: Serverless PostgreSQL database with connection pooling
-- **Drizzle ORM**: Type-safe database operations with automatic migrations
+- **Neon PostgreSQL**: Serverless PostgreSQL database with connection pooling via `@neondatabase/serverless`
+- **Drizzle ORM**: Type-safe database operations with schema migrations
+- **PostgreSQL Session Store**: `connect-pg-simple` for session persistence
 
 ### Authentication
 - **Google OAuth 2.0**: OAuth authentication using Google accounts for secure user login
-- **Passport.js**: Authentication middleware for Express with Google OAuth strategy (passport-google-oauth20)
+- **Passport.js**: Authentication middleware for Express with Google OAuth strategy (`passport-google-oauth20`)
+- **Express Session**: Session management with PostgreSQL backend storage
 
 ### UI and Styling
 - **Radix UI**: Headless component primitives for accessibility and functionality
@@ -75,5 +109,46 @@ Preferred communication style: Simple, everyday language.
 - **ESBuild**: Production bundling for optimized server-side code
 
 ### Real-time Infrastructure
-- **WebSocket**: Native WebSocket implementation for real-time match updates
-- **TanStack Query**: Intelligent caching and synchronization with WebSocket integration
+- **WebSocket**: Native WebSocket implementation (`ws` package) for real-time match updates and notifications
+- **TanStack Query**: Intelligent caching and synchronization with WebSocket integration for optimistic updates
+
+## Environment Configuration
+
+### Required Secrets
+The application requires the following environment variables:
+- `GOOGLE_CLIENT_ID`: OAuth 2.0 Client ID from Google Cloud Console
+- `GOOGLE_CLIENT_SECRET`: OAuth 2.0 Client Secret from Google Cloud Console
+- `SESSION_SECRET`: Random secret for session encryption (minimum 32 characters)
+- `DATABASE_URL`: PostgreSQL connection string (automatically provided by Replit)
+
+### OAuth Configuration
+- **Development Callback URL**: `https://{REPLIT_DEV_DOMAIN}/api/auth/google/callback`
+- **Production Callback URL**: `https://{YOUR_DOMAIN}/api/auth/google/callback`
+- Both URLs must be registered in Google Cloud Console under "Authorized redirect URIs"
+
+## Development Workflow
+
+### Running Locally
+```bash
+npm run dev              # Start development server (Express + Vite)
+npm run build            # Build for production
+npm start                # Run production build
+npm run db:push          # Sync database schema
+```
+
+### Project Structure
+```
+client/              # React frontend
+  src/
+    components/      # React components
+    hooks/          # Custom React hooks
+    lib/            # Utilities and configuration
+    pages/          # Page components
+server/             # Express backend
+  routes.ts         # API routes
+  storage.ts        # Database storage interface
+  googleAuth.ts     # Google OAuth configuration
+  index.ts          # Server entry point
+shared/             # Shared types and schemas
+  schema.ts         # Drizzle database schema
+```
