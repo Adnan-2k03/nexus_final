@@ -56,12 +56,13 @@ export async function setupAuth(app: Express) {
   console.log(`[OAuth Debug] Callback URL: ${callbackURL}`);
   console.log(`[OAuth Debug] Client ID: ${process.env.GOOGLE_CLIENT_ID?.substring(0, 20)}...`);
   console.log(`[OAuth Debug] Client Secret exists: ${!!process.env.GOOGLE_CLIENT_SECRET}`);
+  console.log(`[OAuth Debug] Client Secret length: ${process.env.GOOGLE_CLIENT_SECRET?.trim().length}`);
 
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        clientID: process.env.GOOGLE_CLIENT_ID!.trim(),
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!.trim(),
         callbackURL,
       },
       async (accessToken, refreshToken, profile, done) => {
@@ -115,12 +116,33 @@ export async function setupAuth(app: Express) {
   );
 
   app.get("/api/auth/google/callback",
-    passport.authenticate("google", { 
-      failureRedirect: "/" 
-    }),
-    (req, res) => {
-      // Successful authentication, redirect to home
-      res.redirect("/");
+    (req, res, next) => {
+      passport.authenticate("google", (err, user, info) => {
+        if (err) {
+          console.error("[OAuth Error] Full error:", err);
+          console.error("[OAuth Error] Error name:", err.name);
+          console.error("[OAuth Error] Error message:", err.message);
+          if (err.oauthError) {
+            console.error("[OAuth Error] OAuth status code:", err.oauthError.statusCode);
+            console.error("[OAuth Error] OAuth data:", err.oauthError.data);
+          }
+          return res.status(500).json({ 
+            message: "Authentication failed", 
+            error: err.message,
+            details: err.oauthError?.data 
+          });
+        }
+        if (!user) {
+          return res.redirect("/");
+        }
+        req.login(user, (loginErr) => {
+          if (loginErr) {
+            console.error("[OAuth Error] Login error:", loginErr);
+            return next(loginErr);
+          }
+          return res.redirect("/");
+        });
+      })(req, res, next);
     }
   );
 
