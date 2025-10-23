@@ -117,7 +117,7 @@ export async function setupAuth(app: Express) {
 
   app.get("/api/auth/google/callback",
     (req, res, next) => {
-      passport.authenticate("google", (err, user, info) => {
+      passport.authenticate("google", (err: any, user: any, info: any) => {
         if (err) {
           console.error("[OAuth Error] Full error:", err);
           console.error("[OAuth Error] Error name:", err.name);
