@@ -13,6 +13,8 @@ interface UserProfileProps {
   profileImageUrl?: string;
   bio?: string;
   location?: string;
+  latitude?: number;
+  longitude?: number;
   age?: number;
   preferredGames?: string[];
   isOwn?: boolean;
@@ -28,6 +30,8 @@ export function UserProfile({
   profileImageUrl,
   bio,
   location,
+  latitude,
+  longitude,
   age,
   preferredGames = [],
   isOwn = false,
@@ -94,9 +98,21 @@ export function UserProfile({
 
         <div className="space-y-3">
           {location && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span data-testid={`text-location-${id}`}>{location}</span>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span data-testid={`text-location-${id}`}>{location}</span>
+              </div>
+              {latitude && longitude && (
+                <Badge 
+                  variant="secondary" 
+                  className="text-xs flex items-center gap-1"
+                  data-testid={`badge-gps-enabled-${id}`}
+                >
+                  <MapPin className="h-3 w-3 text-green-500" />
+                  GPS
+                </Badge>
+              )}
             </div>
           )}
           
