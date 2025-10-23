@@ -98,20 +98,15 @@ export function UserProfile({
 
         <div className="space-y-3">
           {location && (
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-              <div className="flex items-center gap-2">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-4 w-4" />
                 <span data-testid={`text-location-${id}`}>{location}</span>
               </div>
-              {latitude && longitude && (
-                <Badge 
-                  variant="secondary" 
-                  className="text-xs flex items-center gap-1"
-                  data-testid={`badge-gps-enabled-${id}`}
-                >
-                  <MapPin className="h-3 w-3 text-green-500" />
-                  GPS
-                </Badge>
+              {isOwn && latitude && longitude && (
+                <div className="ml-6 text-xs text-muted-foreground/70" data-testid={`text-gps-coordinates-${id}`}>
+                  GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
+                </div>
               )}
             </div>
           )}

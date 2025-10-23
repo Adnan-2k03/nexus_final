@@ -129,6 +129,8 @@ export function MatchRequestCard({
                     profileImageUrl={userProfile.profileImageUrl ?? undefined}
                     bio={userProfile.bio ?? undefined}
                     location={userProfile.location ?? undefined}
+                    latitude={userProfile.latitude ?? undefined}
+                    longitude={userProfile.longitude ?? undefined}
                     age={userProfile.age ?? undefined}
                     preferredGames={userProfile.preferredGames ?? undefined}
                     isOwn={false}

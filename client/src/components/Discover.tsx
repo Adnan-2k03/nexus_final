@@ -328,6 +328,8 @@ export function Discover({ currentUserId }: DiscoverProps) {
               profileImageUrl={selectedUser.profileImageUrl ?? undefined}
               bio={selectedUser.bio ?? undefined}
               location={selectedUser.location ?? undefined}
+              latitude={selectedUser.latitude ?? undefined}
+              longitude={selectedUser.longitude ?? undefined}
               age={selectedUser.age ?? undefined}
               preferredGames={selectedUser.preferredGames ?? undefined}
               isOwn={selectedUser.id === currentUserId}

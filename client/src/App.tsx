@@ -35,6 +35,8 @@ function mapUserForComponents(user: User) {
     profileImageUrl: user.profileImageUrl ?? undefined,
     bio: user.bio ?? undefined,
     location: user.location ?? undefined,
+    latitude: user.latitude ?? undefined,
+    longitude: user.longitude ?? undefined,
     age: user.age ?? undefined,
     preferredGames: user.preferredGames ?? undefined,
   };
