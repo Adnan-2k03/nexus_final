@@ -169,9 +169,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserProfile(id: string, profile: Partial<User>): Promise<User> {
+    // Get current user to check if gamertag is actually changing
+    const currentUser = await this.getUser(id);
+    if (!currentUser) {
+      throw new Error('User not found');
+    }
+    
+    // If gamertag hasn't changed, remove it from the update to avoid uniqueness check
+    const updateData = { ...profile };
+    if (updateData.gamertag && updateData.gamertag === currentUser.gamertag) {
+      delete updateData.gamertag;
+    }
+    
     const [updatedUser] = await db
       .update(users)
-      .set({ ...profile, updatedAt: new Date() })
+      .set({ ...updateData, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     
