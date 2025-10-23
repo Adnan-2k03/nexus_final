@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus } from "lucide-react";
+import { X, Plus, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
@@ -34,8 +34,32 @@ type FormData = z.infer<typeof formSchema>;
 export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) {
   const [selectedGames, setSelectedGames] = useState<string[]>(user?.preferredGames || []);
   const [newGame, setNewGame] = useState("");
+  const [coordinates, setCoordinates] = useState<{ latitude: number; longitude: number } | null>(
+    user?.latitude && user?.longitude ? { latitude: user.latitude, longitude: user.longitude } : null
+  );
+  const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Request geolocation when component mounts
+  useEffect(() => {
+    if (!coordinates && navigator.geolocation) {
+      setLocationStatus('requesting');
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setCoordinates({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          setLocationStatus('granted');
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setLocationStatus('denied');
+        }
+      );
+    }
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -56,6 +80,8 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
         ...data,
         age: data.age && data.age.trim() !== "" ? parseInt(data.age) : undefined,
         preferredGames: data.preferredGames,
+        latitude: coordinates?.latitude,
+        longitude: coordinates?.longitude,
       };
       const response = await apiRequest("PATCH", "/api/user/profile", apiData);
       return response.json();
@@ -207,12 +233,27 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
                     <FormItem>
                       <FormLabel>Location</FormLabel>
                       <FormControl>
-                        <Input 
-                          placeholder="City, Country" 
-                          {...field} 
-                          data-testid="input-location"
-                        />
+                        <div className="relative">
+                          <Input 
+                            placeholder="City, Country" 
+                            {...field} 
+                            data-testid="input-location"
+                          />
+                          {locationStatus === 'granted' && coordinates && (
+                            <MapPin className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500" />
+                          )}
+                        </div>
                       </FormControl>
+                      {locationStatus === 'granted' && (
+                        <p className="text-xs text-muted-foreground">
+                          GPS coordinates captured for location-based search
+                        </p>
+                      )}
+                      {locationStatus === 'denied' && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                          Location permission denied - distance filtering won't work
+                        </p>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
