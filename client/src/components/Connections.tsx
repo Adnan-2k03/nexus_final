@@ -6,11 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X } from "lucide-react";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { MatchConnection } from "@shared/schema";
+import type { MatchConnection, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 import { useToast } from "@/hooks/use-toast";
@@ -50,6 +50,21 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     },
     retry: false,
   });
+
+  // Fetch user data for all connected users
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    enabled: true,
+  });
+
+  // Helper function to get user data
+  const getUserData = (userId: string) => {
+    return allUsers.find(u => u.id === userId);
+  };
+
+  const handleRefresh = () => {
+    refetch();
+  };
 
   // Handle real-time WebSocket updates for connections
   useEffect(() => {
@@ -134,9 +149,20 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             <Users className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">My Connections</h1>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            Loading...
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-sm">
+              Loading...
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              data-testid="button-refresh-connections"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
         <LoadingSkeleton />
       </div>
@@ -146,6 +172,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const renderConnectionCard = (connection: MatchConnection, showActions: 'confirm' | 'waiting' | 'chat', isRequester: boolean) => {
     const timeAgo = formatTimeAgo(connection.createdAt);
     const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+    const otherUser = getUserData(otherUserId);
+    const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+    const avatarUrl = otherUser?.profileImageUrl || undefined;
     
     return (
       <Card key={connection.id} className="hover:shadow-md transition-shadow" data-testid={`connection-card-${connection.id}`}>
@@ -153,15 +182,15 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
               <Avatar className="h-12 w-12">
-                <AvatarImage src={""} />
+                <AvatarImage src={avatarUrl} />
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {isRequester ? "A" : "R"}
+                  {displayName[0]?.toUpperCase() || "?"}
                 </AvatarFallback>
               </Avatar>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-foreground">
-                    {otherUserId}
+                    {displayName}
                   </h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
@@ -243,7 +272,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                 <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
                   <DialogHeader className="p-4 pb-3 border-b">
                     <DialogTitle>
-                      Connect with {otherUserId}
+                      Connect with {displayName}
                     </DialogTitle>
                   </DialogHeader>
                   <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
@@ -262,7 +291,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                         connectionId={connection.id}
                         currentUserId={currentUserId || ""}
                         otherUserId={otherUserId}
-                        otherUserName={otherUserId}
+                        otherUserName={displayName}
                       />
                     </TabsContent>
                     <TabsContent value="voice" className="p-4">
@@ -270,7 +299,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                         connectionId={connection.id}
                         currentUserId={currentUserId || ""}
                         otherUserId={otherUserId}
-                        otherUserName={otherUserId}
+                        otherUserName={displayName}
                       />
                     </TabsContent>
                   </Tabs>
@@ -291,9 +320,20 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             <Users className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold text-foreground">My Connections</h1>
           </div>
-          <Badge variant="secondary" className="text-sm">
-            0 connections
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-sm">
+              0 connections
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoading}
+              data-testid="button-refresh-connections"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
         <div className="text-center py-12">
           <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
@@ -313,9 +353,20 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           <Users className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">My Connections</h1>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {connections.length} total
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-sm">
+            {connections.length} total
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            data-testid="button-refresh-connections"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-8">

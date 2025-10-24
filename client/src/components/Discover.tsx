@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Search, MapPin, Users, MessageCircle, Loader2 } from "lucide-react";
+import { Search, MapPin, Users, MessageCircle, Loader2, RefreshCw } from "lucide-react";
 import { UserProfile } from "./UserProfile";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 
 interface DiscoverProps {
@@ -68,6 +70,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const { toast } = useToast();
 
   // Request user's location for distance-based filtering
   useEffect(() => {
@@ -108,9 +111,47 @@ export function Discover({ currentUserId }: DiscoverProps) {
 
   const queryUrl = queryParams.toString() ? `/api/users?${queryParams.toString()}` : "/api/users";
   
-  const { data: users, isLoading } = useQuery<User[]>({
+  const { data: users, isLoading, refetch } = useQuery<User[]>({
     queryKey: [queryUrl],
     enabled: true,
+  });
+
+  // Fetch existing connections to check if already connected
+  const { data: userConnections = [] } = useQuery({
+    queryKey: ['/api/user/connections'],
+    queryFn: async () => {
+      const response = await fetch('/api/user/connections');
+      if (!response.ok) {
+        if (response.status === 401) return [];
+        throw new Error('Failed to fetch connections');
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
+  // Create connection mutation (for messaging)
+  const createConnectionMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      return await apiRequest('POST', '/api/match-connections', {
+        targetUserId,
+        message: 'Hi! I would like to connect with you.',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
+      toast({
+        title: "Connection Request Sent",
+        description: "Your connection request has been sent successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send connection request. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   const filteredUsers = users?.filter(user => user.id !== currentUserId) || [];
@@ -123,14 +164,46 @@ export function Discover({ currentUserId }: DiscoverProps) {
     setSelectedDistance("global");
   };
 
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  const handleMessageUser = (userId: string) => {
+    // Check if already connected
+    const existingConnection = userConnections.find(
+      (conn: any) => conn.requesterId === userId || conn.accepterId === userId
+    );
+    
+    if (existingConnection) {
+      toast({
+        title: "Already Connected",
+        description: "You already have a connection with this user. Check your Connections tab.",
+      });
+      return;
+    }
+
+    createConnectionMutation.mutate(userId);
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
-          <Users className="h-8 w-8 text-primary" />
-          Discover Gamers
-        </h1>
-        <p className="text-muted-foreground">Find and connect with gamers worldwide</p>
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
+            <Users className="h-8 w-8 text-primary" />
+            Discover Gamers
+          </h1>
+          <p className="text-muted-foreground">Find and connect with gamers worldwide</p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isLoading}
+          data-testid="button-refresh-discover"
+        >
+          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+        </Button>
       </div>
 
       {/* Location Error Alert */}
@@ -301,9 +374,18 @@ export function Discover({ currentUserId }: DiscoverProps) {
                   <Button
                     size="sm"
                     className="w-full gap-2"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMessageUser(user.id);
+                    }}
+                    disabled={createConnectionMutation.isPending}
                     data-testid={`button-message-${user.id}`}
                   >
-                    <MessageCircle className="h-4 w-4" />
+                    {createConnectionMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4" />
+                    )}
                     Message
                   </Button>
                 </div>
