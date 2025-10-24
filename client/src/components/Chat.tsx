@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2, RefreshCw } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { queryClient } from "@/lib/queryClient";
 import type { ChatMessageWithSender } from "@shared/schema";
@@ -23,7 +23,7 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   const { lastMessage: wsMessage } = useWebSocket();
 
   // Fetch messages for this connection
-  const { data: messages = [], isLoading, refetch } = useQuery<ChatMessageWithSender[]>({
+  const { data: messages = [], isLoading } = useQuery<ChatMessageWithSender[]>({
     queryKey: ['/api/messages', connectionId],
     queryFn: async () => {
       const response = await fetch(`/api/messages/${connectionId}`);
@@ -34,10 +34,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
     },
     retry: false,
   });
-
-  const handleRefreshMessages = () => {
-    refetch();
-  };
 
   // Send message mutation
   const sendMessageMutation = useMutation({
@@ -99,20 +95,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header with Refresh Button */}
-      <div className="flex items-center justify-between p-4 border-b">
-        <h3 className="font-semibold text-sm text-muted-foreground">Messages</h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleRefreshMessages}
-          disabled={isLoading}
-          data-testid="button-refresh-messages"
-        >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-        </Button>
-      </div>
-      
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef} data-testid="chat-messages-area">
         {isLoading ? (

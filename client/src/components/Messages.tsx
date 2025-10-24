@@ -1,14 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Users, Phone } from "lucide-react";
+import { MessageCircle, Users, Phone, RefreshCw } from "lucide-react";
 import { useState } from "react";
-import type { MatchConnection, ChatMessageWithSender } from "@shared/schema";
+import { queryClient } from "@/lib/queryClient";
+import type { MatchConnection, ChatMessageWithSender, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 
@@ -34,7 +35,7 @@ function formatTimeAgo(date: string | Date | null): string {
 export function Messages({ currentUserId }: MessagesProps) {
   const [selectedConnection, setSelectedConnection] = useState<MatchConnection | null>(null);
 
-  const { data: connections = [], isLoading: isLoadingConnections } = useQuery<MatchConnection[]>({
+  const { data: connections = [], isLoading: isLoadingConnections, refetch } = useQuery<MatchConnection[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
       const response = await fetch('/api/user/connections');
@@ -45,6 +46,30 @@ export function Messages({ currentUserId }: MessagesProps) {
     },
     retry: false,
   });
+
+  // Fetch user data for all connected users
+  const { data: allUsers = [] } = useQuery<User[]>({
+    queryKey: ['/api/users'],
+    queryFn: async () => {
+      const response = await fetch('/api/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
+  // Helper function to get user data
+  const getUserData = (userId: string) => {
+    return allUsers.find(u => u.id === userId);
+  };
+
+  const handleRefresh = () => {
+    refetch();
+    // Also refresh user data to get updated gamertags
+    queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+  };
 
   // Filter only accepted connections
   const acceptedConnections = connections.filter(c => c.status === 'accepted');
@@ -75,9 +100,20 @@ export function Messages({ currentUserId }: MessagesProps) {
           <MessageCircle className="h-6 w-6 text-primary" />
           <h1 className="text-2xl font-bold text-foreground">Messages</h1>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {acceptedConnections.length} conversation{acceptedConnections.length !== 1 ? 's' : ''}
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-sm">
+            {acceptedConnections.length} conversation{acceptedConnections.length !== 1 ? 's' : ''}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoadingConnections}
+            data-testid="button-refresh-messages"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoadingConnections ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
 
       {isLoadingConnections ? (
@@ -95,6 +131,9 @@ export function Messages({ currentUserId }: MessagesProps) {
           {acceptedConnections.map((connection) => {
             const isRequester = connection.requesterId === currentUserId;
             const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+            const otherUser = getUserData(otherUserId);
+            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+            const avatarUrl = otherUser?.profileImageUrl || undefined;
             const timeAgo = formatTimeAgo(connection.updatedAt);
 
             return (
@@ -107,14 +146,15 @@ export function Messages({ currentUserId }: MessagesProps) {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12">
+                      <AvatarImage src={avatarUrl} />
                       <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {isRequester ? "A" : "R"}
+                        {displayName[0]?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="font-semibold text-foreground truncate">
-                          {otherUserId}
+                          {displayName}
                         </h3>
                         <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {timeAgo}
@@ -143,9 +183,13 @@ export function Messages({ currentUserId }: MessagesProps) {
             <>
               <DialogHeader className="p-4 pb-3 border-b">
                 <DialogTitle>
-                  Chat with {selectedConnection.requesterId === currentUserId 
-                    ? selectedConnection.accepterId 
-                    : selectedConnection.requesterId}
+                  Chat with {(() => {
+                    const otherUserId = selectedConnection.requesterId === currentUserId 
+                      ? selectedConnection.accepterId 
+                      : selectedConnection.requesterId;
+                    const otherUser = getUserData(otherUserId);
+                    return otherUser?.gamertag || otherUser?.firstName || otherUserId;
+                  })()}
                 </DialogTitle>
               </DialogHeader>
               <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
@@ -166,9 +210,13 @@ export function Messages({ currentUserId }: MessagesProps) {
                     otherUserId={selectedConnection.requesterId === currentUserId 
                       ? selectedConnection.accepterId 
                       : selectedConnection.requesterId}
-                    otherUserName={selectedConnection.requesterId === currentUserId 
-                      ? selectedConnection.accepterId 
-                      : selectedConnection.requesterId}
+                    otherUserName={(() => {
+                      const otherUserId = selectedConnection.requesterId === currentUserId 
+                        ? selectedConnection.accepterId 
+                        : selectedConnection.requesterId;
+                      const otherUser = getUserData(otherUserId);
+                      return otherUser?.gamertag || otherUser?.firstName || otherUserId;
+                    })()}
                   />
                 </TabsContent>
                 <TabsContent value="voice" className="p-4">
@@ -178,9 +226,13 @@ export function Messages({ currentUserId }: MessagesProps) {
                     otherUserId={selectedConnection.requesterId === currentUserId 
                       ? selectedConnection.accepterId 
                       : selectedConnection.requesterId}
-                    otherUserName={selectedConnection.requesterId === currentUserId 
-                      ? selectedConnection.accepterId 
-                      : selectedConnection.requesterId}
+                    otherUserName={(() => {
+                      const otherUserId = selectedConnection.requesterId === currentUserId 
+                        ? selectedConnection.accepterId 
+                        : selectedConnection.requesterId;
+                      const otherUser = getUserData(otherUserId);
+                      return otherUser?.gamertag || otherUser?.firstName || otherUserId;
+                    })()}
                   />
                 </TabsContent>
               </Tabs>
