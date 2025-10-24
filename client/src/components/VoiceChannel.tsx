@@ -63,12 +63,12 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     // Send ICE candidates to remote peer via WebSocket
     peerConnection.onicecandidate = (event) => {
       if (event.candidate && sendMessage) {
-        sendMessage(JSON.stringify({
+        sendMessage({
           type: 'webrtc_ice_candidate',
           connectionId,
           targetUserId: otherUserId,
           candidate: event.candidate
-        }));
+        });
       }
     };
     
@@ -119,12 +119,12 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
         
         // Send offer to remote peer via WebSocket
         if (sendMessage) {
-          sendMessage(JSON.stringify({
+          sendMessage({
             type: 'webrtc_offer',
             connectionId,
             targetUserId: otherUserId,
             offer: offer
-          }));
+          });
         }
         
         toast({
@@ -244,12 +244,12 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
           await peerConnection.setLocalDescription(answer);
           
           if (sendMessage) {
-            sendMessage(JSON.stringify({
+            sendMessage({
               type: 'webrtc_answer',
               connectionId,
               targetUserId: otherUserId,
               answer: answer
-            }));
+            });
           }
           
           setIsInChannel(true);
