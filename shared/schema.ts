@@ -118,6 +118,14 @@ export type ChatMessageWithSender = ChatMessage & {
   senderProfileImageUrl: string | null;
 };
 
+// Match connection with user information
+export type MatchConnectionWithUser = MatchConnection & {
+  requesterGamertag: string | null;
+  requesterProfileImageUrl: string | null;
+  accepterGamertag: string | null;
+  accepterProfileImageUrl: string | null;
+};
+
 export const insertUserSchema = createInsertSchema(users);
 export const insertMatchRequestSchema = createInsertSchema(matchRequests).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertMatchConnectionSchema = createInsertSchema(matchConnections).omit({ id: true, createdAt: true, updatedAt: true });

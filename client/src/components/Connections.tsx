@@ -10,7 +10,7 @@ import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshC
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { MatchConnection, User } from "@shared/schema";
+import type { MatchConnectionWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 import { useToast } from "@/hooks/use-toast";
@@ -39,7 +39,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [openChatId, setOpenChatId] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const { data: connections = [], isLoading, refetch } = useQuery<MatchConnection[]>({
+  const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
       const response = await fetch('/api/user/connections');
@@ -50,17 +50,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     },
     retry: false,
   });
-
-  // Fetch user data for all connected users
-  const { data: allUsers = [] } = useQuery<User[]>({
-    queryKey: ['/api/users'],
-    enabled: true,
-  });
-
-  // Helper function to get user data
-  const getUserData = (userId: string) => {
-    return allUsers.find(u => u.id === userId);
-  };
 
   const handleRefresh = () => {
     refetch();
@@ -169,12 +158,13 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     );
   }
 
-  const renderConnectionCard = (connection: MatchConnection, showActions: 'confirm' | 'waiting' | 'chat', isRequester: boolean) => {
+  const renderConnectionCard = (connection: MatchConnectionWithUser, showActions: 'confirm' | 'waiting' | 'chat', isRequester: boolean) => {
     const timeAgo = formatTimeAgo(connection.createdAt);
     const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
-    const otherUser = getUserData(otherUserId);
-    const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-    const avatarUrl = otherUser?.profileImageUrl || undefined;
+    const otherGamertag = isRequester ? connection.accepterGamertag : connection.requesterGamertag;
+    const otherProfileImageUrl = isRequester ? connection.accepterProfileImageUrl : connection.requesterProfileImageUrl;
+    const displayName = otherGamertag || otherUserId;
+    const avatarUrl = otherProfileImageUrl || undefined;
     
     return (
       <Card key={connection.id} className="hover:shadow-md transition-shadow" data-testid={`connection-card-${connection.id}`}>

@@ -10,6 +10,7 @@ import {
   type MatchRequestWithUser,
   type InsertMatchRequest,
   type MatchConnection,
+  type MatchConnectionWithUser,
   type InsertMatchConnection,
   type HiddenMatch,
   type InsertHiddenMatch,
@@ -19,6 +20,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { randomUUID } from "crypto";
 
 // Helper function to calculate distance between two coordinates (Haversine formula)
@@ -52,7 +54,7 @@ export interface IStorage {
   // Match connection operations
   createMatchConnection(connection: InsertMatchConnection): Promise<MatchConnection>;
   updateMatchConnectionStatus(id: string, status: string): Promise<MatchConnection>;
-  getUserConnections(userId: string): Promise<MatchConnection[]>;
+  getUserConnections(userId: string): Promise<MatchConnectionWithUser[]>;
   
   // Hidden matches operations
   hideMatchRequest(userId: string, matchRequestId: string): Promise<HiddenMatch>;
@@ -319,10 +321,27 @@ export class DatabaseStorage implements IStorage {
     return updatedConnection;
   }
 
-  async getUserConnections(userId: string): Promise<MatchConnection[]> {
+  async getUserConnections(userId: string): Promise<MatchConnectionWithUser[]> {
+    const requester = alias(users, 'requester');
+    const accepter = alias(users, 'accepter');
+    
     const connections = await db
-      .select()
+      .select({
+        id: matchConnections.id,
+        requestId: matchConnections.requestId,
+        requesterId: matchConnections.requesterId,
+        accepterId: matchConnections.accepterId,
+        status: matchConnections.status,
+        createdAt: matchConnections.createdAt,
+        updatedAt: matchConnections.updatedAt,
+        requesterGamertag: requester.gamertag,
+        requesterProfileImageUrl: requester.profileImageUrl,
+        accepterGamertag: accepter.gamertag,
+        accepterProfileImageUrl: accepter.profileImageUrl,
+      })
       .from(matchConnections)
+      .leftJoin(requester, eq(matchConnections.requesterId, requester.id))
+      .leftJoin(accepter, eq(matchConnections.accepterId, accepter.id))
       .where(or(
         eq(matchConnections.requesterId, userId),
         eq(matchConnections.accepterId, userId)
