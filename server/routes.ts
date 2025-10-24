@@ -606,8 +606,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Authorization passed - forward the signaling message to the target user
-            connectedClients.forEach((targetClient) => {
+            console.log(`[WebRTC] Forwarding ${data.type} from ${client.userId} to ${targetUserId}`);
+            console.log(`[WebRTC] Connected clients count: ${connectedClients.size}`);
+            
+            let forwardedCount = 0;
+            connectedClients.forEach((targetClient, targetClientId) => {
+              console.log(`[WebRTC] Checking client ${targetClientId}: userId=${targetClient.userId}, readyState=${targetClient.ws.readyState}`);
               if (targetClient.userId === targetUserId && targetClient.ws.readyState === WebSocket.OPEN) {
+                console.log(`[WebRTC] ✓ Forwarding to client ${targetClientId}`);
                 targetClient.ws.send(JSON.stringify({
                   type: data.type,
                   data: {
@@ -618,8 +624,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     fromUserId: client.userId
                   }
                 }));
+                forwardedCount++;
               }
             });
+            
+            console.log(`[WebRTC] Forwarded message to ${forwardedCount} client(s)`);
+            
+            if (forwardedCount === 0) {
+              console.warn(`[WebRTC] WARNING: Target user ${targetUserId} has no active WebSocket connections`);
+              ws.send(JSON.stringify({
+                type: 'webrtc_error',
+                message: 'Target user is not currently connected'
+              }));
+            }
           } catch (error) {
             console.error('Error verifying WebRTC authorization:', error);
             ws.send(JSON.stringify({ 
