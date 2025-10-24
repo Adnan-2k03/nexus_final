@@ -70,11 +70,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId,
       });
       
+      // Get user info for the broadcast message
+      const user = await storage.getUser(userId);
+      const displayName = user?.gamertag || user?.firstName || 'A player';
+      
       // Broadcast new match request to all users
       (app as any).broadcast?.toAll({
         type: 'match_request_created',
         data: matchRequest,
-        message: `New ${matchRequest.gameName} ${matchRequest.gameMode} match request from ${matchRequest.userId}`
+        message: `New ${matchRequest.gameName} ${matchRequest.gameMode} match request from ${displayName}`
       });
       
       res.status(201).json(matchRequest);

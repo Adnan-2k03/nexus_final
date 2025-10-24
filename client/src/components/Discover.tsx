@@ -111,7 +111,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
 
   const queryUrl = queryParams.toString() ? `/api/users?${queryParams.toString()}` : "/api/users";
   
-  const { data: users, isLoading, refetch } = useQuery<User[]>({
+  const { data: users, isLoading: isLoadingUsers, refetch } = useQuery<User[]>({
     queryKey: [queryUrl],
     enabled: true,
   });
@@ -130,12 +130,34 @@ export function Discover({ currentUserId }: DiscoverProps) {
     retry: false,
   });
 
+  // Fetch all match requests to find requests from target users
+  const { data: allMatchRequests = [], isLoading: isLoadingMatchRequests } = useQuery({
+    queryKey: ['/api/match-requests'],
+    queryFn: async () => {
+      const response = await fetch('/api/match-requests');
+      if (!response.ok) {
+        throw new Error('Failed to fetch match requests');
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
   // Create connection mutation (for messaging)
   const createConnectionMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
+      // Find an active match request from the target user
+      const targetMatchRequest = allMatchRequests.find(
+        (req: any) => req.userId === targetUserId && req.status === 'waiting'
+      );
+
+      if (!targetMatchRequest) {
+        throw new Error('This user does not have any active match requests');
+      }
+
       return await apiRequest('POST', '/api/match-connections', {
-        targetUserId,
-        message: 'Hi! I would like to connect with you.',
+        requestId: targetMatchRequest.id,
+        accepterId: targetUserId,
       });
     },
     onSuccess: () => {
@@ -145,10 +167,10 @@ export function Discover({ currentUserId }: DiscoverProps) {
         description: "Your connection request has been sent successfully.",
       });
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
-        title: "Error",
-        description: "Failed to send connection request. Please try again.",
+        title: "Unable to Connect",
+        description: error.message || "This user doesn't have any active match requests. Ask them to create one first!",
         variant: "destructive",
       });
     },
@@ -199,10 +221,10 @@ export function Discover({ currentUserId }: DiscoverProps) {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
-          disabled={isLoading}
+          disabled={isLoadingUsers}
           data-testid="button-refresh-discover"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
         </Button>
       </div>
 
@@ -305,7 +327,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
       </Card>
 
       {/* Results */}
-      {isLoading ? (
+      {isLoadingUsers ? (
         <div className="flex justify-center py-12">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
@@ -378,10 +400,10 @@ export function Discover({ currentUserId }: DiscoverProps) {
                       e.stopPropagation();
                       handleMessageUser(user.id);
                     }}
-                    disabled={createConnectionMutation.isPending}
+                    disabled={createConnectionMutation.isPending || isLoadingMatchRequests}
                     data-testid={`button-message-${user.id}`}
                   >
-                    {createConnectionMutation.isPending ? (
+                    {createConnectionMutation.isPending || isLoadingMatchRequests ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <MessageCircle className="h-4 w-4" />
