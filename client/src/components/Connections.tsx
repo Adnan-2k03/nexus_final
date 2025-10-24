@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
@@ -37,6 +37,7 @@ function formatTimeAgo(date: string | Date | null): string {
 export function Connections({ currentUserId }: ConnectionsProps) {
   const { lastMessage } = useWebSocket();
   const [openChatId, setOpenChatId] = useState<string | null>(null);
+  const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
@@ -49,6 +50,18 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       return response.json();
     },
     retry: false,
+  });
+
+  // Fetch user profile when viewing
+  const { data: viewedUserProfile } = useQuery<User>({
+    queryKey: ['/api/users', viewProfileUserId],
+    queryFn: async () => {
+      if (!viewProfileUserId) throw new Error('No user ID');
+      const response = await fetch(`/api/users/${viewProfileUserId}`);
+      if (!response.ok) throw new Error('Failed to fetch user');
+      return response.json();
+    },
+    enabled: !!viewProfileUserId,
   });
 
   const handleRefresh = () => {
@@ -170,7 +183,11 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       <Card key={connection.id} className="hover:shadow-md transition-shadow" data-testid={`connection-card-${connection.id}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
+            <div 
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setViewProfileUserId(otherUserId)}
+              data-testid={`button-view-profile-${connection.id}`}
+            >
               <Avatar className="h-12 w-12">
                 <AvatarImage src={avatarUrl} />
                 <AvatarFallback className="bg-primary/10 text-primary font-semibold">
@@ -179,7 +196,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               </Avatar>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground">
+                  <h3 className="font-semibold text-foreground underline-offset-4 hover:underline">
                     {displayName}
                   </h3>
                 </div>
@@ -420,6 +437,73 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           </div>
         )}
       </div>
+
+      {/* Profile Viewing Dialog */}
+      <Dialog open={!!viewProfileUserId} onOpenChange={(open) => !open && setViewProfileUserId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>User Profile</DialogTitle>
+            <DialogDescription>View gamer profile details</DialogDescription>
+          </DialogHeader>
+          {viewedUserProfile && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={viewedUserProfile.profileImageUrl || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-2xl font-semibold">
+                    {viewedUserProfile.gamertag?.[0]?.toUpperCase() || viewedUserProfile.firstName?.[0]?.toUpperCase() || "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold">{viewedUserProfile.gamertag || viewedUserProfile.firstName}</h3>
+                  <p className="text-sm text-muted-foreground">{viewedUserProfile.email}</p>
+                </div>
+              </div>
+              
+              {viewedUserProfile.bio && (
+                <div>
+                  <h4 className="font-semibold mb-1">Bio</h4>
+                  <p className="text-sm text-muted-foreground">{viewedUserProfile.bio}</p>
+                </div>
+              )}
+              
+              {viewedUserProfile.preferredGames && viewedUserProfile.preferredGames.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">Preferred Games</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {viewedUserProfile.preferredGames.map((game: string, idx: number) => (
+                      <Badge key={idx} variant="secondary">{game}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {viewedUserProfile.location && (
+                <div>
+                  <h4 className="font-semibold mb-1">Location</h4>
+                  <Badge variant="outline">{viewedUserProfile.location}</Badge>
+                </div>
+              )}
+              
+              <div className="grid grid-cols-2 gap-3">
+                {viewedUserProfile.age && (
+                  <div>
+                    <h4 className="font-semibold mb-1 text-sm">Age</h4>
+                    <p className="text-sm text-muted-foreground">{viewedUserProfile.age}</p>
+                  </div>
+                )}
+                
+                {viewedUserProfile.language && (
+                  <div>
+                    <h4 className="font-semibold mb-1 text-sm">Language</h4>
+                    <p className="text-sm text-muted-foreground">{viewedUserProfile.language}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

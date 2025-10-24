@@ -24,9 +24,14 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const localAudioRef = useRef<HTMLAudioElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const iceCandidatesQueue = useRef<RTCIceCandidate[]>([]);
+  const hasReceivedOfferRef = useRef(false);
   
   const { toast } = useToast();
   const { lastMessage, sendMessage } = useWebSocket();
+  
+  // Determine if this user should initiate the call (caller role)
+  // Use lexicographic comparison to ensure one user is always the caller
+  const isCaller = currentUserId < otherUserId;
 
   // ICE servers for WebRTC connection (using free STUN servers)
   const iceServers = {
@@ -104,27 +109,37 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       // Create peer connection
       const peerConnection = await createPeerConnection();
       
-      // Create and send offer
-      const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
+      setIsInChannel(true);
       
-      // Send offer to remote peer via WebSocket
-      if (sendMessage) {
-        sendMessage(JSON.stringify({
-          type: 'webrtc_offer',
-          connectionId,
-          targetUserId: otherUserId,
-          offer: offer
-        }));
+      // Only create and send offer if this user is the caller
+      if (isCaller) {
+        // Create and send offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+        
+        // Send offer to remote peer via WebSocket
+        if (sendMessage) {
+          sendMessage(JSON.stringify({
+            type: 'webrtc_offer',
+            connectionId,
+            targetUserId: otherUserId,
+            offer: offer
+          }));
+        }
+        
+        toast({
+          title: "Joined voice channel",
+          description: "Waiting for teammate to join...",
+        });
+      } else {
+        // Callee waits for the offer from the caller
+        toast({
+          title: "Joined voice channel",
+          description: "Waiting for connection...",
+        });
       }
       
-      setIsInChannel(true);
       setIsConnecting(false);
-      
-      toast({
-        title: "Joined voice channel",
-        description: "Waiting for teammate to join...",
-      });
     } catch (error) {
       console.error('Error joining voice channel:', error);
       setIsConnecting(false);
@@ -152,6 +167,9 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     // Clear remote stream
     remoteStreamRef.current = null;
     
+    // Reset state
+    hasReceivedOfferRef.current = false;
+    iceCandidatesQueue.current = [];
     setIsInChannel(false);
     setIsMuted(false);
     setIsSpeakerMuted(false);
@@ -191,6 +209,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       
       try {
         if (type === 'webrtc_offer') {
+          // Ignore offer if we've already received one (prevents duplicate processing)
+          if (hasReceivedOfferRef.current) {
+            console.log('Ignoring duplicate offer');
+            return;
+          }
+          hasReceivedOfferRef.current = true;
+          
           // Received an offer - create answer
           if (!localStreamRef.current) {
             // Need to get media first
@@ -202,7 +227,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
             }
           }
           
-          const peerConnection = await createPeerConnection();
+          // Create or use existing peer connection
+          const peerConnection = peerConnectionRef.current || await createPeerConnection();
           await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
           
           // Add any queued ICE candidates

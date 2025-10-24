@@ -334,10 +334,10 @@ export class DatabaseStorage implements IStorage {
         status: matchConnections.status,
         createdAt: matchConnections.createdAt,
         updatedAt: matchConnections.updatedAt,
-        requesterGamertag: requester.gamertag,
-        requesterProfileImageUrl: requester.profileImageUrl,
-        accepterGamertag: accepter.gamertag,
-        accepterProfileImageUrl: accepter.profileImageUrl,
+        requesterGamertag: sql<string | null>`${requester.gamertag}`,
+        requesterProfileImageUrl: sql<string | null>`${requester.profileImageUrl}`,
+        accepterGamertag: sql<string | null>`${accepter.gamertag}`,
+        accepterProfileImageUrl: sql<string | null>`${accepter.profileImageUrl}`,
       })
       .from(matchConnections)
       .leftJoin(requester, eq(matchConnections.requesterId, requester.id))
