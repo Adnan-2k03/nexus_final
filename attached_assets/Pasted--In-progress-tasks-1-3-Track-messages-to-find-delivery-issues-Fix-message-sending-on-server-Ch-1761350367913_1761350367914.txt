@@ -1,0 +1,38 @@
+ In progress tasks
+1 / 3
+Track messages to find delivery issues
+Fix message sending on server
+Check voice calls after fix
+
+
+
+11:19:44 PM [express] GET /api/messages/763598bd-f2a9-43b3-82ae-9eac1fe7e30c 304 in 8ms :: []
+11:19:44 PM [express] GET /api/auth/user 304 in 7ms :: {"id":"0d6ba874-1dec-4ac7-9a16-ea7bf4419096","…
+11:19:44 PM [express] GET /api/user/connections 304 in 7ms :: [{"id":"763598bd-f2a9-43b3-82ae-9eac1fe…
+11:19:44 PM [express] GET /api/hidden-matches 304 in 8ms :: []
+11:19:44 PM [express] GET /api/match-requests 304 in 11ms :: [{"id":"59cded2a-6549-48a6-b6c4-e7331e3e…
+WebSocket client connected: pxkiu1jaqcl
+WebSocket client pxkiu1jaqcl authenticated as user 2bfe4e49-b9e7-42d1-a142-207d4623a492
+WebSocket client connected: yncapc7685s
+WebSocket client yncapc7685s authenticated as user 0d6ba874-1dec-4ac7-9a16-ea7bf4419096
+WebSocket client disconnected: pxkiu1jaqcl
+WebSocket client connected: jcyi6jhwrhe
+WebSocket client jcyi6jhwrhe authenticated as user 2bfe4e49-b9e7-42d1-a142-207d4623a492
+WebSocket client disconnected: yncapc7685s
+WebSocket client connected: xlvch3fjcf
+WebSocket client xlvch3fjcf authenticated as user 0d6ba874-1dec-4ac7-9a16-ea7bf4419096
+11:19:47 PM [express] GET /api/messages/763598bd-f2a9-43b3-82ae-9eac1fe7e30c 304 in 8ms :: []
+WebSocket client connected: ghh48r0udae
+WebSocket client ghh48r0udae authenticated as user 2bfe4e49-b9e7-42d1-a142-207d4623a492
+WebSocket client connected: ybmlcw8wa0g
+WebSocket client ybmlcw8wa0g authenticated as user 0d6ba874-1dec-4ac7-9a16-ea7bf4419096
+WebSocket client connected: up874ht1lxd
+WebSocket client up874ht1lxd authenticated as user 2bfe4e49-b9e7-42d1-a142-207d4623a492
+WebSocket client connected: d7m31xlej3r
+WebSocket client d7m31xlej3r authenticated as user 0d6ba874-1dec-4ac7-9a16-ea7bf4419096
+WebSocket client connected: 4y9fs8yu9
+WebSocket client 4y9fs8yu9 authenticated as user 0d6ba874-1dec-4ac7-9a16-ea7bf4419096
+WebSocket client disconnected: ybmlcw8wa0g
+WebSocket client connected: famwceurbn5
+WebSocket client famwceurbn5 authenticated as user 0d6ba874-1dec-4ac7-9a16-ea7bf4419096
+11:21:32 PM [vite] hmr update /src/components/VoiceChannel.tsx, /src/index.css?v=6Ysyl-ZTciVpbZiCHIFBR
