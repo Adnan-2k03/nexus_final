@@ -7,6 +7,4 @@ vite.config.ts.*
 .env
 .env.local
 *.log
-.replit
-replit.nix
 migrations
