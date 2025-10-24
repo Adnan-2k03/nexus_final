@@ -486,8 +486,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Check if user is authenticated through the session
-        if (mockReq.session?.passport?.user?.claims?.sub) {
-          authenticatedUserId = mockReq.session.passport.user.claims.sub;
+        if (mockReq.session?.passport?.user) {
+          authenticatedUserId = mockReq.session.passport.user;
           connectedClients.set(clientId, { ws, userId: authenticatedUserId, lastPong: Date.now() });
           
           ws.send(JSON.stringify({
