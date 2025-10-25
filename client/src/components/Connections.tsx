@@ -557,7 +557,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     );
   };
 
-  if (connections.length === 0) {
+  if (connections.length === 0 && connectionRequests.length === 0) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
