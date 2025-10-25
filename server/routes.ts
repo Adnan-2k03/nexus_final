@@ -283,8 +283,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const existingRequests = await storage.getConnectionRequests(senderId);
       const duplicateRequest = existingRequests.find(r => 
-        (r.senderId === senderId && r.receiverId === receiverId) ||
-        (r.senderId === receiverId && r.receiverId === senderId)
+        r.status === 'pending' &&
+        ((r.senderId === senderId && r.receiverId === receiverId) ||
+        (r.senderId === receiverId && r.receiverId === senderId))
       );
       
       if (duplicateRequest) {
@@ -324,6 +325,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!requestToUpdate) {
         return res.status(404).json({ message: "Connection request not found or you are not authorized to modify it" });
+      }
+      
+      // If declined, delete the request instead of updating status
+      if (status === 'declined') {
+        await storage.deleteConnectionRequest(id, userId);
+        
+        (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {
+          type: 'connection_request_deleted',
+          data: { id },
+          message: 'Connection request declined and removed'
+        });
+        
+        return res.status(204).send();
       }
       
       const updatedRequest = await storage.updateConnectionRequestStatus(id, status);
