@@ -28,10 +28,10 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Google OAuth
+// User storage table for OAuth (Google or Replit)
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  googleId: varchar("google_id").unique().notNull(),
+  googleId: varchar("google_id").unique(),
   email: varchar("email").unique().notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
