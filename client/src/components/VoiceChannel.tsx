@@ -106,13 +106,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
         localAudioRef.current.muted = true;
       }
       
-      // Create peer connection
-      const peerConnection = await createPeerConnection();
-      
       setIsInChannel(true);
       
-      // Only create and send offer if this user is the caller
+      // Only create peer connection and send offer if this user is the caller
       if (isCaller) {
+        // Create peer connection
+        const peerConnection = await createPeerConnection();
+        
         // Create and send offer
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
@@ -132,10 +132,11 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
           description: "Waiting for teammate to join...",
         });
       } else {
-        // Callee waits for the offer from the caller
+        // Callee just gets media and waits for the offer from the caller
+        // Peer connection will be created when offer arrives
         toast({
-          title: "Joined voice channel",
-          description: "Waiting for connection...",
+          title: "Ready for voice",
+          description: "Waiting for teammate to start the call...",
         });
       }
       
