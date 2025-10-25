@@ -39,7 +39,7 @@ export function GameNavigation({
   const navigationItems = [
     { id: "home", label: "Feed", icon: Home },
     { id: "search", label: "Discover", icon: Search },
-    { id: "connections", label: "Connections", icon: Users },
+    { id: "connections", label: "Matches", icon: Users },
     { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages },
     { id: "profile", label: "Profile", icon: User },
   ];
