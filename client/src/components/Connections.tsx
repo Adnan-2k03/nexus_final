@@ -144,27 +144,36 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     },
   });
 
+  // Apply filters
+  const filterByType = (item: MatchConnectionWithUser | ConnectionRequestWithUser) => {
+    if (requestTypeFilter === 'all') return true;
+    if (requestTypeFilter === 'connection') {
+      return 'senderId' in item;
+    }
+    return 'requestType' in item && item.requestType === requestTypeFilter;
+  };
+
   // Split match connections and connection requests into categories
-  const incomingConnectionRequests = connectionRequests.filter(
-    r => r.status === 'pending' && r.receiverId === currentUserId
-  );
+  const incomingConnectionRequests = connectionRequests
+    .filter(r => r.status === 'pending' && r.receiverId === currentUserId)
+    .filter(filterByType);
   
-  const outgoingConnectionRequests = connectionRequests.filter(
-    r => r.status === 'pending' && r.senderId === currentUserId
-  );
+  const outgoingConnectionRequests = connectionRequests
+    .filter(r => r.status === 'pending' && r.senderId === currentUserId)
+    .filter(filterByType);
 
   // Split connections into three categories
-  const incomingApplications = connections.filter(
-    c => c.status === 'pending' && c.accepterId === currentUserId
-  );
+  const incomingApplications = connections
+    .filter(c => c.status === 'pending' && c.accepterId === currentUserId)
+    .filter(filterByType);
   
-  const yourApplications = connections.filter(
-    c => c.status === 'pending' && c.requesterId === currentUserId
-  );
+  const yourApplications = connections
+    .filter(c => c.status === 'pending' && c.requesterId === currentUserId)
+    .filter(filterByType);
   
-  const acceptedConnections = connections.filter(
-    c => c.status === 'accepted'
-  );
+  const acceptedConnections = connections
+    .filter(c => c.status === 'accepted')
+    .filter(filterByType);
 
   const LoadingSkeleton = () => (
     <div className="space-y-4">
@@ -222,6 +231,99 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       </div>
     );
   }
+
+  const renderConnectionRequestCard = (request: ConnectionRequestWithUser, showActions: 'confirm' | 'waiting' | 'chat', isSender: boolean) => {
+    const timeAgo = formatTimeAgo(request.createdAt);
+    const otherUserId = isSender ? request.receiverId : request.senderId;
+    const otherGamertag = isSender ? request.receiverGamertag : request.senderGamertag;
+    const otherProfileImageUrl = isSender ? request.receiverProfileImageUrl : request.senderProfileImageUrl;
+    const displayName = otherGamertag || otherUserId;
+    const avatarUrl = otherProfileImageUrl || undefined;
+    
+    return (
+      <Card key={request.id} className="hover:shadow-md transition-shadow" data-testid={`connection-request-card-${request.id}`}>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between">
+            <div 
+              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => setViewProfileUserId(otherUserId)}
+              data-testid={`button-view-profile-${request.id}`}
+            >
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={avatarUrl} />
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {displayName[0]?.toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-foreground underline-offset-4 hover:underline">
+                    {displayName}
+                  </h3>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {isSender ? "Connection request sent" : "Wants to connect"}
+                </p>
+              </div>
+            </div>
+            <Badge 
+              variant={
+                request.status === 'accepted' ? 'default' : 'secondary'
+              }
+              className="text-xs"
+              data-testid={`connection-request-status-${request.id}`}
+            >
+              {request.status}
+            </Badge>
+          </div>
+        </CardHeader>
+        
+        <CardContent>
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>{timeAgo}</span>
+              </div>
+            </div>
+            
+            {showActions === 'confirm' && (
+              <div className="flex gap-2">
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => updateConnectionRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
+                  disabled={updateConnectionRequestMutation.isPending}
+                  data-testid={`button-accept-request-${request.id}`}
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Accept
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => updateConnectionRequestMutation.mutate({ requestId: request.id, status: 'declined' })}
+                  disabled={updateConnectionRequestMutation.isPending}
+                  data-testid={`button-decline-request-${request.id}`}
+                >
+                  <X className="h-4 w-4" />
+                  Decline
+                </Button>
+              </div>
+            )}
+            
+            {showActions === 'waiting' && (
+              <Badge variant="secondary" className="text-xs">
+                Waiting for response
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   const renderConnectionCard = (connection: MatchConnectionWithUser, showActions: 'confirm' | 'waiting' | 'chat', isRequester: boolean) => {
     const timeAgo = formatTimeAgo(connection.createdAt);
@@ -429,50 +531,74 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       </div>
 
       <div className="space-y-8">
+        {/* Filter Section - Show at top if any pending requests */}
+        {(incomingApplications.length > 0 || incomingConnectionRequests.length > 0) && (
+          <div className="flex items-center justify-end gap-2">
+            <Popover open={showFilters} onOpenChange={setShowFilters}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm" data-testid="button-toggle-request-filters">
+                  <Filter className="h-4 w-4 mr-1" />
+                  Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" data-testid="popover-request-filters">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-3">Filter Requests</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Request Type</label>
+                    <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                      <SelectTrigger data-testid="select-request-type">
+                        <SelectValue placeholder="All Requests" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Requests</SelectItem>
+                        <SelectItem value="connection">Connection Requests</SelectItem>
+                        <SelectItem value="1v1">1v1 Match Requests</SelectItem>
+                        <SelectItem value="2v2">2v2 Match Requests</SelectItem>
+                        <SelectItem value="3v3">3v3 Match Requests</SelectItem>
+                        <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+
+        {/* Incoming Connection Requests Section */}
+        {incomingConnectionRequests.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Incoming Connection Requests
+              </h2>
+              <Badge variant="default" className="text-xs">
+                {incomingConnectionRequests.length} pending
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {incomingConnectionRequests.map((request) => 
+                renderConnectionRequestCard(request, 'confirm', false)
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Incoming Applications Section */}
         {incomingApplications.length > 0 && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-primary" />
-                Incoming Applications
+                Incoming Match Applications
               </h2>
-              <div className="flex items-center gap-2">
-                <Popover open={showFilters} onOpenChange={setShowFilters}>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" data-testid="button-toggle-request-filters">
-                      <Filter className="h-4 w-4 mr-1" />
-                      Filter
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-64" data-testid="popover-request-filters">
-                    <div className="space-y-4">
-                      <div>
-                        <h4 className="font-semibold mb-3">Filter Requests</h4>
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Request Type</label>
-                        <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
-                          <SelectTrigger data-testid="select-request-type">
-                            <SelectValue placeholder="All Requests" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Requests</SelectItem>
-                            <SelectItem value="connection">Connection Requests</SelectItem>
-                            <SelectItem value="1v1">1v1 Match Requests</SelectItem>
-                            <SelectItem value="2v2">2v2 Match Requests</SelectItem>
-                            <SelectItem value="3v3">3v3 Match Requests</SelectItem>
-                            <SelectItem value="squad">Team/Squad Finder</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-                <Badge variant="default" className="text-xs">
-                  {incomingApplications.length} pending
-                </Badge>
-              </div>
+              <Badge variant="default" className="text-xs">
+                {incomingApplications.length} pending
+              </Badge>
             </div>
             <div className="space-y-3">
               {incomingApplications.map((connection) => 
@@ -507,8 +633,8 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Your Applications
+                <Trophy className="h-5 w-5 text-primary" />
+                Your Match Applications
               </h2>
               <Badge variant="secondary" className="text-xs">
                 {yourApplications.length} pending
@@ -517,6 +643,26 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             <div className="space-y-3">
               {yourApplications.map((connection) => 
                 renderConnectionCard(connection, 'waiting', true)
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Outgoing Connection Requests Section */}
+        {outgoingConnectionRequests.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Users className="h-5 w-5 text-primary" />
+                Your Connection Requests
+              </h2>
+              <Badge variant="secondary" className="text-xs">
+                {outgoingConnectionRequests.length} pending
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {outgoingConnectionRequests.map((request) => 
+                renderConnectionRequestCard(request, 'waiting', true)
               )}
             </div>
           </div>
