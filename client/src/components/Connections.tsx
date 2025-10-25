@@ -206,6 +206,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const outgoingConnectionRequests = connectionRequests
     .filter(r => r.status === 'pending' && r.senderId === currentUserId)
     .filter(filterByType);
+  
+  const acceptedConnectionRequests = connectionRequests
+    .filter(r => r.status === 'accepted')
+    .filter(filterByType);
 
   // Split connections into three categories
   const incomingApplications = connections
@@ -600,7 +604,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-sm">
-            {connections.length} total
+            {connections.length + acceptedConnectionRequests.length} total
           </Badge>
           <Button
             variant="outline"
@@ -707,6 +711,26 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             <div className="space-y-3">
               {acceptedConnections.map((connection) => 
                 renderConnectionCard(connection, 'chat', connection.requesterId === currentUserId)
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Accepted Direct Connections Section */}
+        {acceptedConnectionRequests.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Direct Connections
+              </h2>
+              <Badge variant="default" className="text-xs">
+                {acceptedConnectionRequests.length} active
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {acceptedConnectionRequests.map((request) => 
+                renderConnectionRequestCard(request, 'chat', request.senderId === currentUserId)
               )}
             </div>
           </div>
