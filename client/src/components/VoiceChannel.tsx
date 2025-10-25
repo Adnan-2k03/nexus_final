@@ -18,6 +18,9 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [otherUserReady, setOtherUserReady] = useState(false);
+  const [connectionState, setConnectionState] = useState<string>('disconnected');
+  const [iceConnectionState, setIceConnectionState] = useState<string>('new');
+  const [hasAudio, setHasAudio] = useState(false);
   
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -57,13 +60,16 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     
     // Handle incoming remote tracks
     peerConnection.ontrack = (event) => {
-      console.log('Received remote track:', event.streams[0]);
+      console.log('[Voice] Received remote track:', event.streams[0]);
       remoteStreamRef.current = event.streams[0];
+      setHasAudio(true);
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = event.streams[0];
         // Explicitly play the audio to handle browser autoplay policies
-        remoteAudioRef.current.play().catch(err => {
-          console.error('Error playing remote audio:', err);
+        remoteAudioRef.current.play().then(() => {
+          console.log('[Voice] Remote audio playing successfully');
+        }).catch(err => {
+          console.error('[Voice] Error playing remote audio:', err);
           toast({
             title: "Audio playback issue",
             description: "Click anywhere on the page to enable audio",
@@ -87,7 +93,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     
     // Monitor connection state
     peerConnection.onconnectionstatechange = () => {
-      console.log('Connection state:', peerConnection.connectionState);
+      console.log('[Voice] Connection state:', peerConnection.connectionState);
+      setConnectionState(peerConnection.connectionState);
       if (peerConnection.connectionState === 'connected') {
         toast({
           title: "Voice connected",
@@ -102,15 +109,27 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
         leaveChannel();
       }
     };
+
+    // Monitor ICE connection state
+    peerConnection.oniceconnectionstatechange = () => {
+      console.log('[Voice] ICE connection state:', peerConnection.iceConnectionState);
+      setIceConnectionState(peerConnection.iceConnectionState);
+    };
     
     return peerConnection;
   };
 
   const initiateCall = async () => {
-    if (!isCaller || !localStreamRef.current || hasInitiatedCallRef.current) return;
+    console.log('[Voice] initiateCall called - isCaller:', isCaller, 'hasStream:', !!localStreamRef.current, 'hasInitiated:', hasInitiatedCallRef.current);
+    
+    if (!isCaller || !localStreamRef.current || hasInitiatedCallRef.current) {
+      console.log('[Voice] Skipping initiateCall - conditions not met');
+      return;
+    }
     
     // Prevent multiple invocations
     hasInitiatedCallRef.current = true;
+    console.log('[Voice] Creating peer connection and offer...');
     
     try {
       // Create peer connection
@@ -119,6 +138,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       // Create and send offer
       const offer = await peerConnection.createOffer();
       await peerConnection.setLocalDescription(offer);
+      
+      console.log('[Voice] Sending WebRTC offer to', otherUserId);
       
       // Send offer to remote peer via WebSocket
       if (sendMessage) {
@@ -135,7 +156,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
         description: "Connecting with teammate...",
       });
     } catch (error) {
-      console.error('Error initiating call:', error);
+      console.error('[Voice] Error initiating call:', error);
       hasInitiatedCallRef.current = false; // Reset on error so user can retry
       toast({
         title: "Failed to start call",
@@ -146,12 +167,15 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   };
 
   const joinChannel = async () => {
+    console.log('[Voice] joinChannel called - isCaller:', isCaller, 'otherUserReady:', otherUserReady);
     try {
       setIsConnecting(true);
       
       // Request microphone access
+      console.log('[Voice] Requesting microphone access...');
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       localStreamRef.current = stream;
+      console.log('[Voice] Got local audio stream with', stream.getAudioTracks().length, 'tracks');
       
       if (localAudioRef.current) {
         localAudioRef.current.srcObject = stream;
@@ -162,6 +186,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       
       // Notify the other user that we're ready
       if (sendMessage && !hasSentReadyRef.current) {
+        console.log('[Voice] Sending voice_channel_ready to', otherUserId);
         sendMessage({
           type: 'voice_channel_ready',
           connectionId,
@@ -172,13 +197,16 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       
       // If we're the caller and the other user is already ready, initiate the call
       if (isCaller && otherUserReady) {
+        console.log('[Voice] We are caller and other user ready - initiating call');
         await initiateCall();
       } else if (isCaller) {
+        console.log('[Voice] We are caller but waiting for other user');
         toast({
           title: "Ready for voice",
           description: "Waiting for teammate to join...",
         });
       } else {
+        console.log('[Voice] We are not caller - waiting for call to start');
         toast({
           title: "Ready for voice",
           description: "Teammate can now start the call...",
@@ -223,6 +251,11 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     setIsSpeakerMuted(false);
     setOtherUserReady(false);
     
+    // Reset connection status indicators
+    setConnectionState('disconnected');
+    setIceConnectionState('new');
+    setHasAudio(false);
+    
     toast({
       title: "Left voice channel",
       description: "You've disconnected from the voice chat",
@@ -259,13 +292,17 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       try {
         if (type === 'voice_channel_ready') {
           // Other user is ready for voice
+          console.log('[Voice] Received voice_channel_ready - isCaller:', isCaller, 'isInChannel:', isInChannel);
           setOtherUserReady(true);
           
           // If we're the caller and we're already in the channel, initiate the call
           if (isCaller && isInChannel && localStreamRef.current) {
+            console.log('[Voice] We are caller and in channel - initiating call');
             await initiateCall();
           }
         } else if (type === 'webrtc_offer') {
+          console.log('[Voice] Received webrtc_offer');
+
           // Ignore offer if we've already received one (prevents duplicate processing)
           if (hasReceivedOfferRef.current) {
             console.log('Ignoring duplicate offer');
@@ -313,24 +350,33 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
           setIsConnecting(false);
         } else if (type === 'webrtc_answer') {
           // Received an answer
+          console.log('[Voice] Received webrtc_answer');
           if (peerConnectionRef.current) {
             await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
+            console.log('[Voice] Set remote description from answer');
             
             // Add any queued ICE candidates
+            console.log('[Voice] Processing', iceCandidatesQueue.current.length, 'queued ICE candidates');
             while (iceCandidatesQueue.current.length > 0) {
               const candidate = iceCandidatesQueue.current.shift();
               if (candidate) {
                 await peerConnectionRef.current.addIceCandidate(candidate);
+                console.log('[Voice] Added queued ICE candidate');
               }
             }
+          } else {
+            console.warn('[Voice] Received answer but no peer connection exists');
           }
         } else if (type === 'webrtc_ice_candidate') {
           // Received an ICE candidate
+          console.log('[Voice] Received ICE candidate');
           if (peerConnectionRef.current && peerConnectionRef.current.remoteDescription) {
             await peerConnectionRef.current.addIceCandidate(new RTCIceCandidate(data.candidate));
+            console.log('[Voice] Added ICE candidate to peer connection');
           } else {
             // Queue candidate if remote description not set yet
             iceCandidatesQueue.current.push(new RTCIceCandidate(data.candidate));
+            console.log('[Voice] Queued ICE candidate (remote description not set yet), queue size:', iceCandidatesQueue.current.length);
           }
         }
       } catch (error) {
@@ -448,6 +494,75 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                   </>
                 )}
               </Button>
+            </div>
+            
+            {/* Connection Status Indicators */}
+            <div className="bg-background/50 rounded p-3 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Connection Status:</span>
+                <div className="flex items-center gap-2">
+                  {connectionState === 'connected' ? (
+                    <>
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium text-green-600 dark:text-green-400">Connected</span>
+                    </>
+                  ) : connectionState === 'connecting' ? (
+                    <>
+                      <div className="h-2 w-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium text-yellow-600 dark:text-yellow-400">Connecting...</span>
+                    </>
+                  ) : connectionState === 'failed' ? (
+                    <>
+                      <div className="h-2 w-2 bg-red-500 rounded-full"></div>
+                      <span className="font-medium text-red-600 dark:text-red-400">Failed</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
+                      <span className="font-medium text-muted-foreground">Waiting...</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Audio Stream:</span>
+                <div className="flex items-center gap-2">
+                  {hasAudio ? (
+                    <>
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium text-green-600 dark:text-green-400">Receiving</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
+                      <span className="font-medium text-muted-foreground">No Audio</span>
+                    </>
+                  )}
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">ICE State:</span>
+                <div className="flex items-center gap-2">
+                  {iceConnectionState === 'connected' || iceConnectionState === 'completed' ? (
+                    <>
+                      <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                      <span className="font-medium text-green-600 dark:text-green-400 capitalize">{iceConnectionState}</span>
+                    </>
+                  ) : iceConnectionState === 'checking' ? (
+                    <>
+                      <div className="h-2 w-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                      <span className="font-medium text-yellow-600 dark:text-yellow-400">Checking</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
+                      <span className="font-medium text-muted-foreground capitalize">{iceConnectionState}</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
             
             <div className="text-xs text-muted-foreground bg-background/50 rounded p-2">
