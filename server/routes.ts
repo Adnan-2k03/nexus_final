@@ -267,6 +267,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Connection request routes (direct user-to-user, no match required)
+  app.post('/api/connection-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const senderId = req.user.id;
+      const { receiverId } = req.body;
+      
+      if (!receiverId) {
+        return res.status(400).json({ message: "receiverId is required" });
+      }
+      
+      if (senderId === receiverId) {
+        return res.status(400).json({ message: "You cannot send a connection request to yourself" });
+      }
+      
+      const existingRequests = await storage.getConnectionRequests(senderId);
+      const duplicateRequest = existingRequests.find(r => 
+        (r.senderId === senderId && r.receiverId === receiverId) ||
+        (r.senderId === receiverId && r.receiverId === senderId)
+      );
+      
+      if (duplicateRequest) {
+        return res.status(400).json({ message: "Connection request already exists" });
+      }
+      
+      const request = await storage.createConnectionRequest({
+        senderId,
+        receiverId,
+      });
+      
+      (app as any).broadcast?.toUsers([senderId, receiverId], {
+        type: 'connection_request_created',
+        data: request,
+        message: 'New connection request created'
+      });
+      
+      res.status(201).json(request);
+    } catch (error) {
+      console.error("Error creating connection request:", error);
+      res.status(500).json({ message: "Failed to create connection request" });
+    }
+  });
+
+  app.patch('/api/connection-requests/:id/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      const userId = req.user.id;
+      
+      if (!['pending', 'accepted', 'declined'].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      
+      const userRequests = await storage.getConnectionRequests(userId);
+      const requestToUpdate = userRequests.find(r => r.id === id);
+      
+      if (!requestToUpdate) {
+        return res.status(404).json({ message: "Connection request not found or you are not authorized to modify it" });
+      }
+      
+      const updatedRequest = await storage.updateConnectionRequestStatus(id, status);
+      
+      (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {
+        type: 'connection_request_updated',
+        data: updatedRequest,
+        message: `Connection request status updated to ${status}`
+      });
+      
+      res.json(updatedRequest);
+    } catch (error) {
+      console.error("Error updating connection request:", error);
+      res.status(500).json({ message: "Failed to update connection request" });
+    }
+  });
+
+  app.get('/api/connection-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const requests = await storage.getConnectionRequests(userId);
+      res.json(requests);
+    } catch (error) {
+      console.error("Error fetching connection requests:", error);
+      res.status(500).json({ message: "Failed to fetch connection requests" });
+    }
+  });
+
   // User profile routes
   app.get('/api/users/:userId', async (req, res) => {
     try {
