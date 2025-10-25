@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { MessageCircle, Users, Phone, RefreshCw, Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
-import type { MatchConnectionWithUser, ChatMessageWithSender, User } from "@shared/schema";
+import type { MatchConnectionWithUser, ConnectionRequestWithUser, ChatMessageWithSender, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 
@@ -35,8 +35,12 @@ function formatTimeAgo(date: string | Date | null): string {
   return `${diffDays}d ago`;
 }
 
+type ConversationType = 
+  | { type: 'match'; data: MatchConnectionWithUser }
+  | { type: 'direct'; data: ConnectionRequestWithUser };
+
 export function Messages({ currentUserId }: MessagesProps) {
-  const [selectedConnection, setSelectedConnection] = useState<MatchConnectionWithUser | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<ConversationType | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -45,12 +49,24 @@ export function Messages({ currentUserId }: MessagesProps) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
   }
 
-  const { data: connections = [], isLoading: isLoadingConnections, refetch } = useQuery<MatchConnectionWithUser[]>({
+  const { data: connections = [], isLoading: isLoadingConnections, refetch: refetchConnections } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
       const response = await fetch('/api/user/connections');
       if (!response.ok) {
         throw new Error('Failed to fetch connections');
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useQuery<ConnectionRequestWithUser[]>({
+    queryKey: ['/api/connection-requests'],
+    queryFn: async () => {
+      const response = await fetch('/api/connection-requests');
+      if (!response.ok) {
+        throw new Error('Failed to fetch connection requests');
       }
       return response.json();
     },
@@ -76,29 +92,49 @@ export function Messages({ currentUserId }: MessagesProps) {
   };
 
   const handleRefresh = () => {
-    refetch();
-    // Also refresh user data to get updated gamertags
+    refetchConnections();
+    refetchRequests();
     queryClient.invalidateQueries({ queryKey: ['/api/users'] });
   };
 
+  // Filter only accepted connections and requests
+  const acceptedMatchConnections = connections.filter(c => c.status === 'accepted');
+  const acceptedDirectConnections = connectionRequests.filter(r => r.status === 'accepted');
+
+  // Create unified list of conversations
+  const allConversations: ConversationType[] = [
+    ...acceptedMatchConnections.map(conn => ({ type: 'match' as const, data: conn })),
+    ...acceptedDirectConnections.map(req => ({ type: 'direct' as const, data: req }))
+  ];
+
   // Apply filters
-  const filterByType = (connection: MatchConnectionWithUser) => {
+  const filterByType = (conversation: ConversationType) => {
     if (requestTypeFilter === 'all') return true;
-    return connection.gameMode === requestTypeFilter;
+    if (conversation.type === 'direct') return requestTypeFilter === 'direct';
+    return conversation.data.gameMode === requestTypeFilter;
   };
 
-  const filterBySearch = (connection: MatchConnectionWithUser) => {
+  const filterBySearch = (conversation: ConversationType) => {
     if (!searchTerm.trim()) return true;
-    const isRequester = connection.requesterId === currentUserId;
-    const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
-    const otherUser = getUserData(otherUserId);
-    const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
-    return displayName.includes(searchTerm.toLowerCase());
+    
+    if (conversation.type === 'match') {
+      const connection = conversation.data;
+      const isRequester = connection.requesterId === currentUserId;
+      const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+      const otherUser = getUserData(otherUserId);
+      const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
+      return displayName.includes(searchTerm.toLowerCase());
+    } else {
+      const request = conversation.data;
+      const isSender = request.senderId === currentUserId;
+      const otherUserId = isSender ? request.receiverId : request.senderId;
+      const otherUser = getUserData(otherUserId);
+      const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
+      return displayName.includes(searchTerm.toLowerCase());
+    }
   };
 
-  // Filter only accepted connections and apply filters
-  const acceptedConnections = connections
-    .filter(c => c.status === 'accepted')
+  const filteredConversations = allConversations
     .filter(filterByType)
     .filter(filterBySearch);
 
@@ -131,16 +167,16 @@ export function Messages({ currentUserId }: MessagesProps) {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
-              {acceptedConnections.length} conversation{acceptedConnections.length !== 1 ? 's' : ''}
+              {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''}
             </Badge>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoadingConnections}
+              disabled={isLoadingConnections || isLoadingRequests}
               data-testid="button-refresh-messages"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoadingConnections ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${(isLoadingConnections || isLoadingRequests) ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
@@ -171,13 +207,14 @@ export function Messages({ currentUserId }: MessagesProps) {
                   <h4 className="font-semibold mb-3">Filter Conversations</h4>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Match Type</label>
+                  <label className="text-sm font-medium">Connection Type</label>
                   <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
                     <SelectTrigger data-testid="select-message-type">
                       <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="all">All Connections</SelectItem>
+                      <SelectItem value="direct">Direct Connections</SelectItem>
                       <SelectItem value="1v1">1v1 Matches</SelectItem>
                       <SelectItem value="2v2">2v2 Matches</SelectItem>
                       <SelectItem value="3v3">3v3 Matches</SelectItem>
@@ -191,32 +228,51 @@ export function Messages({ currentUserId }: MessagesProps) {
         </div>
       </div>
 
-      {isLoadingConnections ? (
+      {(isLoadingConnections || isLoadingRequests) ? (
         <LoadingSkeleton />
-      ) : acceptedConnections.length === 0 ? (
+      ) : filteredConversations.length === 0 ? (
         <div className="text-center py-12">
           <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            Once you connect with other players, you'll be able to chat with them here.
+            Connect with other players through the Discover tab to start chatting here.
           </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {acceptedConnections.map((connection) => {
-            const isRequester = connection.requesterId === currentUserId;
-            const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
-            const otherUser = getUserData(otherUserId);
-            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-            const avatarUrl = otherUser?.profileImageUrl || undefined;
-            const timeAgo = formatTimeAgo(connection.updatedAt);
+          {filteredConversations.map((conversation) => {
+            let otherUserId: string;
+            let displayName: string;
+            let avatarUrl: string | undefined;
+            let timeAgo: string;
+            let conversationId: string;
+
+            if (conversation.type === 'match') {
+              const connection = conversation.data;
+              const isRequester = connection.requesterId === currentUserId;
+              otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+              const otherUser = getUserData(otherUserId);
+              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+              avatarUrl = otherUser?.profileImageUrl || undefined;
+              timeAgo = formatTimeAgo(connection.updatedAt);
+              conversationId = connection.id;
+            } else {
+              const request = conversation.data;
+              const isSender = request.senderId === currentUserId;
+              otherUserId = isSender ? request.receiverId : request.senderId;
+              const otherUser = getUserData(otherUserId);
+              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+              avatarUrl = otherUser?.profileImageUrl || undefined;
+              timeAgo = formatTimeAgo(request.updatedAt);
+              conversationId = request.id;
+            }
 
             return (
               <Card
-                key={connection.id}
+                key={conversationId}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setSelectedConnection(connection)}
-                data-testid={`conversation-${connection.id}`}
+                onClick={() => setSelectedConversation(conversation)}
+                data-testid={`conversation-${conversationId}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -236,7 +292,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        Click to start chatting or join voice
+                        {conversation.type === 'direct' ? 'Direct Connection' : 'Match Connection'} • Click to chat or join voice
                       </p>
                     </div>
                     <div className="flex gap-1">
@@ -252,67 +308,67 @@ export function Messages({ currentUserId }: MessagesProps) {
       )}
 
       {/* Conversation Dialog */}
-      <Dialog open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
+      <Dialog open={!!selectedConversation} onOpenChange={(open) => !open && setSelectedConversation(null)}>
         <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
-          {selectedConnection && (
-            <>
-              <DialogHeader className="p-4 pb-3 border-b">
-                <DialogTitle>
-                  Chat with {(() => {
-                    const otherUserId = selectedConnection.requesterId === currentUserId 
-                      ? selectedConnection.accepterId 
-                      : selectedConnection.requesterId;
-                    const otherUser = getUserData(otherUserId);
-                    return otherUser?.gamertag || otherUser?.firstName || otherUserId;
-                  })()}
-                </DialogTitle>
-              </DialogHeader>
-              <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
-                <TabsList className="mx-4 mt-2">
-                  <TabsTrigger value="chat" className="flex-1" data-testid="tab-chat">
-                    <MessageCircle className="h-4 w-4 mr-1" />
-                    Chat
-                  </TabsTrigger>
-                  <TabsTrigger value="voice" className="flex-1" data-testid="tab-voice">
-                    <Phone className="h-4 w-4 mr-1" />
-                    Voice
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="chat" className="flex-1 overflow-hidden m-0">
-                  <Chat
-                    connectionId={selectedConnection.id}
-                    currentUserId={currentUserId}
-                    otherUserId={selectedConnection.requesterId === currentUserId 
-                      ? selectedConnection.accepterId 
-                      : selectedConnection.requesterId}
-                    otherUserName={(() => {
-                      const otherUserId = selectedConnection.requesterId === currentUserId 
-                        ? selectedConnection.accepterId 
-                        : selectedConnection.requesterId;
-                      const otherUser = getUserData(otherUserId);
-                      return otherUser?.gamertag || otherUser?.firstName || otherUserId;
-                    })()}
-                  />
-                </TabsContent>
-                <TabsContent value="voice" className="p-4">
-                  <VoiceChannel
-                    connectionId={selectedConnection.id}
-                    currentUserId={currentUserId}
-                    otherUserId={selectedConnection.requesterId === currentUserId 
-                      ? selectedConnection.accepterId 
-                      : selectedConnection.requesterId}
-                    otherUserName={(() => {
-                      const otherUserId = selectedConnection.requesterId === currentUserId 
-                        ? selectedConnection.accepterId 
-                        : selectedConnection.requesterId;
-                      const otherUser = getUserData(otherUserId);
-                      return otherUser?.gamertag || otherUser?.firstName || otherUserId;
-                    })()}
-                  />
-                </TabsContent>
-              </Tabs>
-            </>
-          )}
+          {selectedConversation && (() => {
+            let otherUserId: string;
+            let displayName: string;
+            let conversationId: string;
+
+            if (selectedConversation.type === 'match') {
+              const connection = selectedConversation.data;
+              const isRequester = connection.requesterId === currentUserId;
+              otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+              const otherUser = getUserData(otherUserId);
+              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+              conversationId = connection.id;
+            } else {
+              const request = selectedConversation.data;
+              const isSender = request.senderId === currentUserId;
+              otherUserId = isSender ? request.receiverId : request.senderId;
+              const otherUser = getUserData(otherUserId);
+              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+              conversationId = request.id;
+            }
+
+            return (
+              <>
+                <DialogHeader className="p-4 pb-3 border-b">
+                  <DialogTitle>
+                    Chat with {displayName}
+                  </DialogTitle>
+                </DialogHeader>
+                <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
+                  <TabsList className="mx-4 mt-2">
+                    <TabsTrigger value="chat" className="flex-1" data-testid="tab-chat">
+                      <MessageCircle className="h-4 w-4 mr-1" />
+                      Chat
+                    </TabsTrigger>
+                    <TabsTrigger value="voice" className="flex-1" data-testid="tab-voice">
+                      <Phone className="h-4 w-4 mr-1" />
+                      Voice
+                    </TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="chat" className="flex-1 overflow-hidden m-0">
+                    <Chat
+                      connectionId={conversationId}
+                      currentUserId={currentUserId}
+                      otherUserId={otherUserId}
+                      otherUserName={displayName}
+                    />
+                  </TabsContent>
+                  <TabsContent value="voice" className="p-4">
+                    <VoiceChannel
+                      connectionId={conversationId}
+                      currentUserId={currentUserId}
+                      otherUserId={otherUserId}
+                      otherUserName={displayName}
+                    />
+                  </TabsContent>
+                </Tabs>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
     </div>
