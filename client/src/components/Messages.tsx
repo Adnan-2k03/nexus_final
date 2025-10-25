@@ -6,10 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Users, Phone, RefreshCw } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { MessageCircle, Users, Phone, RefreshCw, Filter, Search } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
-import type { MatchConnection, ChatMessageWithSender, User } from "@shared/schema";
+import type { MatchConnectionWithUser, ChatMessageWithSender, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 
@@ -33,9 +36,12 @@ function formatTimeAgo(date: string | Date | null): string {
 }
 
 export function Messages({ currentUserId }: MessagesProps) {
-  const [selectedConnection, setSelectedConnection] = useState<MatchConnection | null>(null);
+  const [selectedConnection, setSelectedConnection] = useState<MatchConnectionWithUser | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
 
-  const { data: connections = [], isLoading: isLoadingConnections, refetch } = useQuery<MatchConnection[]>({
+  const { data: connections = [], isLoading: isLoadingConnections, refetch } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
       const response = await fetch('/api/user/connections');
@@ -71,8 +77,26 @@ export function Messages({ currentUserId }: MessagesProps) {
     queryClient.invalidateQueries({ queryKey: ['/api/users'] });
   };
 
-  // Filter only accepted connections
-  const acceptedConnections = connections.filter(c => c.status === 'accepted');
+  // Apply filters
+  const filterByType = (connection: MatchConnectionWithUser) => {
+    if (requestTypeFilter === 'all') return true;
+    return connection.gameMode === requestTypeFilter;
+  };
+
+  const filterBySearch = (connection: MatchConnectionWithUser) => {
+    if (!searchTerm.trim()) return true;
+    const isRequester = connection.requesterId === currentUserId;
+    const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
+    const otherUser = getUserData(otherUserId);
+    const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
+    return displayName.includes(searchTerm.toLowerCase());
+  };
+
+  // Filter only accepted connections and apply filters
+  const acceptedConnections = connections
+    .filter(c => c.status === 'accepted')
+    .filter(filterByType)
+    .filter(filterBySearch);
 
   const LoadingSkeleton = () => (
     <div className="space-y-3">
@@ -95,24 +119,71 @@ export function Messages({ currentUserId }: MessagesProps) {
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+      <div className="space-y-4 mb-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="text-sm">
+              {acceptedConnections.length} conversation{acceptedConnections.length !== 1 ? 's' : ''}
+            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isLoadingConnections}
+              data-testid="button-refresh-messages"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoadingConnections ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-sm">
-            {acceptedConnections.length} conversation{acceptedConnections.length !== 1 ? 's' : ''}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoadingConnections}
-            data-testid="button-refresh-messages"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoadingConnections ? 'animate-spin' : ''}`} />
-          </Button>
+
+        {/* Search and Filter */}
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search conversations..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-messages"
+            />
+          </div>
+          <Popover open={showFilters} onOpenChange={setShowFilters}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" data-testid="button-toggle-message-filters">
+                <Filter className="h-4 w-4 mr-1" />
+                Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" data-testid="popover-message-filters">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-3">Filter Conversations</h4>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Match Type</label>
+                  <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                    <SelectTrigger data-testid="select-message-type">
+                      <SelectValue placeholder="All Types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="1v1">1v1 Matches</SelectItem>
+                      <SelectItem value="2v2">2v2 Matches</SelectItem>
+                      <SelectItem value="3v3">3v3 Matches</SelectItem>
+                      <SelectItem value="squad">Team/Squad</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
