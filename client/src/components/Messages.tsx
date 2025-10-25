@@ -6,13 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Users, Phone, RefreshCw, Filter, Search } from "lucide-react";
+import { MessageCircle, Phone, RefreshCw, Search } from "lucide-react";
 import { useState } from "react";
 import { queryClient } from "@/lib/queryClient";
-import type { MatchConnectionWithUser, ConnectionRequestWithUser, ChatMessageWithSender, User } from "@shared/schema";
+import type { ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 
@@ -35,33 +33,15 @@ function formatTimeAgo(date: string | Date | null): string {
   return `${diffDays}d ago`;
 }
 
-type ConversationType = 
-  | { type: 'match'; data: MatchConnectionWithUser }
-  | { type: 'direct'; data: ConnectionRequestWithUser };
-
 export function Messages({ currentUserId }: MessagesProps) {
-  const [selectedConversation, setSelectedConversation] = useState<ConversationType | null>(null);
+  const [selectedConnection, setSelectedConnection] = useState<ConnectionRequestWithUser | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
-  const [showFilters, setShowFilters] = useState(false);
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
   }
 
-  const { data: connections = [], isLoading: isLoadingConnections, refetch: refetchConnections } = useQuery<MatchConnectionWithUser[]>({
-    queryKey: ['/api/user/connections'],
-    queryFn: async () => {
-      const response = await fetch('/api/user/connections');
-      if (!response.ok) {
-        throw new Error('Failed to fetch connections');
-      }
-      return response.json();
-    },
-    retry: false,
-  });
-
-  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useQuery<ConnectionRequestWithUser[]>({
+  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch } = useQuery<ConnectionRequestWithUser[]>({
     queryKey: ['/api/connection-requests'],
     queryFn: async () => {
       const response = await fetch('/api/connection-requests');
@@ -92,51 +72,25 @@ export function Messages({ currentUserId }: MessagesProps) {
   };
 
   const handleRefresh = () => {
-    refetchConnections();
-    refetchRequests();
+    refetch();
     queryClient.invalidateQueries({ queryKey: ['/api/users'] });
   };
 
-  // Filter only accepted connections and requests
-  const acceptedMatchConnections = connections.filter(c => c.status === 'accepted');
+  // Filter only accepted direct connections
   const acceptedDirectConnections = connectionRequests.filter(r => r.status === 'accepted');
 
-  // Create unified list of conversations
-  const allConversations: ConversationType[] = [
-    ...acceptedMatchConnections.map(conn => ({ type: 'match' as const, data: conn })),
-    ...acceptedDirectConnections.map(req => ({ type: 'direct' as const, data: req }))
-  ];
-
-  // Apply filters
-  const filterByType = (conversation: ConversationType) => {
-    if (requestTypeFilter === 'all') return true;
-    if (conversation.type === 'direct') return requestTypeFilter === 'direct';
-    return conversation.data.gameMode === requestTypeFilter;
-  };
-
-  const filterBySearch = (conversation: ConversationType) => {
+  // Apply search filter
+  const filterBySearch = (request: ConnectionRequestWithUser) => {
     if (!searchTerm.trim()) return true;
     
-    if (conversation.type === 'match') {
-      const connection = conversation.data;
-      const isRequester = connection.requesterId === currentUserId;
-      const otherUserId = isRequester ? connection.accepterId : connection.requesterId;
-      const otherUser = getUserData(otherUserId);
-      const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
-      return displayName.includes(searchTerm.toLowerCase());
-    } else {
-      const request = conversation.data;
-      const isSender = request.senderId === currentUserId;
-      const otherUserId = isSender ? request.receiverId : request.senderId;
-      const otherUser = getUserData(otherUserId);
-      const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
-      return displayName.includes(searchTerm.toLowerCase());
-    }
+    const isSender = request.senderId === currentUserId;
+    const otherUserId = isSender ? request.receiverId : request.senderId;
+    const otherUser = getUserData(otherUserId);
+    const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
+    return displayName.includes(searchTerm.toLowerCase());
   };
 
-  const filteredConversations = allConversations
-    .filter(filterByType)
-    .filter(filterBySearch);
+  const filteredConnections = acceptedDirectConnections.filter(filterBySearch);
 
   const LoadingSkeleton = () => (
     <div className="space-y-3">
@@ -167,70 +121,37 @@ export function Messages({ currentUserId }: MessagesProps) {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
-              {filteredConversations.length} conversation{filteredConversations.length !== 1 ? 's' : ''}
+              {filteredConnections.length} conversation{filteredConnections.length !== 1 ? 's' : ''}
             </Badge>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoadingConnections || isLoadingRequests}
+              disabled={isLoadingRequests}
               data-testid="button-refresh-messages"
             >
-              <RefreshCw className={`h-4 w-4 ${(isLoadingConnections || isLoadingRequests) ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isLoadingRequests ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
 
-        {/* Search and Filter */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search conversations..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9"
-              data-testid="input-search-messages"
-            />
-          </div>
-          <Popover open={showFilters} onOpenChange={setShowFilters}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" data-testid="button-toggle-message-filters">
-                <Filter className="h-4 w-4 mr-1" />
-                Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64" data-testid="popover-message-filters">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-3">Filter Conversations</h4>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Connection Type</label>
-                  <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
-                    <SelectTrigger data-testid="select-message-type">
-                      <SelectValue placeholder="All Types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Connections</SelectItem>
-                      <SelectItem value="direct">Direct Connections</SelectItem>
-                      <SelectItem value="1v1">1v1 Matches</SelectItem>
-                      <SelectItem value="2v2">2v2 Matches</SelectItem>
-                      <SelectItem value="3v3">3v3 Matches</SelectItem>
-                      <SelectItem value="squad">Team/Squad</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-messages"
+          />
         </div>
       </div>
 
-      {(isLoadingConnections || isLoadingRequests) ? (
+      {isLoadingRequests ? (
         <LoadingSkeleton />
-      ) : filteredConversations.length === 0 ? (
+      ) : filteredConnections.length === 0 ? (
         <div className="text-center py-12">
           <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
@@ -240,39 +161,20 @@ export function Messages({ currentUserId }: MessagesProps) {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredConversations.map((conversation) => {
-            let otherUserId: string;
-            let displayName: string;
-            let avatarUrl: string | undefined;
-            let timeAgo: string;
-            let conversationId: string;
-
-            if (conversation.type === 'match') {
-              const connection = conversation.data;
-              const isRequester = connection.requesterId === currentUserId;
-              otherUserId = isRequester ? connection.accepterId : connection.requesterId;
-              const otherUser = getUserData(otherUserId);
-              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-              avatarUrl = otherUser?.profileImageUrl || undefined;
-              timeAgo = formatTimeAgo(connection.updatedAt);
-              conversationId = connection.id;
-            } else {
-              const request = conversation.data;
-              const isSender = request.senderId === currentUserId;
-              otherUserId = isSender ? request.receiverId : request.senderId;
-              const otherUser = getUserData(otherUserId);
-              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-              avatarUrl = otherUser?.profileImageUrl || undefined;
-              timeAgo = formatTimeAgo(request.updatedAt);
-              conversationId = request.id;
-            }
+          {filteredConnections.map((request) => {
+            const isSender = request.senderId === currentUserId;
+            const otherUserId = isSender ? request.receiverId : request.senderId;
+            const otherUser = getUserData(otherUserId);
+            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+            const avatarUrl = otherUser?.profileImageUrl || undefined;
+            const timeAgo = formatTimeAgo(request.updatedAt);
 
             return (
               <Card
-                key={conversationId}
+                key={request.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setSelectedConversation(conversation)}
-                data-testid={`conversation-${conversationId}`}
+                onClick={() => setSelectedConnection(request)}
+                data-testid={`conversation-${request.id}`}
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
@@ -292,7 +194,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        {conversation.type === 'direct' ? 'Direct Connection' : 'Match Connection'} • Click to chat or join voice
+                        Click to chat or join voice
                       </p>
                     </div>
                     <div className="flex gap-1">
@@ -308,28 +210,13 @@ export function Messages({ currentUserId }: MessagesProps) {
       )}
 
       {/* Conversation Dialog */}
-      <Dialog open={!!selectedConversation} onOpenChange={(open) => !open && setSelectedConversation(null)}>
+      <Dialog open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
         <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
-          {selectedConversation && (() => {
-            let otherUserId: string;
-            let displayName: string;
-            let conversationId: string;
-
-            if (selectedConversation.type === 'match') {
-              const connection = selectedConversation.data;
-              const isRequester = connection.requesterId === currentUserId;
-              otherUserId = isRequester ? connection.accepterId : connection.requesterId;
-              const otherUser = getUserData(otherUserId);
-              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-              conversationId = connection.id;
-            } else {
-              const request = selectedConversation.data;
-              const isSender = request.senderId === currentUserId;
-              otherUserId = isSender ? request.receiverId : request.senderId;
-              const otherUser = getUserData(otherUserId);
-              displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-              conversationId = request.id;
-            }
+          {selectedConnection && (() => {
+            const isSender = selectedConnection.senderId === currentUserId;
+            const otherUserId = isSender ? selectedConnection.receiverId : selectedConnection.senderId;
+            const otherUser = getUserData(otherUserId);
+            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
 
             return (
               <>
@@ -351,7 +238,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                   </TabsList>
                   <TabsContent value="chat" className="flex-1 overflow-hidden m-0">
                     <Chat
-                      connectionId={conversationId}
+                      connectionId={selectedConnection.id}
                       currentUserId={currentUserId}
                       otherUserId={otherUserId}
                       otherUserName={displayName}
@@ -359,7 +246,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                   </TabsContent>
                   <TabsContent value="voice" className="p-4">
                     <VoiceChannel
-                      connectionId={conversationId}
+                      connectionId={selectedConnection.id}
                       currentUserId={currentUserId}
                       otherUserId={otherUserId}
                       otherUserName={displayName}
