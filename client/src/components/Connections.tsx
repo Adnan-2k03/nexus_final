@@ -6,11 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { MatchConnectionWithUser, User } from "@shared/schema";
+import type { MatchConnectionWithUser, ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 import { useToast } from "@/hooks/use-toast";
@@ -38,6 +40,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const { lastMessage } = useWebSocket();
   const [openChatId, setOpenChatId] = useState<string | null>(null);
   const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
+  const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
+  const [gameFilter, setGameFilter] = useState<string>("all");
+  const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
 
   const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
@@ -46,6 +51,18 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       const response = await fetch('/api/user/connections');
       if (!response.ok) {
         throw new Error('Failed to fetch connections');
+      }
+      return response.json();
+    },
+    retry: false,
+  });
+
+  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useQuery<ConnectionRequestWithUser[]>({
+    queryKey: ['/api/connection-requests'],
+    queryFn: async () => {
+      const response = await fetch('/api/connection-requests');
+      if (!response.ok) {
+        throw new Error('Failed to fetch connection requests');
       }
       return response.json();
     },
@@ -66,6 +83,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
   const handleRefresh = () => {
     refetch();
+    refetchRequests();
   };
 
   // Handle real-time WebSocket updates for connections
@@ -76,6 +94,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     
     if (type === 'match_connection_created' || type === 'match_connection_updated') {
       queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
+    }
+    if (type === 'connection_request_created' || type === 'connection_request_updated') {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
     }
   }, [lastMessage]);
 
@@ -100,6 +121,37 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       });
     },
   });
+
+  const updateConnectionRequestMutation = useMutation({
+    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
+      return await apiRequest('PATCH', `/api/connection-requests/${requestId}/status`, { status });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      toast({
+        title: variables.status === 'accepted' ? "Connection Accepted" : "Connection Declined",
+        description: variables.status === 'accepted' 
+          ? "You are now connected with this gamer"
+          : "The connection request has been declined",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Split match connections and connection requests into categories
+  const incomingConnectionRequests = connectionRequests.filter(
+    r => r.status === 'pending' && r.receiverId === currentUserId
+  );
+  
+  const outgoingConnectionRequests = connectionRequests.filter(
+    r => r.status === 'pending' && r.senderId === currentUserId
+  );
 
   // Split connections into three categories
   const incomingApplications = connections.filter(
@@ -385,9 +437,42 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                 <CheckCircle className="h-5 w-5 text-primary" />
                 Incoming Applications
               </h2>
-              <Badge variant="default" className="text-xs">
-                {incomingApplications.length} pending
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Popover open={showFilters} onOpenChange={setShowFilters}>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" data-testid="button-toggle-request-filters">
+                      <Filter className="h-4 w-4 mr-1" />
+                      Filter
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64" data-testid="popover-request-filters">
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="font-semibold mb-3">Filter Requests</h4>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">Request Type</label>
+                        <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                          <SelectTrigger data-testid="select-request-type">
+                            <SelectValue placeholder="All Requests" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Requests</SelectItem>
+                            <SelectItem value="connection">Connection Requests</SelectItem>
+                            <SelectItem value="1v1">1v1 Match Requests</SelectItem>
+                            <SelectItem value="2v2">2v2 Match Requests</SelectItem>
+                            <SelectItem value="3v3">3v3 Match Requests</SelectItem>
+                            <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Badge variant="default" className="text-xs">
+                  {incomingApplications.length} pending
+                </Badge>
+              </div>
             </div>
             <div className="space-y-3">
               {incomingApplications.map((connection) => 
