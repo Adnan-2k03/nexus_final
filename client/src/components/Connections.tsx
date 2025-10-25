@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2 } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -43,6 +44,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
   const [gameFilter, setGameFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const { toast } = useToast();
 
   const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
@@ -656,44 +658,124 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           </div>
         )}
 
-        {/* Incoming Connection Requests Section */}
-        {incomingConnectionRequests.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Incoming Connection Requests
-              </h2>
-              <Badge variant="default" className="text-xs">
-                {incomingConnectionRequests.length} pending
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {incomingConnectionRequests.map((request) => 
-                renderConnectionRequestCard(request, 'confirm', false)
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Incoming Applications Section */}
-        {incomingApplications.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <CheckCircle className="h-5 w-5 text-primary" />
-                Incoming Match Applications
-              </h2>
-              <Badge variant="default" className="text-xs">
-                {incomingApplications.length} pending
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {incomingApplications.map((connection) => 
-                renderConnectionCard(connection, 'confirm', false)
-              )}
-            </div>
-          </div>
+        {/* Pending Applications & Requests - Collapsible Section */}
+        {(incomingConnectionRequests.length > 0 || incomingApplications.length > 0 || yourApplications.length > 0 || outgoingConnectionRequests.length > 0) && (
+          <Collapsible open={pendingRequestsOpen} onOpenChange={setPendingRequestsOpen}>
+            <Card className="p-4">
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full flex items-center justify-between p-2 hover:bg-accent"
+                  data-testid="button-toggle-pending-requests"
+                >
+                  <div className="flex items-center gap-2">
+                    <Trophy className="h-5 w-5 text-primary" />
+                    <h2 className="text-lg font-semibold">Pending Applications & Requests</h2>
+                    <Badge variant="default" className="text-xs">
+                      {incomingConnectionRequests.length + incomingApplications.length + yourApplications.length + outgoingConnectionRequests.length} total
+                    </Badge>
+                  </div>
+                  {pendingRequestsOpen ? (
+                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="space-y-6 mt-4">
+                {/* Received Requests */}
+                {(incomingConnectionRequests.length > 0 || incomingApplications.length > 0) && (
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-foreground flex items-center gap-2 px-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Received Requests
+                      <Badge variant="outline" className="text-xs">
+                        {incomingConnectionRequests.length + incomingApplications.length}
+                      </Badge>
+                    </h3>
+                    
+                    {/* Incoming Connection Requests */}
+                    {incomingConnectionRequests.length > 0 && (
+                      <div className="space-y-3 pl-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <h4 className="text-sm font-medium text-muted-foreground">Connection Requests</h4>
+                          <Badge variant="secondary" className="text-xs">
+                            {incomingConnectionRequests.length}
+                          </Badge>
+                        </div>
+                        {incomingConnectionRequests.map((request) => 
+                          renderConnectionRequestCard(request, 'confirm', false)
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Incoming Match Applications */}
+                    {incomingApplications.length > 0 && (
+                      <div className="space-y-3 pl-4">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-4 w-4 text-muted-foreground" />
+                          <h4 className="text-sm font-medium text-muted-foreground">Match Applications</h4>
+                          <Badge variant="secondary" className="text-xs">
+                            {incomingApplications.length}
+                          </Badge>
+                        </div>
+                        {incomingApplications.map((connection) => 
+                          renderConnectionCard(connection, 'confirm', false)
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                {/* Sent Requests */}
+                {(yourApplications.length > 0 || outgoingConnectionRequests.length > 0) && (
+                  <div className="space-y-4">
+                    <h3 className="text-md font-semibold text-foreground flex items-center gap-2 px-2">
+                      <Users className="h-4 w-4 text-blue-500" />
+                      Sent Requests
+                      <Badge variant="outline" className="text-xs">
+                        {yourApplications.length + outgoingConnectionRequests.length}
+                      </Badge>
+                    </h3>
+                    
+                    {/* Your Connection Requests */}
+                    {outgoingConnectionRequests.length > 0 && (
+                      <div className="space-y-3 pl-4">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <h4 className="text-sm font-medium text-muted-foreground">Connection Requests</h4>
+                          <Badge variant="secondary" className="text-xs">
+                            {outgoingConnectionRequests.length}
+                          </Badge>
+                        </div>
+                        {outgoingConnectionRequests.map((request) => 
+                          renderConnectionRequestCard(request, 'waiting', true)
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Your Match Applications */}
+                    {yourApplications.length > 0 && (
+                      <div className="space-y-3 pl-4">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-4 w-4 text-muted-foreground" />
+                          <h4 className="text-sm font-medium text-muted-foreground">Match Applications</h4>
+                          <Badge variant="secondary" className="text-xs">
+                            {yourApplications.length}
+                          </Badge>
+                        </div>
+                        {yourApplications.map((connection) => 
+                          renderConnectionCard(connection, 'waiting', true)
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Card>
+          </Collapsible>
         )}
 
         {/* Match Connections Section */}
@@ -716,45 +798,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           </div>
         )}
 
-        {/* Your Applications Section */}
-        {yourApplications.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-primary" />
-                Your Match Applications
-              </h2>
-              <Badge variant="secondary" className="text-xs">
-                {yourApplications.length} pending
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {yourApplications.map((connection) => 
-                renderConnectionCard(connection, 'waiting', true)
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Outgoing Connection Requests Section */}
-        {outgoingConnectionRequests.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Users className="h-5 w-5 text-primary" />
-                Your Connection Requests
-              </h2>
-              <Badge variant="secondary" className="text-xs">
-                {outgoingConnectionRequests.length} pending
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {outgoingConnectionRequests.map((request) => 
-                renderConnectionRequestCard(request, 'waiting', true)
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Profile Viewing Dialog */}
