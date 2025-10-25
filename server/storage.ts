@@ -59,11 +59,13 @@ export interface IStorage {
   createConnectionRequest(request: InsertConnectionRequest): Promise<ConnectionRequest>;
   updateConnectionRequestStatus(id: string, status: string): Promise<ConnectionRequest>;
   getConnectionRequests(userId: string): Promise<ConnectionRequestWithUser[]>;
+  deleteConnectionRequest(id: string, userId: string): Promise<void>;
   
   // Match connection operations
   createMatchConnection(connection: InsertMatchConnection): Promise<MatchConnection>;
   updateMatchConnectionStatus(id: string, status: string): Promise<MatchConnection>;
   getUserConnections(userId: string): Promise<MatchConnectionWithUser[]>;
+  deleteMatchConnection(id: string, userId: string): Promise<void>;
   
   // Hidden matches operations
   hideMatchRequest(userId: string, matchRequestId: string): Promise<HiddenMatch>;
@@ -359,6 +361,25 @@ export class DatabaseStorage implements IStorage {
     return requests;
   }
 
+  async deleteConnectionRequest(id: string, userId: string): Promise<void> {
+    // First verify the user is authorized to delete this request
+    const [request] = await db
+      .select()
+      .from(connectionRequests)
+      .where(eq(connectionRequests.id, id));
+    
+    if (!request) {
+      throw new Error('Connection request not found');
+    }
+    
+    // Only the sender or receiver can delete the request
+    if (request.senderId !== userId && request.receiverId !== userId) {
+      throw new Error('Unauthorized to delete this connection request');
+    }
+    
+    await db.delete(connectionRequests).where(eq(connectionRequests.id, id));
+  }
+
   // Match connection operations
   async createMatchConnection(connectionData: InsertMatchConnection): Promise<MatchConnection> {
     const [connection] = await db
@@ -413,6 +434,25 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(matchConnections.createdAt));
     
     return connections;
+  }
+
+  async deleteMatchConnection(id: string, userId: string): Promise<void> {
+    // First verify the user is authorized to delete this connection
+    const [connection] = await db
+      .select()
+      .from(matchConnections)
+      .where(eq(matchConnections.id, id));
+    
+    if (!connection) {
+      throw new Error('Match connection not found');
+    }
+    
+    // Only the requester or accepter can delete the connection
+    if (connection.requesterId !== userId && connection.accepterId !== userId) {
+      throw new Error('Unauthorized to delete this match connection');
+    }
+    
+    await db.delete(matchConnections).where(eq(matchConnections.id, id));
   }
 
   // Hidden matches operations

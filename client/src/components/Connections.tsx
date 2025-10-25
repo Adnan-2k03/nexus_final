@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter } from "lucide-react";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2 } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -92,10 +92,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
     const { type } = lastMessage;
     
-    if (type === 'match_connection_created' || type === 'match_connection_updated') {
+    if (type === 'match_connection_created' || type === 'match_connection_updated' || type === 'match_connection_deleted') {
       queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
     }
-    if (type === 'connection_request_created' || type === 'connection_request_updated') {
+    if (type === 'connection_request_created' || type === 'connection_request_updated' || type === 'connection_request_deleted') {
       queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
     }
   }, [lastMessage]);
@@ -139,6 +139,46 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       toast({
         title: "Error",
         description: "Failed to update connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteConnectionRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return await apiRequest('DELETE', `/api/connection-requests/${requestId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      toast({
+        title: "Request Deleted",
+        description: "The connection request has been deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMatchConnectionMutation = useMutation({
+    mutationFn: async (connectionId: string) => {
+      return await apiRequest('DELETE', `/api/match-connections/${connectionId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
+      toast({
+        title: "Connection Deleted",
+        description: "The match connection has been deleted",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete match connection",
         variant: "destructive",
       });
     },
@@ -320,9 +360,22 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             )}
             
             {showActions === 'waiting' && (
-              <Badge variant="secondary" className="text-xs">
-                Waiting for response
-              </Badge>
+              <div className="flex gap-2 items-center">
+                <Badge variant="secondary" className="text-xs">
+                  Waiting for response
+                </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-1 text-destructive hover:text-destructive"
+                  onClick={() => deleteConnectionRequestMutation.mutate(request.id)}
+                  disabled={deleteConnectionRequestMutation.isPending}
+                  data-testid={`button-delete-request-${request.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
             )}
           </div>
         </CardContent>
@@ -417,24 +470,50 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             )}
             
             {showActions === 'waiting' && (
-              <Badge variant="secondary" className="text-xs">
-                Waiting for confirmation
-              </Badge>
+              <div className="flex gap-2 items-center">
+                <Badge variant="secondary" className="text-xs">
+                  Waiting for confirmation
+                </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-1 text-destructive hover:text-destructive"
+                  onClick={() => deleteMatchConnectionMutation.mutate(connection.id)}
+                  disabled={deleteMatchConnectionMutation.isPending}
+                  data-testid={`button-delete-connection-${connection.id}`}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Cancel
+                </Button>
+              </div>
             )}
             
             {showActions === 'chat' && (
               <Dialog open={openChatId === connection.id} onOpenChange={(open) => setOpenChatId(open ? connection.id : null)}>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="gap-1 text-primary hover:text-primary"
-                  onClick={() => setOpenChatId(connection.id)}
-                  data-testid={`button-open-connection-${connection.id}`}
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <Phone className="h-4 w-4" />
-                  <span className="text-xs">Chat & Voice</span>
-                </Button>
+                <div className="flex gap-2 items-center">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-1 text-primary hover:text-primary"
+                    onClick={() => setOpenChatId(connection.id)}
+                    data-testid={`button-open-connection-${connection.id}`}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <Phone className="h-4 w-4" />
+                    <span className="text-xs">Chat & Voice</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-1 text-destructive hover:text-destructive"
+                    onClick={() => deleteMatchConnectionMutation.mutate(connection.id)}
+                    disabled={deleteMatchConnectionMutation.isPending}
+                    data-testid={`button-disconnect-${connection.id}`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Disconnect
+                  </Button>
+                </div>
                 <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
                   <DialogHeader className="p-4 pb-3 border-b">
                     <DialogTitle>

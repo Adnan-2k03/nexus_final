@@ -352,6 +352,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/connection-requests/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Get the request details before deleting to broadcast to both users
+      const userRequests = await storage.getConnectionRequests(userId);
+      const requestToDelete = userRequests.find(r => r.id === id);
+      
+      if (!requestToDelete) {
+        return res.status(404).json({ message: 'Connection request not found or you are not authorized to delete it' });
+      }
+      
+      await storage.deleteConnectionRequest(id, userId);
+      
+      // Broadcast to both sender and receiver
+      (app as any).broadcast?.toUsers([requestToDelete.senderId, requestToDelete.receiverId], {
+        type: 'connection_request_deleted',
+        data: { id },
+        message: 'Connection request deleted'
+      });
+      
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error deleting connection request:", error);
+      if (error.message === 'Connection request not found') {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === 'Unauthorized to delete this connection request') {
+        return res.status(403).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to delete connection request" });
+    }
+  });
+
+  app.delete('/api/match-connections/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      
+      // Get the connection details before deleting to broadcast to both users
+      const userConnections = await storage.getUserConnections(userId);
+      const connectionToDelete = userConnections.find(c => c.id === id);
+      
+      if (!connectionToDelete) {
+        return res.status(404).json({ message: 'Match connection not found or you are not authorized to delete it' });
+      }
+      
+      await storage.deleteMatchConnection(id, userId);
+      
+      // Broadcast to both requester and accepter
+      (app as any).broadcast?.toUsers([connectionToDelete.requesterId, connectionToDelete.accepterId], {
+        type: 'match_connection_deleted',
+        data: { id },
+        message: 'Match connection deleted'
+      });
+      
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error deleting match connection:", error);
+      if (error.message === 'Match connection not found') {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === 'Unauthorized to delete this match connection') {
+        return res.status(403).json({ message: error.message });
+      }
+      res.status(500).json({ message: "Failed to delete match connection" });
+    }
+  });
+
   // User profile routes
   app.get('/api/users/:userId', async (req, res) => {
     try {
