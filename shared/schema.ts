@@ -77,7 +77,7 @@ export const connectionRequests = pgTable("connection_requests", {
 // Match connections table (for match-based connections)
 export const matchConnections = pgTable("match_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  requestId: varchar("request_id").notNull().references(() => matchRequests.id),
+  requestId: varchar("request_id").notNull().references(() => matchRequests.id, { onDelete: "cascade" }),
   requesterId: varchar("requester_id").notNull().references(() => users.id),
   accepterId: varchar("accepter_id").notNull().references(() => users.id),
   status: varchar("status").notNull().default("pending"), // pending, accepted, declined
@@ -89,7 +89,7 @@ export const matchConnections = pgTable("match_connections", {
 export const hiddenMatches = pgTable("hidden_matches", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
-  matchRequestId: varchar("match_request_id").notNull().references(() => matchRequests.id),
+  matchRequestId: varchar("match_request_id").notNull().references(() => matchRequests.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_user_hidden_matches").on(table.userId),

@@ -377,6 +377,10 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Unauthorized to delete this connection request');
     }
     
+    // Delete associated chat messages first
+    await db.delete(chatMessages).where(eq(chatMessages.connectionId, id));
+    
+    // Then delete the connection request
     await db.delete(connectionRequests).where(eq(connectionRequests.id, id));
   }
 
@@ -452,6 +456,10 @@ export class DatabaseStorage implements IStorage {
       throw new Error('Unauthorized to delete this match connection');
     }
     
+    // Delete associated chat messages first
+    await db.delete(chatMessages).where(eq(chatMessages.connectionId, id));
+    
+    // Then delete the match connection
     await db.delete(matchConnections).where(eq(matchConnections.id, id));
   }
 
