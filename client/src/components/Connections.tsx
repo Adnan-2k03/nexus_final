@@ -207,6 +207,12 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     .filter(r => r.status === 'pending' && r.senderId === currentUserId)
     .filter(filterByType);
 
+  // Debug logging
+  console.log('[Connections Debug] currentUserId:', currentUserId);
+  console.log('[Connections Debug] connectionRequests:', connectionRequests);
+  console.log('[Connections Debug] incomingConnectionRequests:', incomingConnectionRequests);
+  console.log('[Connections Debug] outgoingConnectionRequests:', outgoingConnectionRequests);
+
   // Split connections into three categories
   const incomingApplications = connections
     .filter(c => c.status === 'pending' && c.accepterId === currentUserId)
