@@ -150,7 +150,12 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     if (requestTypeFilter === 'connection') {
       return 'senderId' in item;
     }
-    return 'requestType' in item && item.requestType === requestTypeFilter;
+    // For match connections, check gameMode
+    if ('gameMode' in item && item.gameMode) {
+      return item.gameMode === requestTypeFilter;
+    }
+    // Connection requests don't have a type, so they're filtered out for specific game modes
+    return false;
   };
 
   // Split match connections and connection requests into categories

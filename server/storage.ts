@@ -399,10 +399,13 @@ export class DatabaseStorage implements IStorage {
         requesterProfileImageUrl: sql<string | null>`${requester.profileImageUrl}`,
         accepterGamertag: sql<string | null>`${accepter.gamertag}`,
         accepterProfileImageUrl: sql<string | null>`${accepter.profileImageUrl}`,
+        gameName: sql<string | null>`${matchRequests.gameName}`,
+        gameMode: sql<string | null>`${matchRequests.gameMode}`,
       })
       .from(matchConnections)
       .leftJoin(requester, eq(matchConnections.requesterId, requester.id))
       .leftJoin(accepter, eq(matchConnections.accepterId, accepter.id))
+      .leftJoin(matchRequests, eq(matchConnections.requestId, matchRequests.id))
       .where(or(
         eq(matchConnections.requesterId, userId),
         eq(matchConnections.accepterId, userId)
