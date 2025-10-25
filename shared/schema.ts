@@ -64,7 +64,17 @@ export const matchRequests = pgTable("match_requests", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// Match connections table
+// Direct connection requests (user-to-user, no match required)
+export const connectionRequests = pgTable("connection_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  receiverId: varchar("receiver_id").notNull().references(() => users.id),
+  status: varchar("status").notNull().default("pending"), // pending, accepted, declined
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Match connections table (for match-based connections)
 export const matchConnections = pgTable("match_connections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   requestId: varchar("request_id").notNull().references(() => matchRequests.id),
@@ -85,10 +95,11 @@ export const hiddenMatches = pgTable("hidden_matches", {
   index("idx_user_hidden_matches").on(table.userId),
 ]);
 
-// Chat messages table - stores messages between matched players
+// Chat messages table - stores messages between connected users
+// connectionId can reference either connectionRequests or matchConnections
 export const chatMessages = pgTable("chat_messages", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  connectionId: varchar("connection_id").notNull().references(() => matchConnections.id),
+  connectionId: varchar("connection_id").notNull(),
   senderId: varchar("sender_id").notNull().references(() => users.id),
   receiverId: varchar("receiver_id").notNull().references(() => users.id),
   message: text("message").notNull(),
@@ -99,6 +110,8 @@ export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
 export type MatchRequest = typeof matchRequests.$inferSelect;
+export type InsertConnectionRequest = typeof connectionRequests.$inferInsert;
+export type ConnectionRequest = typeof connectionRequests.$inferSelect;
 export type InsertMatchConnection = typeof matchConnections.$inferInsert;
 export type MatchConnection = typeof matchConnections.$inferSelect;
 export type InsertHiddenMatch = typeof hiddenMatches.$inferInsert;
@@ -118,16 +131,27 @@ export type ChatMessageWithSender = ChatMessage & {
   senderProfileImageUrl: string | null;
 };
 
+// Connection request with user information
+export type ConnectionRequestWithUser = ConnectionRequest & {
+  senderGamertag: string | null;
+  senderProfileImageUrl: string | null;
+  receiverGamertag: string | null;
+  receiverProfileImageUrl: string | null;
+};
+
 // Match connection with user information
 export type MatchConnectionWithUser = MatchConnection & {
   requesterGamertag: string | null;
   requesterProfileImageUrl: string | null;
   accepterGamertag: string | null;
   accepterProfileImageUrl: string | null;
+  gameName?: string | null;
+  gameMode?: string | null;
 };
 
 export const insertUserSchema = createInsertSchema(users);
 export const insertMatchRequestSchema = createInsertSchema(matchRequests).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+export const insertConnectionRequestSchema = createInsertSchema(connectionRequests).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMatchConnectionSchema = createInsertSchema(matchConnections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertHiddenMatchSchema = createInsertSchema(hiddenMatches).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });

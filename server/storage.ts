@@ -2,6 +2,7 @@ import {
   users,
   matchRequests,
   matchConnections,
+  connectionRequests,
   hiddenMatches,
   chatMessages,
   type User,
@@ -12,6 +13,9 @@ import {
   type MatchConnection,
   type MatchConnectionWithUser,
   type InsertMatchConnection,
+  type ConnectionRequest,
+  type ConnectionRequestWithUser,
+  type InsertConnectionRequest,
   type HiddenMatch,
   type InsertHiddenMatch,
   type ChatMessage,
@@ -50,6 +54,11 @@ export interface IStorage {
   createMatchRequest(request: InsertMatchRequest): Promise<MatchRequest>;
   updateMatchRequestStatus(id: string, status: "waiting" | "connected" | "declined"): Promise<MatchRequest>;
   deleteMatchRequest(id: string): Promise<void>;
+  
+  // Direct connection request operations (user-to-user, no match required)
+  createConnectionRequest(request: InsertConnectionRequest): Promise<ConnectionRequest>;
+  updateConnectionRequestStatus(id: string, status: string): Promise<ConnectionRequest>;
+  getConnectionRequests(userId: string): Promise<ConnectionRequestWithUser[]>;
   
   // Match connection operations
   createMatchConnection(connection: InsertMatchConnection): Promise<MatchConnection>;
@@ -296,6 +305,58 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMatchRequest(id: string): Promise<void> {
     await db.delete(matchRequests).where(eq(matchRequests.id, id));
+  }
+
+  // Direct connection request operations
+  async createConnectionRequest(requestData: InsertConnectionRequest): Promise<ConnectionRequest> {
+    const [request] = await db
+      .insert(connectionRequests)
+      .values(requestData)
+      .returning();
+    return request;
+  }
+
+  async updateConnectionRequestStatus(id: string, status: string): Promise<ConnectionRequest> {
+    const [updatedRequest] = await db
+      .update(connectionRequests)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(connectionRequests.id, id))
+      .returning();
+    
+    if (!updatedRequest) {
+      throw new Error('Connection request not found');
+    }
+    
+    return updatedRequest;
+  }
+
+  async getConnectionRequests(userId: string): Promise<ConnectionRequestWithUser[]> {
+    const sender = alias(users, 'sender');
+    const receiver = alias(users, 'receiver');
+    
+    const requests = await db
+      .select({
+        id: connectionRequests.id,
+        senderId: connectionRequests.senderId,
+        receiverId: connectionRequests.receiverId,
+        status: connectionRequests.status,
+        createdAt: connectionRequests.createdAt,
+        updatedAt: connectionRequests.updatedAt,
+        senderGamertag: sql<string | null>`${sender.gamertag}`,
+        senderProfileImageUrl: sql<string | null>`${sender.profileImageUrl}`,
+        receiverGamertag: sql<string | null>`${receiver.gamertag}`,
+        receiverProfileImageUrl: sql<string | null>`${receiver.profileImageUrl}`,
+      })
+      .from(connectionRequests)
+      .leftJoin(sender, eq(connectionRequests.senderId, sender.id))
+      .leftJoin(receiver, eq(connectionRequests.receiverId, receiver.id))
+      .where(or(
+        eq(connectionRequests.senderId, userId),
+        eq(connectionRequests.receiverId, userId)
+      ))
+      .orderBy(desc(connectionRequests.createdAt));
+    
+    return requests;
   }
 
   // Match connection operations
