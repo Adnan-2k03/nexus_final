@@ -17,6 +17,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [otherUserReady, setOtherUserReady] = useState(false);
   
   const localStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
@@ -25,6 +26,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
   const iceCandidatesQueue = useRef<RTCIceCandidate[]>([]);
   const hasReceivedOfferRef = useRef(false);
+  const hasSentReadyRef = useRef(false);
+  const hasInitiatedCallRef = useRef(false);
   
   const { toast } = useToast();
   const { lastMessage, sendMessage } = useWebSocket();
@@ -93,6 +96,45 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     return peerConnection;
   };
 
+  const initiateCall = async () => {
+    if (!isCaller || !localStreamRef.current || hasInitiatedCallRef.current) return;
+    
+    // Prevent multiple invocations
+    hasInitiatedCallRef.current = true;
+    
+    try {
+      // Create peer connection
+      const peerConnection = await createPeerConnection();
+      
+      // Create and send offer
+      const offer = await peerConnection.createOffer();
+      await peerConnection.setLocalDescription(offer);
+      
+      // Send offer to remote peer via WebSocket
+      if (sendMessage) {
+        sendMessage({
+          type: 'webrtc_offer',
+          connectionId,
+          targetUserId: otherUserId,
+          offer: offer
+        });
+      }
+      
+      toast({
+        title: "Starting call",
+        description: "Connecting with teammate...",
+      });
+    } catch (error) {
+      console.error('Error initiating call:', error);
+      hasInitiatedCallRef.current = false; // Reset on error so user can retry
+      toast({
+        title: "Failed to start call",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
   const joinChannel = async () => {
     try {
       setIsConnecting(true);
@@ -108,32 +150,25 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       
       setIsInChannel(true);
       
-      // Only create peer connection and send offer if this user is the caller
-      if (isCaller) {
-        // Create peer connection
-        const peerConnection = await createPeerConnection();
-        
-        // Create and send offer
-        const offer = await peerConnection.createOffer();
-        await peerConnection.setLocalDescription(offer);
-        
-        // Send offer to remote peer via WebSocket
-        if (sendMessage) {
-          sendMessage({
-            type: 'webrtc_offer',
-            connectionId,
-            targetUserId: otherUserId,
-            offer: offer
-          });
-        }
-        
+      // Notify the other user that we're ready
+      if (sendMessage && !hasSentReadyRef.current) {
+        sendMessage({
+          type: 'voice_channel_ready',
+          connectionId,
+          targetUserId: otherUserId,
+        });
+        hasSentReadyRef.current = true;
+      }
+      
+      // If we're the caller and the other user is already ready, initiate the call
+      if (isCaller && otherUserReady) {
+        await initiateCall();
+      } else if (isCaller) {
         toast({
-          title: "Joined voice channel",
+          title: "Ready for voice",
           description: "Waiting for teammate to join...",
         });
       } else {
-        // Callee just gets media and waits for the offer from the caller
-        // Peer connection will be created when offer arrives
         toast({
           title: "Ready for voice",
           description: "Waiting for teammate to start the call...",
@@ -170,10 +205,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     
     // Reset state
     hasReceivedOfferRef.current = false;
+    hasSentReadyRef.current = false;
+    hasInitiatedCallRef.current = false;
     iceCandidatesQueue.current = [];
     setIsInChannel(false);
     setIsMuted(false);
     setIsSpeakerMuted(false);
+    setOtherUserReady(false);
     
     toast({
       title: "Left voice channel",
@@ -209,7 +247,15 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       if (data?.connectionId !== connectionId) return;
       
       try {
-        if (type === 'webrtc_offer') {
+        if (type === 'voice_channel_ready') {
+          // Other user is ready for voice
+          setOtherUserReady(true);
+          
+          // If we're the caller and we're already in the channel, initiate the call
+          if (isCaller && isInChannel && localStreamRef.current) {
+            await initiateCall();
+          }
+        } else if (type === 'webrtc_offer') {
           // Ignore offer if we've already received one (prevents duplicate processing)
           if (hasReceivedOfferRef.current) {
             console.log('Ignoring duplicate offer');

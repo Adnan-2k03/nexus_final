@@ -635,8 +635,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (data.type === 'ping') {
           ws.send(JSON.stringify({ type: 'pong' }));
-        } else if (data.type === 'webrtc_offer' || data.type === 'webrtc_answer' || data.type === 'webrtc_ice_candidate') {
-          // WebRTC signaling - forward to target user with authorization
+        } else if (data.type === 'voice_channel_ready' || data.type === 'webrtc_offer' || data.type === 'webrtc_answer' || data.type === 'webrtc_ice_candidate') {
+          // WebRTC signaling and voice channel coordination - forward to target user with authorization
           if (!client?.userId) {
             ws.send(JSON.stringify({ 
               type: 'error', 
