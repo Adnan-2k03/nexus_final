@@ -15,7 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 
 interface DiscoverProps {
-  currentUserId: string;
+  currentUserId?: string;
 }
 
 const GAMES = [

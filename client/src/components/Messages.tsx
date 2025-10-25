@@ -17,7 +17,7 @@ import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 
 interface MessagesProps {
-  currentUserId: string;
+  currentUserId?: string;
 }
 
 function formatTimeAgo(date: string | Date | null): string {
@@ -40,6 +40,10 @@ export function Messages({ currentUserId }: MessagesProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
+
+  if (!currentUserId) {
+    return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
+  }
 
   const { data: connections = [], isLoading: isLoadingConnections, refetch } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],

@@ -202,7 +202,7 @@ function Router() {
               onCreateMatch={handleCreateMatch}
               onAcceptMatch={handleAcceptMatch}
               onDeclineMatch={handleDeclineMatch}
-              currentUserId={user?.id || ""}
+              currentUserId={user?.id}
             />
           </div>
         );
@@ -240,19 +240,19 @@ function Router() {
       case "connections":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <Connections currentUserId={user?.id || ""} />
+            <Connections currentUserId={user?.id} />
           </div>
         );
       case "search":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <Discover currentUserId={user?.id || ""} />
+            <Discover currentUserId={user?.id} />
           </div>
         );
       case "messages":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <Messages currentUserId={user?.id || ""} />
+            <Messages currentUserId={user?.id} />
           </div>
         );
       case "settings":
@@ -299,7 +299,7 @@ function Router() {
               onCreateMatch={handleCreateMatch}
               onAcceptMatch={handleAcceptMatch}
               onDeclineMatch={handleDeclineMatch}
-              currentUserId={user?.id || ""}
+              currentUserId={user?.id}
             />
           </div>
         );
