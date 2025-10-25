@@ -32,8 +32,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const { toast } = useToast();
   const { lastMessage, sendMessage } = useWebSocket();
   
-  // Determine if this user should initiate the call (caller role)
-  // Use lexicographic comparison to ensure one user is always the caller
+  // Determine caller using deterministic tie-breaker to prevent both users from initiating
+  // This ensures only one user ever sends the offer, avoiding WebRTC "glare"
   const isCaller = currentUserId < otherUserId;
 
   // ICE servers for WebRTC connection (using free STUN servers)
@@ -57,9 +57,19 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     
     // Handle incoming remote tracks
     peerConnection.ontrack = (event) => {
+      console.log('Received remote track:', event.streams[0]);
       remoteStreamRef.current = event.streams[0];
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = event.streams[0];
+        // Explicitly play the audio to handle browser autoplay policies
+        remoteAudioRef.current.play().catch(err => {
+          console.error('Error playing remote audio:', err);
+          toast({
+            title: "Audio playback issue",
+            description: "Click anywhere on the page to enable audio",
+            variant: "destructive",
+          });
+        });
       }
     };
     
@@ -171,7 +181,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       } else {
         toast({
           title: "Ready for voice",
-          description: "Waiting for teammate to start the call...",
+          description: "Teammate can now start the call...",
         });
       }
       
