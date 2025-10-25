@@ -6,6 +6,13 @@ GameMatch is a social gaming web application that enables real-time matchmaking 
 
 ## Recent Changes
 
+**October 25, 2025**
+- Fixed database referential integrity with CASCADE DELETE constraints
+- Added CASCADE DELETE to matchConnections and hiddenMatches tables
+- Updated storage methods to properly clean up chat messages when connections are deleted
+- Verified WebRTC voice call signaling is working correctly (ICE candidates being exchanged)
+- Cleaned up and optimized deletion logic for match requests and connections
+
 **October 22, 2025**
 - Successfully migrated application from Railway to Replit environment
 - Configured PostgreSQL database with Drizzle ORM (Neon serverless)
@@ -16,11 +23,11 @@ GameMatch is a social gaming web application that enables real-time matchmaking 
 - Deployment configuration: Autoscale deployment target for production
 
 **Current Status**
-- Application is running and accessible
-- Frontend displaying correctly with GameMatch branding and UI
-- Google OAuth integration configured (troubleshooting callback authentication)
-- Database schema applied with all tables: users, matchRequests, matchConnections, hiddenMatches, chatMessages
-- Session management using PostgreSQL session store
+- Application is fully operational on Replit
+- Database CASCADE DELETE constraints properly configured
+- Google OAuth authentication working
+- WebSocket real-time updates and WebRTC signaling operational
+- All core features functional: matchmaking, messaging, connections, voice chat
 
 ## User Preferences
 
