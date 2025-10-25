@@ -24,7 +24,8 @@ GameMatch is a social gaming web application that enables real-time matchmaking 
 
 ## User Preferences
 
-Preferred communication style: Simple, everyday language.
+- **Communication Style**: Simple, everyday language
+- **Authentication**: Google OAuth 2.0 only - Do not use or suggest alternative authentication methods (Replit Auth, email/password, etc.). The application is built specifically for Google OAuth integration.
 
 ## System Architecture
 
