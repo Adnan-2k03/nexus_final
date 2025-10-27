@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { MessageCircle, Phone, RefreshCw, Search } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, ChevronUp, CheckCircle, X } from "lucide-react";
 import { useState } from "react";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
@@ -36,6 +38,8 @@ function formatTimeAgo(date: string | Date | null): string {
 export function Messages({ currentUserId }: MessagesProps) {
   const [selectedConnection, setSelectedConnection] = useState<ConnectionRequestWithUser | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
+  const { toast } = useToast();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -76,7 +80,55 @@ export function Messages({ currentUserId }: MessagesProps) {
     queryClient.invalidateQueries({ queryKey: ['/api/users'] });
   };
 
-  // Filter only accepted direct connections
+  // Mutation to accept connection request
+  const acceptConnectionMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return await apiRequest('PATCH', `/api/connection-requests/${requestId}/status`, { status: 'accepted' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      toast({
+        title: "Connection Accepted",
+        description: "You can now chat with this player",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to accept connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to decline connection request
+  const declineConnectionMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return await apiRequest('PATCH', `/api/connection-requests/${requestId}/status`, { status: 'declined' });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      toast({
+        title: "Connection Declined",
+        description: "The connection request has been declined",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to decline connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Filter pending and accepted direct connections
+  const pendingReceivedRequests = connectionRequests.filter(
+    r => r.status === 'pending' && r.receiverId === currentUserId
+  );
+  const pendingSentRequests = connectionRequests.filter(
+    r => r.status === 'pending' && r.senderId === currentUserId
+  );
   const acceptedDirectConnections = connectionRequests.filter(r => r.status === 'accepted');
 
   // Apply search filter
@@ -151,17 +203,155 @@ export function Messages({ currentUserId }: MessagesProps) {
 
       {isLoadingRequests ? (
         <LoadingSkeleton />
-      ) : filteredConnections.length === 0 ? (
-        <div className="text-center py-12">
-          <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            Connect with other players through the Discover tab to start chatting here.
-          </p>
-        </div>
       ) : (
-        <div className="space-y-3">
-          {filteredConnections.map((request) => {
+        <div className="space-y-6">
+          {/* Pending Connection Requests Folder */}
+          {(pendingReceivedRequests.length > 0 || pendingSentRequests.length > 0) && (
+            <Collapsible open={pendingRequestsOpen} onOpenChange={setPendingRequestsOpen}>
+              <Card className="p-4 bg-muted/30">
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full flex items-center justify-between p-2 hover:bg-accent"
+                    data-testid="button-toggle-pending-requests"
+                  >
+                    <div className="flex items-center gap-2">
+                      <UserPlus className="h-5 w-5 text-primary" />
+                      <h2 className="text-lg font-semibold">Connection Requests</h2>
+                      <Badge variant="default" className="text-xs">
+                        {pendingReceivedRequests.length + pendingSentRequests.length} pending
+                      </Badge>
+                    </div>
+                    {pendingRequestsOpen ? (
+                      <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                
+                <CollapsibleContent className="space-y-4 mt-4">
+                  {/* Received Requests */}
+                  {pendingReceivedRequests.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-muted-foreground px-2">
+                        Incoming ({pendingReceivedRequests.length})
+                      </h3>
+                      {pendingReceivedRequests.map((request) => {
+                        const otherUserId = request.senderId;
+                        const otherUser = getUserData(otherUserId);
+                        const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+                        const avatarUrl = otherUser?.profileImageUrl || undefined;
+                        const timeAgo = formatTimeAgo(request.createdAt);
+
+                        return (
+                          <Card key={request.id} className="hover:shadow-md transition-shadow" data-testid={`connection-request-${request.id}`}>
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage src={avatarUrl} />
+                                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                    {displayName[0]?.toUpperCase() || "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-semibold text-foreground truncate">
+                                    {displayName}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    Wants to connect • {timeAgo}
+                                  </p>
+                                </div>
+                                <div className="flex gap-2">
+                                  <Button 
+                                    variant="default" 
+                                    size="sm" 
+                                    className="gap-1"
+                                    onClick={() => acceptConnectionMutation.mutate(request.id)}
+                                    disabled={acceptConnectionMutation.isPending || declineConnectionMutation.isPending}
+                                    data-testid={`button-accept-${request.id}`}
+                                  >
+                                    <CheckCircle className="h-4 w-4" />
+                                    Accept
+                                  </Button>
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="gap-1"
+                                    onClick={() => declineConnectionMutation.mutate(request.id)}
+                                    disabled={acceptConnectionMutation.isPending || declineConnectionMutation.isPending}
+                                    data-testid={`button-decline-${request.id}`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Decline
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Sent Requests */}
+                  {pendingSentRequests.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-muted-foreground px-2">
+                        Sent ({pendingSentRequests.length})
+                      </h3>
+                      {pendingSentRequests.map((request) => {
+                        const otherUserId = request.receiverId;
+                        const otherUser = getUserData(otherUserId);
+                        const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+                        const avatarUrl = otherUser?.profileImageUrl || undefined;
+                        const timeAgo = formatTimeAgo(request.createdAt);
+
+                        return (
+                          <Card key={request.id} className="hover:shadow-md transition-shadow" data-testid={`connection-sent-${request.id}`}>
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-12 w-12">
+                                  <AvatarImage src={avatarUrl} />
+                                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                    {displayName[0]?.toUpperCase() || "?"}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="font-semibold text-foreground truncate">
+                                    {displayName}
+                                  </h3>
+                                  <p className="text-sm text-muted-foreground">
+                                    Request sent • {timeAgo}
+                                  </p>
+                                </div>
+                                <Badge variant="secondary" className="text-xs">
+                                  Pending
+                                </Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+          )}
+
+          {/* Active Conversations */}
+          {filteredConnections.length === 0 && pendingReceivedRequests.length === 0 && pendingSentRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Connect with other players through the Discover tab to start chatting here.
+              </p>
+            </div>
+          ) : filteredConnections.length > 0 ? (
+            <div className="space-y-3">
+              {filteredConnections.map((request) => {
             const isSender = request.senderId === currentUserId;
             const otherUserId = isSender ? request.receiverId : request.senderId;
             const otherUser = getUserData(otherUserId);
@@ -206,6 +396,8 @@ export function Messages({ currentUserId }: MessagesProps) {
               </Card>
             );
           })}
+            </div>
+          ) : null}
         </div>
       )}
 

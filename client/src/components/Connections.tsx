@@ -59,19 +59,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     retry: false,
   });
 
-  // Fetch direct connection requests (from Discover tab)
-  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useQuery<ConnectionRequestWithUser[]>({
-    queryKey: ['/api/connection-requests'],
-    queryFn: async () => {
-      const response = await fetch('/api/connection-requests');
-      if (!response.ok) {
-        if (response.status === 401) return [];
-        throw new Error('Failed to fetch connection requests');
-      }
-      return response.json();
-    },
-    retry: false,
-  });
 
   // Fetch user profile when viewing
   const { data: viewedUserProfile } = useQuery<User>({
