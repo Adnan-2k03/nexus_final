@@ -42,7 +42,7 @@ const popularGames = [
   "GTA V", "Rainbow Six Siege", "Destiny 2", "Warzone"
 ].sort();
 
-const gameProfileFormSchema = insertGameProfileSchema.extend({
+const gameProfileFormSchema = z.object({
   gameName: z.string().min(1, "Game name is required"),
   currentRank: z.string().optional(),
   highestRank: z.string().optional(),
@@ -96,26 +96,24 @@ export function GameProfileForm({
   });
 
   const { fields: achievementFields, append: appendAchievement, remove: removeAchievement } = useFieldArray({
-    control: form.control,
+    control: form.control as any,
     name: "achievements",
   });
 
   const { fields: clipFields, append: appendClip, remove: removeClip } = useFieldArray({
-    control: form.control,
+    control: form.control as any,
     name: "clipUrls",
   });
 
   const { fields: statsFields, append: appendStat, remove: removeStat } = useFieldArray({
-    control: form.control,
+    control: form.control as any,
     name: "statsEntries",
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: Omit<GameProfileFormValues, 'statsEntries'> & { stats?: Record<string, any> }) => {
-      return await apiRequest('/api/game-profiles', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      });
+    mutationFn: async (data: any) => {
+      const res = await apiRequest('POST', '/api/game-profiles', data);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'game-profiles'] });
@@ -137,11 +135,9 @@ export function GameProfileForm({
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (data: Omit<GameProfileFormValues, 'statsEntries'> & { stats?: Record<string, any> }) => {
-      return await apiRequest(`/api/game-profiles/${profile!.id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      });
+    mutationFn: async (data: any) => {
+      const res = await apiRequest('PATCH', `/api/game-profiles/${profile!.id}`, data);
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'game-profiles'] });
@@ -163,9 +159,7 @@ export function GameProfileForm({
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest(`/api/game-profiles/${profile!.id}`, {
-        method: 'DELETE',
-      });
+      return await apiRequest('DELETE', `/api/game-profiles/${profile!.id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'game-profiles'] });
@@ -197,12 +191,12 @@ export function GameProfileForm({
 
     const payload = {
       ...rest,
-      hoursPlayed: rest.hoursPlayed ?? null,
-      currentRank: rest.currentRank || null,
-      highestRank: rest.highestRank || null,
-      achievements: rest.achievements?.filter(a => a.trim()) || null,
-      clipUrls: rest.clipUrls?.filter(c => c.trim()) || null,
-      stats: stats && Object.keys(stats).length > 0 ? stats : null,
+      hoursPlayed: rest.hoursPlayed ?? undefined,
+      currentRank: rest.currentRank || undefined,
+      highestRank: rest.highestRank || undefined,
+      achievements: rest.achievements?.filter(a => a.trim()).length ? rest.achievements.filter(a => a.trim()) : undefined,
+      clipUrls: rest.clipUrls?.filter(c => c.trim()).length ? rest.clipUrls.filter(c => c.trim()) : undefined,
+      stats: stats && Object.keys(stats).length > 0 ? stats : undefined,
     };
 
     if (isEditing) {

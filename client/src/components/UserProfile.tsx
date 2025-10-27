@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus } from "lucide-react";
 import type { GameProfile } from "@shared/schema";
+import { GameProfileForm } from "./GameProfileForm";
 
 interface UserProfileProps {
   id: string;
@@ -57,11 +58,23 @@ export function UserProfile({
     : gamertag.slice(0, 2).toUpperCase();
 
   const [selectedClip, setSelectedClip] = useState<string | null>(null);
+  const [gameProfileFormOpen, setGameProfileFormOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<GameProfile | undefined>(undefined);
 
   const { data: gameProfiles = [], isLoading: isLoadingProfiles } = useQuery<GameProfile[]>({
     queryKey: ['/api/users', id, 'game-profiles'],
     enabled: !!id,
   });
+
+  const handleAddGame = () => {
+    setEditingProfile(undefined);
+    setGameProfileFormOpen(true);
+  };
+
+  const handleEditProfile = (profile: GameProfile) => {
+    setEditingProfile(profile);
+    setGameProfileFormOpen(true);
+  };
 
   return (
     <div className="w-full max-w-5xl mx-auto space-y-6">
@@ -116,7 +129,7 @@ export function UserProfile({
                     <Edit className="h-4 w-4 mr-2" />
                     Edit Profile
                   </Button>
-                  <Button size="sm" onClick={onAddGame} data-testid="button-add-game-profile">
+                  <Button size="sm" onClick={handleAddGame} data-testid="button-add-game-profile">
                     <Plus className="h-4 w-4 mr-2" />
                     Add Game
                   </Button>
@@ -151,7 +164,7 @@ export function UserProfile({
               </p>
             </div>
             {isOwn && (
-              <Button onClick={onAddGame} data-testid="button-add-first-game">
+              <Button onClick={handleAddGame} data-testid="button-add-first-game">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Game
               </Button>
@@ -184,6 +197,19 @@ export function UserProfile({
 
               {gameProfiles.map((profile) => (
                 <TabsContent key={profile.id} value={profile.id} className="space-y-6 mt-6">
+                  {isOwn && (
+                    <div className="flex justify-end">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleEditProfile(profile)}
+                        data-testid={`button-edit-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit {profile.gameName} Profile
+                      </Button>
+                    </div>
+                  )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {profile.currentRank && (
                       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
@@ -332,13 +358,13 @@ export function UserProfile({
                       <Card className="bg-muted/30">
                         <CardContent className="p-4">
                           <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {Object.entries(profile.stats as Record<string, any>).map(([key, value]) => (
+                            {Object.entries(profile.stats as Record<string, string | number | boolean>).map(([key, value]) => (
                               <div key={key} className="flex justify-between items-center">
                                 <dt className="text-sm text-muted-foreground capitalize">
                                   {key.replace(/([A-Z])/g, ' $1').trim()}:
                                 </dt>
                                 <dd className="text-sm font-semibold" data-testid={`text-stat-${profile.id}-${key}`}>
-                                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                  {String(value)}
                                 </dd>
                               </div>
                             ))}
@@ -353,6 +379,17 @@ export function UserProfile({
           </CardContent>
         </Card>
       )}
+
+      <GameProfileForm
+        open={gameProfileFormOpen}
+        onOpenChange={setGameProfileFormOpen}
+        userId={id}
+        profile={editingProfile}
+        onSuccess={() => {
+          setGameProfileFormOpen(false);
+          setEditingProfile(undefined);
+        }}
+      />
     </div>
   );
 }
