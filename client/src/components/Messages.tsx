@@ -435,42 +435,46 @@ export function Messages({ currentUserId }: MessagesProps) {
 
             return (
               <>
-                <DialogHeader className="p-4 pb-3 border-b flex-row items-center justify-between space-y-0">
-                  <DialogTitle>
-                    Chat with {displayName}
-                  </DialogTitle>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        data-testid="button-disconnect"
-                      >
-                        <UserMinus className="h-4 w-4" />
-                        Disconnect
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Disconnect from {displayName}?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This will remove your connection with {displayName}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel data-testid="button-cancel-disconnect">Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => disconnectMutation.mutate(selectedConnection.id)}
-                          disabled={disconnectMutation.isPending}
-                          className="bg-destructive hover:bg-destructive/90"
-                          data-testid="button-confirm-disconnect"
+                <DialogHeader className="p-4 pb-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <DialogTitle>
+                      Chat with {displayName}
+                    </DialogTitle>
+                  </div>
+                  <div className="pt-2">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          data-testid="button-disconnect"
                         >
-                          {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                          <UserMinus className="h-4 w-4" />
+                          Disconnect
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Disconnect from {displayName}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will remove your connection with {displayName}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel data-testid="button-cancel-disconnect">Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => disconnectMutation.mutate(selectedConnection.id)}
+                            disabled={disconnectMutation.isPending}
+                            className="bg-destructive hover:bg-destructive/90"
+                            data-testid="button-confirm-disconnect"
+                          >
+                            {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </DialogHeader>
                 <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
                   <TabsList className="mx-4 mt-2">
