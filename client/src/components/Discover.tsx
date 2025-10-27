@@ -197,10 +197,12 @@ export function Discover({ currentUserId }: DiscoverProps) {
       return;
     }
 
-    // Check if connection request already sent
+    // Check if connection request already sent (only check pending/accepted status)
     const existingRequest = connectionRequests.find(
-      (req: any) => (req.senderId === currentUserId && req.receiverId === userId) ||
-                    (req.receiverId === currentUserId && req.senderId === userId)
+      (req: any) => 
+        (req.status === 'pending' || req.status === 'accepted') &&
+        ((req.senderId === currentUserId && req.receiverId === userId) ||
+        (req.receiverId === currentUserId && req.senderId === userId))
     );
     
     if (existingRequest) {

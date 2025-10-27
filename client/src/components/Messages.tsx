@@ -130,6 +130,7 @@ export function Messages({ currentUserId }: MessagesProps) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
       setSelectedConnection(null); // Close the dialog
       toast({
         title: "Connection Removed",
