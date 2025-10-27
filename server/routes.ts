@@ -514,11 +514,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = req.user.id;
       const { connectionId } = req.params;
       
-      // Verify user is part of this connection
+      // Verify user is part of this connection (check both match connections AND connection requests)
       const userConnections = await storage.getUserConnections(userId);
-      const hasAccess = userConnections.some(c => c.id === connectionId);
+      const connectionRequests = await storage.getConnectionRequests(userId);
       
-      if (!hasAccess) {
+      const hasMatchConnectionAccess = userConnections.some(c => c.id === connectionId);
+      // Only allow messaging for accepted connection requests
+      const hasConnectionRequestAccess = connectionRequests.some(c => c.id === connectionId && c.status === 'accepted');
+      
+      if (!hasMatchConnectionAccess && !hasConnectionRequestAccess) {
         return res.status(403).json({ message: "You don't have access to this conversation" });
       }
       
@@ -539,16 +543,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "connectionId, receiverId, and message are required" });
       }
       
-      // Verify user is part of this connection
+      // Verify user is part of this connection (check both match connections AND connection requests)
       const userConnections = await storage.getUserConnections(senderId);
-      const connection = userConnections.find(c => c.id === connectionId);
+      const connectionRequests = await storage.getConnectionRequests(senderId);
       
-      if (!connection) {
+      const matchConnection = userConnections.find(c => c.id === connectionId);
+      // Only allow messaging for accepted connection requests
+      const connectionRequest = connectionRequests.find(c => c.id === connectionId && c.status === 'accepted');
+      
+      if (!matchConnection && !connectionRequest) {
         return res.status(403).json({ message: "You don't have access to this conversation" });
       }
       
-      // Verify receiverId is the other participant
-      const validReceiver = connection.requesterId === receiverId || connection.accepterId === receiverId;
+      // Verify receiverId is the other participant (works for both types)
+      let validReceiver = false;
+      if (matchConnection) {
+        validReceiver = matchConnection.requesterId === receiverId || matchConnection.accepterId === receiverId;
+      } else if (connectionRequest) {
+        validReceiver = connectionRequest.senderId === receiverId || connectionRequest.receiverId === receiverId;
+      }
+      
       if (!validReceiver) {
         return res.status(400).json({ message: "Invalid receiverId for this connection" });
       }

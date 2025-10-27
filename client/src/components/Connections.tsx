@@ -59,17 +59,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     retry: false,
   });
 
-  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch: refetchRequests } = useQuery<ConnectionRequestWithUser[]>({
-    queryKey: ['/api/connection-requests'],
-    queryFn: async () => {
-      const response = await fetch('/api/connection-requests');
-      if (!response.ok) {
-        throw new Error('Failed to fetch connection requests');
-      }
-      return response.json();
-    },
-    retry: false,
-  });
 
   // Fetch user profile when viewing
   const { data: viewedUserProfile } = useQuery<User>({
@@ -85,7 +74,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
   const handleRefresh = () => {
     refetch();
-    refetchRequests();
   };
 
   // Handle real-time WebSocket updates for connections
@@ -96,9 +84,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     
     if (type === 'match_connection_created' || type === 'match_connection_updated' || type === 'match_connection_deleted') {
       queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
-    }
-    if (type === 'connection_request_created' || type === 'connection_request_updated' || type === 'connection_request_deleted') {
-      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
     }
   }, [lastMessage]);
 
@@ -124,47 +109,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     },
   });
 
-  const updateConnectionRequestMutation = useMutation({
-    mutationFn: async ({ requestId, status }: { requestId: string; status: string }) => {
-      return await apiRequest('PATCH', `/api/connection-requests/${requestId}/status`, { status });
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
-      toast({
-        title: variables.status === 'accepted' ? "Connection Accepted" : "Connection Declined",
-        description: variables.status === 'accepted' 
-          ? "You are now connected with this gamer"
-          : "The connection request has been declined",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update connection request",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const deleteConnectionRequestMutation = useMutation({
-    mutationFn: async (requestId: string) => {
-      return await apiRequest('DELETE', `/api/connection-requests/${requestId}`, {});
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
-      toast({
-        title: "Request Deleted",
-        description: "The connection request has been deleted",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete connection request",
-        variant: "destructive",
-      });
-    },
-  });
 
   const deleteMatchConnectionMutation = useMutation({
     mutationFn: async (connectionId: string) => {
@@ -200,20 +144,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     return false;
   };
 
-  // Split match connections and connection requests into categories
-  const incomingConnectionRequests = connectionRequests
-    .filter(r => r.status === 'pending' && r.receiverId === currentUserId)
-    .filter(filterByType);
-  
-  const outgoingConnectionRequests = connectionRequests
-    .filter(r => r.status === 'pending' && r.senderId === currentUserId)
-    .filter(filterByType);
-  
-  const acceptedConnectionRequests = connectionRequests
-    .filter(r => r.status === 'accepted')
-    .filter(filterByType);
-
-  // Split connections into three categories
+  // Split match connections into categories
   const incomingApplications = connections
     .filter(c => c.status === 'pending' && c.accepterId === currentUserId)
     .filter(filterByType);
@@ -283,111 +214,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     );
   }
 
-  const renderConnectionRequestCard = (request: ConnectionRequestWithUser, showActions: 'confirm' | 'waiting' | 'chat', isSender: boolean) => {
-    const timeAgo = formatTimeAgo(request.createdAt);
-    const otherUserId = isSender ? request.receiverId : request.senderId;
-    const otherGamertag = isSender ? request.receiverGamertag : request.senderGamertag;
-    const otherProfileImageUrl = isSender ? request.receiverProfileImageUrl : request.senderProfileImageUrl;
-    const displayName = otherGamertag || otherUserId;
-    const avatarUrl = otherProfileImageUrl || undefined;
-    
-    return (
-      <Card key={request.id} className="hover:shadow-md transition-shadow" data-testid={`connection-request-card-${request.id}`}>
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between">
-            <div 
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setViewProfileUserId(otherUserId)}
-              data-testid={`button-view-profile-${request.id}`}
-            >
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={avatarUrl} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {displayName[0]?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground underline-offset-4 hover:underline">
-                    {displayName}
-                  </h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {isSender ? "Connection request sent" : "Wants to connect"}
-                </p>
-              </div>
-            </div>
-            <Badge 
-              variant={
-                request.status === 'accepted' ? 'default' : 'secondary'
-              }
-              className="text-xs"
-              data-testid={`connection-request-status-${request.id}`}
-            >
-              {request.status}
-            </Badge>
-          </div>
-        </CardHeader>
-        
-        <CardContent>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span>{timeAgo}</span>
-              </div>
-            </div>
-            
-            {showActions === 'confirm' && (
-              <div className="flex gap-2">
-                <Button 
-                  variant="default" 
-                  size="sm" 
-                  className="gap-1"
-                  onClick={() => updateConnectionRequestMutation.mutate({ requestId: request.id, status: 'accepted' })}
-                  disabled={updateConnectionRequestMutation.isPending}
-                  data-testid={`button-accept-request-${request.id}`}
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Accept
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1"
-                  onClick={() => updateConnectionRequestMutation.mutate({ requestId: request.id, status: 'declined' })}
-                  disabled={updateConnectionRequestMutation.isPending}
-                  data-testid={`button-decline-request-${request.id}`}
-                >
-                  <X className="h-4 w-4" />
-                  Decline
-                </Button>
-              </div>
-            )}
-            
-            {showActions === 'waiting' && (
-              <div className="flex gap-2 items-center">
-                <Badge variant="secondary" className="text-xs">
-                  Waiting for response
-                </Badge>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="gap-1 text-destructive hover:text-destructive"
-                  onClick={() => deleteConnectionRequestMutation.mutate(request.id)}
-                  disabled={deleteConnectionRequestMutation.isPending}
-                  data-testid={`button-delete-request-${request.id}`}
-                >
-                  <Trash2 className="h-4 w-4" />
-                  Cancel
-                </Button>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    );
-  };
 
   const renderConnectionCard = (connection: MatchConnectionWithUser, showActions: 'confirm' | 'waiting' | 'chat', isRequester: boolean) => {
     const timeAgo = formatTimeAgo(connection.createdAt);
@@ -563,7 +389,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     );
   };
 
-  if (connections.length === 0 && connectionRequests.length === 0) {
+  if (connections.length === 0) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
@@ -622,7 +448,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
       <div className="space-y-8">
         {/* Filter Section - Show at top if any pending requests */}
-        {(incomingApplications.length > 0 || incomingConnectionRequests.length > 0) && (
+        {incomingApplications.length > 0 && (
           <div className="flex items-center justify-end gap-2">
             <Popover open={showFilters} onOpenChange={setShowFilters}>
               <PopoverTrigger asChild>
@@ -643,11 +469,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                         <SelectValue placeholder="All Requests" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Requests</SelectItem>
-                        <SelectItem value="connection">Connection Requests</SelectItem>
-                        <SelectItem value="1v1">1v1 Match Requests</SelectItem>
-                        <SelectItem value="2v2">2v2 Match Requests</SelectItem>
-                        <SelectItem value="3v3">3v3 Match Requests</SelectItem>
+                        <SelectItem value="all">All Applications</SelectItem>
+                        <SelectItem value="1v1">1v1 Match Applications</SelectItem>
+                        <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                        <SelectItem value="3v3">3v3 Match Applications</SelectItem>
                         <SelectItem value="squad">Team/Squad Finder</SelectItem>
                       </SelectContent>
                     </Select>
@@ -658,8 +483,8 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           </div>
         )}
 
-        {/* Pending Applications & Requests - Collapsible Section */}
-        {(incomingConnectionRequests.length > 0 || incomingApplications.length > 0 || yourApplications.length > 0 || outgoingConnectionRequests.length > 0) && (
+        {/* Pending Applications - Collapsible Section */}
+        {(incomingApplications.length > 0 || yourApplications.length > 0) && (
           <Collapsible open={pendingRequestsOpen} onOpenChange={setPendingRequestsOpen}>
             <Card className="p-4">
               <CollapsibleTrigger asChild>
@@ -670,9 +495,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                 >
                   <div className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-primary" />
-                    <h2 className="text-lg font-semibold">Pending Applications & Requests</h2>
+                    <h2 className="text-lg font-semibold">Pending Match Applications</h2>
                     <Badge variant="default" className="text-xs">
-                      {incomingConnectionRequests.length + incomingApplications.length + yourApplications.length + outgoingConnectionRequests.length} total
+                      {incomingApplications.length + yourApplications.length} total
                     </Badge>
                   </div>
                   {pendingRequestsOpen ? (
@@ -684,93 +509,55 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               </CollapsibleTrigger>
               
               <CollapsibleContent className="space-y-6 mt-4">
-                {/* Received Requests */}
-                {(incomingConnectionRequests.length > 0 || incomingApplications.length > 0) && (
+                {/* Received Applications */}
+                {incomingApplications.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="text-md font-semibold text-foreground flex items-center gap-2 px-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      Received Requests
+                      Received Applications
                       <Badge variant="outline" className="text-xs">
-                        {incomingConnectionRequests.length + incomingApplications.length}
+                        {incomingApplications.length}
                       </Badge>
                     </h3>
                     
-                    {/* Incoming Connection Requests */}
-                    {incomingConnectionRequests.length > 0 && (
-                      <div className="space-y-3 pl-4">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <h4 className="text-sm font-medium text-muted-foreground">Connection Requests</h4>
-                          <Badge variant="secondary" className="text-xs">
-                            {incomingConnectionRequests.length}
-                          </Badge>
-                        </div>
-                        {incomingConnectionRequests.map((request) => 
-                          renderConnectionRequestCard(request, 'confirm', false)
-                        )}
+                    <div className="space-y-3 pl-4">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-muted-foreground" />
+                        <h4 className="text-sm font-medium text-muted-foreground">Match Applications</h4>
+                        <Badge variant="secondary" className="text-xs">
+                          {incomingApplications.length}
+                        </Badge>
                       </div>
-                    )}
-                    
-                    {/* Incoming Match Applications */}
-                    {incomingApplications.length > 0 && (
-                      <div className="space-y-3 pl-4">
-                        <div className="flex items-center gap-2">
-                          <Trophy className="h-4 w-4 text-muted-foreground" />
-                          <h4 className="text-sm font-medium text-muted-foreground">Match Applications</h4>
-                          <Badge variant="secondary" className="text-xs">
-                            {incomingApplications.length}
-                          </Badge>
-                        </div>
-                        {incomingApplications.map((connection) => 
-                          renderConnectionCard(connection, 'confirm', false)
-                        )}
-                      </div>
-                    )}
+                      {incomingApplications.map((connection) => 
+                        renderConnectionCard(connection, 'confirm', false)
+                      )}
+                    </div>
                   </div>
                 )}
                 
-                {/* Sent Requests */}
-                {(yourApplications.length > 0 || outgoingConnectionRequests.length > 0) && (
+                {/* Sent Applications */}
+                {yourApplications.length > 0 && (
                   <div className="space-y-4">
                     <h3 className="text-md font-semibold text-foreground flex items-center gap-2 px-2">
                       <Users className="h-4 w-4 text-blue-500" />
-                      Sent Requests
+                      Sent Applications
                       <Badge variant="outline" className="text-xs">
-                        {yourApplications.length + outgoingConnectionRequests.length}
+                        {yourApplications.length}
                       </Badge>
                     </h3>
                     
-                    {/* Your Connection Requests */}
-                    {outgoingConnectionRequests.length > 0 && (
-                      <div className="space-y-3 pl-4">
-                        <div className="flex items-center gap-2">
-                          <Users className="h-4 w-4 text-muted-foreground" />
-                          <h4 className="text-sm font-medium text-muted-foreground">Connection Requests</h4>
-                          <Badge variant="secondary" className="text-xs">
-                            {outgoingConnectionRequests.length}
-                          </Badge>
-                        </div>
-                        {outgoingConnectionRequests.map((request) => 
-                          renderConnectionRequestCard(request, 'waiting', true)
-                        )}
+                    <div className="space-y-3 pl-4">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-4 w-4 text-muted-foreground" />
+                        <h4 className="text-sm font-medium text-muted-foreground">Match Applications</h4>
+                        <Badge variant="secondary" className="text-xs">
+                          {yourApplications.length}
+                        </Badge>
                       </div>
-                    )}
-                    
-                    {/* Your Match Applications */}
-                    {yourApplications.length > 0 && (
-                      <div className="space-y-3 pl-4">
-                        <div className="flex items-center gap-2">
-                          <Trophy className="h-4 w-4 text-muted-foreground" />
-                          <h4 className="text-sm font-medium text-muted-foreground">Match Applications</h4>
-                          <Badge variant="secondary" className="text-xs">
-                            {yourApplications.length}
-                          </Badge>
-                        </div>
-                        {yourApplications.map((connection) => 
-                          renderConnectionCard(connection, 'waiting', true)
-                        )}
-                      </div>
-                    )}
+                      {yourApplications.map((connection) => 
+                        renderConnectionCard(connection, 'waiting', true)
+                      )}
+                    </div>
                   </div>
                 )}
               </CollapsibleContent>
