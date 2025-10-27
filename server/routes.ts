@@ -754,9 +754,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
           
           // Verify that both sender and target are participants in this connection
+          // Check both match connections and connection requests
           try {
             const userConnections = await storage.getUserConnections(client.userId);
-            const connection = userConnections.find(c => c.id === connectionId);
+            const matchConnection = userConnections.find(c => c.id === connectionId);
+            
+            const connectionRequests = await storage.getConnectionRequests(client.userId);
+            const connectionRequest = connectionRequests.find(c => c.id === connectionId);
+            
+            const connection = matchConnection || connectionRequest;
             
             if (!connection) {
               ws.send(JSON.stringify({ 
@@ -767,9 +773,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Verify target is the other participant
-            const isValidTarget = 
-              (connection.requesterId === client.userId && connection.accepterId === targetUserId) ||
-              (connection.accepterId === client.userId && connection.requesterId === targetUserId);
+            // Match connections use requesterId/accepterId, connection requests use senderId/receiverId
+            const isValidTarget = matchConnection
+              ? (matchConnection.requesterId === client.userId && matchConnection.accepterId === targetUserId) ||
+                (matchConnection.accepterId === client.userId && matchConnection.requesterId === targetUserId)
+              : (connectionRequest!.senderId === client.userId && connectionRequest!.receiverId === targetUserId) ||
+                (connectionRequest!.receiverId === client.userId && connectionRequest!.senderId === targetUserId);
             
             if (!isValidTarget) {
               ws.send(JSON.stringify({ 
