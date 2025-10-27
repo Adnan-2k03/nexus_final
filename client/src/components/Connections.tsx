@@ -47,6 +47,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const { toast } = useToast();
 
+  if (!currentUserId) {
+    return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
+  }
+
   const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
@@ -366,7 +370,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                     <TabsContent value="chat" className="flex-1 overflow-hidden m-0">
                       <Chat
                         connectionId={connection.id}
-                        currentUserId={currentUserId || ""}
+                        currentUserId={currentUserId}
                         otherUserId={otherUserId}
                         otherUserName={displayName}
                       />
@@ -374,7 +378,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                     <TabsContent value="voice" className="p-4">
                       <VoiceChannel
                         connectionId={connection.id}
-                        currentUserId={currentUserId || ""}
+                        currentUserId={currentUserId}
                         otherUserId={otherUserId}
                         otherUserName={displayName}
                       />
