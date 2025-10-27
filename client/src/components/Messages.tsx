@@ -5,10 +5,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, ChevronUp, CheckCircle, X } from "lucide-react";
+import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, ChevronUp, CheckCircle, X, UserMinus } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -117,6 +118,28 @@ export function Messages({ currentUserId }: MessagesProps) {
       toast({
         title: "Error",
         description: "Failed to decline connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation to disconnect (delete) connection
+  const disconnectMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      return await apiRequest('DELETE', `/api/connection-requests/${requestId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      setSelectedConnection(null); // Close the dialog
+      toast({
+        title: "Connection Removed",
+        description: "You have disconnected from this player",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to remove connection",
         variant: "destructive",
       });
     },
@@ -412,10 +435,42 @@ export function Messages({ currentUserId }: MessagesProps) {
 
             return (
               <>
-                <DialogHeader className="p-4 pb-3 border-b">
+                <DialogHeader className="p-4 pb-3 border-b flex-row items-center justify-between space-y-0">
                   <DialogTitle>
                     Chat with {displayName}
                   </DialogTitle>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        data-testid="button-disconnect"
+                      >
+                        <UserMinus className="h-4 w-4" />
+                        Disconnect
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Disconnect from {displayName}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This will remove your connection with {displayName}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel data-testid="button-cancel-disconnect">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          onClick={() => disconnectMutation.mutate(selectedConnection.id)}
+                          disabled={disconnectMutation.isPending}
+                          className="bg-destructive hover:bg-destructive/90"
+                          data-testid="button-confirm-disconnect"
+                        >
+                          {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </DialogHeader>
                 <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
                   <TabsList className="mx-4 mt-2">
