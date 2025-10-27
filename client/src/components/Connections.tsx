@@ -322,7 +322,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             
             {showActions === 'chat' && (
               <Dialog open={openChatId === connection.id} onOpenChange={(open) => setOpenChatId(open ? connection.id : null)}>
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center justify-between w-full">
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -337,7 +337,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="gap-1 text-destructive hover:text-destructive"
+                    className="gap-1 text-destructive hover:text-destructive ml-auto"
                     onClick={() => deleteMatchConnectionMutation.mutate(connection.id)}
                     disabled={deleteMatchConnectionMutation.isPending}
                     data-testid={`button-disconnect-${connection.id}`}
