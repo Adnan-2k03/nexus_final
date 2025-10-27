@@ -1,9 +1,20 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus } from "lucide-react";
+import type { GameProfile } from "@shared/schema";
 
 interface UserProfileProps {
   id: string;
@@ -20,6 +31,7 @@ interface UserProfileProps {
   isOwn?: boolean;
   onEdit?: () => void;
   onMessage?: () => void;
+  onAddGame?: () => void;
 }
 
 export function UserProfile({
@@ -37,112 +49,310 @@ export function UserProfile({
   isOwn = false,
   onEdit,
   onMessage,
+  onAddGame,
 }: UserProfileProps) {
   const displayName = firstName && lastName ? `${firstName} ${lastName}` : gamertag;
   const initials = firstName && lastName 
     ? `${firstName[0]}${lastName[0]}`.toUpperCase()
     : gamertag.slice(0, 2).toUpperCase();
 
+  const [selectedClip, setSelectedClip] = useState<string | null>(null);
+
+  const { data: gameProfiles = [], isLoading: isLoadingProfiles } = useQuery<GameProfile[]>({
+    queryKey: ['/api/users', id, 'game-profiles'],
+    enabled: !!id,
+  });
+
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center pb-4">
-        <div className="flex flex-col items-center space-y-4">
-          <Avatar className="h-20 w-20">
-            <AvatarImage src={profileImageUrl} alt={gamertag} />
-            <AvatarFallback className="bg-primary text-primary-foreground text-lg font-bold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          
-          <div className="space-y-2 text-center">
-            <h2 className="text-xl font-bold text-foreground" data-testid={`text-display-name-${id}`}>
-              {displayName}
-            </h2>
-            {firstName && lastName && (
-              <p className="text-sm text-muted-foreground" data-testid={`text-gamertag-${id}`}>
-                @{gamertag}
-              </p>
-            )}
-          </div>
-
-          <div className="flex gap-2">
-            {isOwn ? (
-              <Button size="sm" variant="outline" onClick={onEdit} data-testid="button-edit-profile">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Profile
-              </Button>
-            ) : (
-              <Button size="sm" onClick={onMessage} data-testid="button-message-user">
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Message
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        {bio && (
-          <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <User className="h-4 w-4" />
-              About
-            </h3>
-            <p className="text-sm text-muted-foreground" data-testid={`text-bio-${id}`}>
-              {bio}
-            </p>
-          </div>
-        )}
-
-        <Separator />
-
-        <div className="space-y-3">
-          {location && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span data-testid={`text-location-${id}`}>{location}</span>
+    <div className="w-full max-w-5xl mx-auto space-y-6">
+      <Card>
+        <CardHeader className="pb-4">
+          <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+            <Avatar className="h-24 w-24 border-4 border-primary/20">
+              <AvatarImage src={profileImageUrl} alt={gamertag} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1 text-center md:text-left space-y-3">
+              <div>
+                <h1 className="text-3xl font-bold text-foreground" data-testid={`text-display-name-${id}`}>
+                  {displayName}
+                </h1>
+                {firstName && lastName && (
+                  <p className="text-lg text-muted-foreground" data-testid={`text-gamertag-${id}`}>
+                    @{gamertag}
+                  </p>
+                )}
               </div>
-              {isOwn && latitude && longitude && (
-                <div className="ml-6 text-xs text-muted-foreground/70" data-testid={`text-gps-coordinates-${id}`}>
-                  GPS: {latitude.toFixed(6)}, {longitude.toFixed(6)}
-                </div>
+
+              {bio && (
+                <p className="text-sm text-muted-foreground max-w-2xl" data-testid={`text-bio-${id}`}>
+                  {bio}
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3 items-center justify-center md:justify-start text-sm text-muted-foreground">
+                {location && (
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-4 w-4" />
+                    <span data-testid={`text-location-${id}`}>{location}</span>
+                  </div>
+                )}
+                {age && (
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4" />
+                    <span data-testid={`text-age-${id}`}>{age} years old</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              {isOwn ? (
+                <>
+                  <Button size="sm" variant="outline" onClick={onEdit} data-testid="button-edit-profile">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Profile
+                  </Button>
+                  <Button size="sm" onClick={onAddGame} data-testid="button-add-game-profile">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Game
+                  </Button>
+                </>
+              ) : (
+                <Button size="sm" onClick={onMessage} data-testid="button-message-user">
+                  <MessageCircle className="h-4 w-4 mr-2" />
+                  Message
+                </Button>
               )}
             </div>
-          )}
-          
-          {age && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span data-testid={`text-age-${id}`}>{age} years old</span>
-            </div>
-          )}
-        </div>
+          </div>
+        </CardHeader>
+      </Card>
 
-        {preferredGames.length > 0 && (
-          <>
-            <Separator />
-            <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Gamepad2 className="h-4 w-4" />
-                Preferred Games
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {preferredGames.map((game) => (
-                  <Badge
-                    key={game}
-                    variant="secondary"
-                    className="text-xs"
-                    data-testid={`badge-game-${game.toLowerCase().replace(/\s+/g, '-')}-${id}`}
-                  >
-                    {game}
-                  </Badge>
-                ))}
-              </div>
+      {isLoadingProfiles ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground">Loading game profiles...</p>
+          </CardContent>
+        </Card>
+      ) : gameProfiles.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center space-y-4">
+            <Gamepad2 className="h-16 w-16 text-muted-foreground/50 mx-auto" />
+            <div>
+              <h3 className="text-lg font-semibold mb-2">No game profiles yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                {isOwn 
+                  ? "Start building your gaming portfolio by adding your first game profile!" 
+                  : `${displayName} hasn't added any game profiles yet.`}
+              </p>
             </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+            {isOwn && (
+              <Button onClick={onAddGame} data-testid="button-add-first-game">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Your First Game
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <h2 className="text-xl font-bold flex items-center gap-2">
+              <Gamepad2 className="h-5 w-5 text-primary" />
+              Gaming Profiles
+            </h2>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue={gameProfiles[0]?.id} className="w-full">
+              <TabsList className="w-full flex-wrap h-auto justify-start gap-2">
+                {gameProfiles.map((profile) => (
+                  <TabsTrigger 
+                    key={profile.id} 
+                    value={profile.id} 
+                    className="flex items-center gap-2"
+                    data-testid={`tab-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    <Gamepad2 className="h-4 w-4" />
+                    {profile.gameName}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+
+              {gameProfiles.map((profile) => (
+                <TabsContent key={profile.id} value={profile.id} className="space-y-6 mt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {profile.currentRank && (
+                      <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-primary">
+                            <Star className="h-5 w-5" />
+                            <span className="text-sm font-semibold">Current Rank</span>
+                          </div>
+                          <p className="text-2xl font-bold" data-testid={`text-current-rank-${profile.id}`}>
+                            {profile.currentRank}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {profile.highestRank && (
+                      <Card className="bg-gradient-to-br from-yellow-500/5 to-yellow-500/10 border-yellow-500/20">
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400">
+                            <Trophy className="h-5 w-5" />
+                            <span className="text-sm font-semibold">Highest Rank</span>
+                          </div>
+                          <p className="text-2xl font-bold" data-testid={`text-highest-rank-${profile.id}`}>
+                            {profile.highestRank}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {profile.hoursPlayed !== null && profile.hoursPlayed !== undefined && (
+                      <Card className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20">
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                            <Clock className="h-5 w-5" />
+                            <span className="text-sm font-semibold">Hours Played</span>
+                          </div>
+                          <p className="text-2xl font-bold" data-testid={`text-hours-played-${profile.id}`}>
+                            {profile.hoursPlayed.toLocaleString()}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {profile.achievements && profile.achievements.length > 0 && (
+                      <Card className="bg-gradient-to-br from-purple-500/5 to-purple-500/10 border-purple-500/20">
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
+                            <Award className="h-5 w-5" />
+                            <span className="text-sm font-semibold">Achievements</span>
+                          </div>
+                          <p className="text-2xl font-bold" data-testid={`text-achievements-count-${profile.id}`}>
+                            {profile.achievements.length}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+
+                  {profile.achievements && profile.achievements.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        Esport Achievements
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {profile.achievements.map((achievement, index) => (
+                          <Card key={index} className="bg-purple-500/5 border-purple-500/20">
+                            <CardContent className="p-3">
+                              <p className="text-sm font-medium" data-testid={`text-achievement-${profile.id}-${index}`}>
+                                {achievement}
+                              </p>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.clipUrls && profile.clipUrls.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        Best Clips & Highlights
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {profile.clipUrls.map((clipUrl, index) => (
+                          <Dialog key={index}>
+                            <DialogTrigger asChild>
+                              <Card 
+                                className="cursor-pointer hover:bg-accent/50 transition-colors bg-gradient-to-br from-red-500/5 to-red-500/10 border-red-500/20"
+                                data-testid={`card-clip-${profile.id}-${index}`}
+                              >
+                                <CardContent className="p-4 flex items-center justify-center gap-3">
+                                  <Play className="h-8 w-8 text-red-600 dark:text-red-400" />
+                                  <div className="text-left flex-1">
+                                    <p className="text-sm font-semibold">Clip {index + 1}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{clipUrl}</p>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-4xl">
+                              <DialogHeader>
+                                <DialogTitle>Clip {index + 1} - {profile.gameName}</DialogTitle>
+                              </DialogHeader>
+                              <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+                                {clipUrl.includes('youtube.com') || clipUrl.includes('youtu.be') ? (
+                                  <iframe
+                                    src={clipUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                    className="w-full h-full"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowFullScreen
+                                  />
+                                ) : clipUrl.includes('twitch.tv') ? (
+                                  <iframe
+                                    src={clipUrl.replace('twitch.tv/', 'player.twitch.tv/?video=').replace('clips/', 'player.twitch.tv/?clip=')}
+                                    className="w-full h-full"
+                                    allowFullScreen
+                                  />
+                                ) : (
+                                  <div className="flex items-center justify-center h-full">
+                                    <a 
+                                      href={clipUrl} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-primary hover:underline"
+                                    >
+                                      Open Clip in New Tab
+                                    </a>
+                                  </div>
+                                )}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {profile.stats && Object.keys(profile.stats).length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        <Star className="h-5 w-5 text-primary" />
+                        Stats & Details
+                      </h3>
+                      <Card className="bg-muted/30">
+                        <CardContent className="p-4">
+                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {Object.entries(profile.stats as Record<string, any>).map(([key, value]) => (
+                              <div key={key} className="flex justify-between items-center">
+                                <dt className="text-sm text-muted-foreground capitalize">
+                                  {key.replace(/([A-Z])/g, ' $1').trim()}:
+                                </dt>
+                                <dd className="text-sm font-semibold" data-testid={`text-stat-${profile.id}-${key}`}>
+                                  {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
+                </TabsContent>
+              ))}
+            </Tabs>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

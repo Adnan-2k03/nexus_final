@@ -5,6 +5,7 @@ import {
   connectionRequests,
   hiddenMatches,
   chatMessages,
+  gameProfiles,
   type User,
   type UpsertUser,
   type MatchRequest,
@@ -21,6 +22,8 @@ import {
   type ChatMessage,
   type ChatMessageWithSender,
   type InsertChatMessage,
+  type GameProfile,
+  type InsertGameProfile,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
@@ -76,6 +79,13 @@ export interface IStorage {
   sendMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getMessages(connectionId: string): Promise<ChatMessageWithSender[]>;
   getRecentMessages(userId: string): Promise<ChatMessageWithSender[]>;
+  
+  // Game profile operations
+  createGameProfile(profile: InsertGameProfile): Promise<GameProfile>;
+  updateGameProfile(id: string, profile: Partial<GameProfile>): Promise<GameProfile>;
+  getUserGameProfiles(userId: string): Promise<GameProfile[]>;
+  getGameProfile(id: string): Promise<GameProfile | undefined>;
+  deleteGameProfile(id: string, userId: string): Promise<void>;
 }
 
 // Database storage implementation using PostgreSQL
@@ -548,6 +558,65 @@ export class DatabaseStorage implements IStorage {
       .limit(50);
     
     return messages;
+  }
+
+  // Game profile operations
+  async createGameProfile(profileData: InsertGameProfile): Promise<GameProfile> {
+    const [profile] = await db
+      .insert(gameProfiles)
+      .values(profileData)
+      .returning();
+    return profile;
+  }
+
+  async updateGameProfile(id: string, profileData: Partial<GameProfile>): Promise<GameProfile> {
+    const [updatedProfile] = await db
+      .update(gameProfiles)
+      .set({ ...profileData, updatedAt: new Date() })
+      .where(eq(gameProfiles.id, id))
+      .returning();
+    
+    if (!updatedProfile) {
+      throw new Error('Game profile not found');
+    }
+    
+    return updatedProfile;
+  }
+
+  async getUserGameProfiles(userId: string): Promise<GameProfile[]> {
+    const profiles = await db
+      .select()
+      .from(gameProfiles)
+      .where(eq(gameProfiles.userId, userId))
+      .orderBy(desc(gameProfiles.updatedAt));
+    
+    return profiles;
+  }
+
+  async getGameProfile(id: string): Promise<GameProfile | undefined> {
+    const [profile] = await db
+      .select()
+      .from(gameProfiles)
+      .where(eq(gameProfiles.id, id));
+    return profile || undefined;
+  }
+
+  async deleteGameProfile(id: string, userId: string): Promise<void> {
+    // First verify the user owns this game profile
+    const [profile] = await db
+      .select()
+      .from(gameProfiles)
+      .where(eq(gameProfiles.id, id));
+    
+    if (!profile) {
+      throw new Error('Game profile not found');
+    }
+    
+    if (profile.userId !== userId) {
+      throw new Error('Unauthorized to delete this game profile');
+    }
+    
+    await db.delete(gameProfiles).where(eq(gameProfiles.id, id));
   }
 }
 
