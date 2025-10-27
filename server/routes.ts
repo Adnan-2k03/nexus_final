@@ -466,6 +466,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Game profile routes
+  // Get all game profiles for a user
+  app.get('/api/users/:userId/game-profiles', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const profiles = await storage.getUserGameProfiles(userId);
+      res.json(profiles);
+    } catch (error: any) {
+      console.error('Error fetching game profiles:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Create a new game profile
+  app.post('/api/game-profiles', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const profile = await storage.createGameProfile({
+        ...req.body,
+        userId,
+      });
+      res.status(201).json(profile);
+    } catch (error: any) {
+      console.error('Error creating game profile:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update a game profile
+  app.patch('/api/game-profiles/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const profile = await storage.getGameProfile(id);
+      
+      if (!profile) {
+        return res.status(404).json({ error: 'Game profile not found' });
+      }
+      
+      if (profile.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const updatedProfile = await storage.updateGameProfile(id, req.body);
+      res.json(updatedProfile);
+    } catch (error: any) {
+      console.error('Error updating game profile:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Delete a game profile
+  app.delete('/api/game-profiles/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      await storage.deleteGameProfile(id, userId);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Error deleting game profile:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Hidden matches routes
   app.get('/api/hidden-matches', isAuthenticated, async (req: any, res) => {
     try {

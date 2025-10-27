@@ -106,6 +106,23 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Game profiles table - stores detailed game achievements per user per game
+export const gameProfiles = pgTable("game_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  gameName: varchar("game_name").notNull(),
+  highestRank: varchar("highest_rank"),
+  currentRank: varchar("current_rank"),
+  hoursPlayed: integer("hours_played"),
+  clipUrls: text("clip_urls").array(),
+  achievements: text("achievements").array(),
+  stats: jsonb("stats"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_user_game_profiles").on(table.userId),
+]);
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
@@ -118,6 +135,8 @@ export type InsertHiddenMatch = typeof hiddenMatches.$inferInsert;
 export type HiddenMatch = typeof hiddenMatches.$inferSelect;
 export type InsertChatMessage = typeof chatMessages.$inferInsert;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertGameProfile = typeof gameProfiles.$inferInsert;
+export type GameProfile = typeof gameProfiles.$inferSelect;
 
 // Enhanced match request type that includes user profile data
 export type MatchRequestWithUser = MatchRequest & {
@@ -155,3 +174,4 @@ export const insertConnectionRequestSchema = createInsertSchema(connectionReques
 export const insertMatchConnectionSchema = createInsertSchema(matchConnections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertHiddenMatchSchema = createInsertSchema(hiddenMatches).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
+export const insertGameProfileSchema = createInsertSchema(gameProfiles).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
