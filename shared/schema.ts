@@ -148,6 +148,20 @@ export const hobbies = pgTable("hobbies", {
   index("idx_hobbies_category").on(table.category),
 ]);
 
+// Portfolio Pages table - stores AI-generated or custom portfolio pages
+export const portfolioPages = pgTable("portfolio_pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  themeName: varchar("theme_name").notNull(), // e.g., "modern", "minimal", "vibrant"
+  layout: jsonb("layout").notNull(), // JSON structure with sections, colors, components
+  prompt: text("prompt"), // Original prompt used for AI generation
+  isActive: varchar("is_active").default("true"), // Whether this is the active portfolio
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_user_portfolios").on(table.userId),
+]);
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
@@ -164,6 +178,8 @@ export type InsertGameProfile = typeof gameProfiles.$inferInsert;
 export type GameProfile = typeof gameProfiles.$inferSelect;
 export type InsertHobby = typeof hobbies.$inferInsert;
 export type Hobby = typeof hobbies.$inferSelect;
+export type InsertPortfolioPage = typeof portfolioPages.$inferInsert;
+export type PortfolioPage = typeof portfolioPages.$inferSelect;
 
 // Enhanced match request type that includes user profile data
 export type MatchRequestWithUser = MatchRequest & {
@@ -203,3 +219,12 @@ export const insertHiddenMatchSchema = createInsertSchema(hiddenMatches).omit({ 
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
 export const insertGameProfileSchema = createInsertSchema(gameProfiles).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertHobbySchema = createInsertSchema(hobbies).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+export const insertPortfolioPageSchema = createInsertSchema(portfolioPages).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+
+// Privacy settings validation
+export const privacyVisibilityEnum = z.enum(["everyone", "connections", "nobody"]);
+export const updatePrivacySettingsSchema = z.object({
+  showMutualGames: privacyVisibilityEnum.optional(),
+  showMutualFriends: privacyVisibilityEnum.optional(),
+  showMutualHobbies: privacyVisibilityEnum.optional(),
+});

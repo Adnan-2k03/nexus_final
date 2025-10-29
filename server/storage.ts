@@ -54,6 +54,7 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
   updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
+  updatePrivacySettings(id: string, settings: { showMutualGames?: string; showMutualFriends?: string; showMutualHobbies?: string }): Promise<User>;
   
   // Match request operations
   getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<MatchRequestWithUser[]>;
@@ -222,6 +223,20 @@ export class DatabaseStorage implements IStorage {
     const [updatedUser] = await db
       .update(users)
       .set({ ...updateData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
+    
+    return updatedUser;
+  }
+
+  async updatePrivacySettings(id: string, settings: { showMutualGames?: string; showMutualFriends?: string; showMutualHobbies?: string }): Promise<User> {
+    const [updatedUser] = await db
+      .update(users)
+      .set({ ...settings, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     
