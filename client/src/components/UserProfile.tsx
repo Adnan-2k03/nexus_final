@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
@@ -176,40 +176,38 @@ export function UserProfile({
           <CardHeader>
             <h2 className="text-xl font-bold flex items-center gap-2">
               <Gamepad2 className="h-5 w-5 text-primary" />
-              Gaming Profiles
+              Gaming Profiles ({gameProfiles.length})
             </h2>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue={gameProfiles[0]?.id} className="w-full">
-              <TabsList className="w-full flex-wrap h-auto justify-start gap-2">
-                {gameProfiles.map((profile) => (
-                  <TabsTrigger 
-                    key={profile.id} 
-                    value={profile.id} 
-                    className="flex items-center gap-2"
-                    data-testid={`tab-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
-                  >
-                    <Gamepad2 className="h-4 w-4" />
-                    {profile.gameName}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-
+            <Accordion type="single" collapsible className="w-full">
               {gameProfiles.map((profile) => (
-                <TabsContent key={profile.id} value={profile.id} className="space-y-6 mt-6">
-                  {isOwn && (
-                    <div className="flex justify-end">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => handleEditProfile(profile)}
-                        data-testid={`button-edit-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit {profile.gameName} Profile
-                      </Button>
+                <AccordionItem key={profile.id} value={profile.id}>
+                  <AccordionTrigger className="hover:no-underline">
+                    <div className="flex items-center gap-3">
+                      <Gamepad2 className="h-5 w-5 text-primary" />
+                      <span className="text-lg font-semibold">{profile.gameName}</span>
+                      {profile.currentRank && (
+                        <Badge variant="outline" className="ml-2">
+                          {profile.currentRank}
+                        </Badge>
+                      )}
                     </div>
-                  )}
+                  </AccordionTrigger>
+                  <AccordionContent className="space-y-6 pt-6">
+                    {isOwn && (
+                      <div className="flex justify-end">
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          onClick={() => handleEditProfile(profile)}
+                          data-testid={`button-edit-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit {profile.gameName} Profile
+                        </Button>
+                      </div>
+                    )}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {profile.currentRank && (
                       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
@@ -373,9 +371,10 @@ export function UserProfile({
                       </Card>
                     </div>
                   )}
-                </TabsContent>
+                  </AccordionContent>
+                </AccordionItem>
               ))}
-            </Tabs>
+            </Accordion>
           </CardContent>
         </Card>
       )}
