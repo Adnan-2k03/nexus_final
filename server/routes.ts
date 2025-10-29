@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./googleAuth";
+import { devAuthMiddleware, ensureDevUser } from "./devAuth";
 import { insertMatchRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
@@ -15,12 +16,27 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Development mode flag - bypass authentication for easier development
+const DEV_MODE = process.env.AUTH_DISABLED === "true" || process.env.NODE_ENV === "development";
+
+// Choose authentication middleware based on mode
+const authMiddleware = DEV_MODE ? devAuthMiddleware : isAuthenticated;
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
+  // Setup authentication (skip in dev mode)
+  if (DEV_MODE) {
+    console.log("\n🔓 [DEV MODE] Authentication is DISABLED for development");
+    console.log("   All routes will use a mock development user");
+    console.log("   To enable authentication: Remove AUTH_DISABLED from secrets or set to 'false'\n");
+    await ensureDevUser();
+  } else {
+    console.log("\n🔐 [PRODUCTION MODE] Authentication is ENABLED");
+    console.log("   Google OAuth is required for all protected routes\n");
+    await setupAuth(app);
+  }
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const user = await storage.getUser(userId);
@@ -69,7 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/match-requests', isAuthenticated, async (req: any, res) => {
+  app.post('/api/match-requests', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const validatedData = insertMatchRequestSchema.parse(req.body);
@@ -101,7 +117,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/match-requests/:id/status', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/match-requests/:id/status', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -139,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/match-requests/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/match-requests/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
@@ -173,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Match connection routes
-  app.post('/api/match-connections', isAuthenticated, async (req: any, res) => {
+  app.post('/api/match-connections', authMiddleware, async (req: any, res) => {
     try {
       const requesterId = req.user.id;
       const { requestId, accepterId } = req.body;
@@ -231,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/match-connections/:id/status', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/match-connections/:id/status', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -265,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/user/connections', isAuthenticated, async (req: any, res) => {
+  app.get('/api/user/connections', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const connections = await storage.getUserConnections(userId);
@@ -277,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Connection request routes (direct user-to-user, no match required)
-  app.post('/api/connection-requests', isAuthenticated, async (req: any, res) => {
+  app.post('/api/connection-requests', authMiddleware, async (req: any, res) => {
     try {
       const senderId = req.user.id;
       const { receiverId } = req.body;
@@ -319,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/connection-requests/:id/status', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/connection-requests/:id/status', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { status } = req.body;
@@ -364,7 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/connection-requests', isAuthenticated, async (req: any, res) => {
+  app.get('/api/connection-requests', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const requests = await storage.getConnectionRequests(userId);
@@ -375,7 +391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/connection-requests/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/connection-requests/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
@@ -410,7 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/match-connections/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/match-connections/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
@@ -462,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/user/profile', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/user/profile', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const profileData = req.body;
@@ -475,7 +491,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/user/privacy', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/user/privacy', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { updatePrivacySettingsSchema } = await import("@shared/schema");
@@ -529,7 +545,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Serve uploaded files statically
   app.use('/uploads', express.static(uploadsDir));
 
-  app.post('/api/upload-photo', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/upload-photo', authMiddleware, upload.single('file'), async (req: any, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: 'No file uploaded' });
@@ -557,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a new game profile
-  app.post('/api/game-profiles', isAuthenticated, async (req: any, res) => {
+  app.post('/api/game-profiles', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const profile = await storage.createGameProfile({
@@ -572,7 +588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update a game profile
-  app.patch('/api/game-profiles/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/game-profiles/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const profile = await storage.getGameProfile(id);
@@ -594,7 +610,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete a game profile
-  app.delete('/api/game-profiles/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/game-profiles/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
@@ -619,7 +635,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/hobbies', isAuthenticated, async (req: any, res) => {
+  app.post('/api/hobbies', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const hobbyData = { ...req.body, userId };
@@ -631,7 +647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/hobbies/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/hobbies/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const hobby = await storage.getHobby(id);
@@ -652,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/hobbies/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/hobbies/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;
       const userId = req.user.id;
@@ -665,7 +681,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mutuals routes
-  app.get('/api/mutuals/:userId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/mutuals/:userId', authMiddleware, async (req: any, res) => {
     try {
       const currentUserId = req.user.id;
       const { userId } = req.params;
@@ -708,7 +724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Hidden matches routes
-  app.get('/api/hidden-matches', isAuthenticated, async (req: any, res) => {
+  app.get('/api/hidden-matches', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const hiddenIds = await storage.getHiddenMatchIds(userId);
@@ -719,7 +735,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/hidden-matches', isAuthenticated, async (req: any, res) => {
+  app.post('/api/hidden-matches', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { matchRequestId } = req.body;
@@ -736,7 +752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/hidden-matches/:matchRequestId', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/hidden-matches/:matchRequestId', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { matchRequestId } = req.params;
@@ -750,7 +766,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Chat message routes
-  app.get('/api/messages/:connectionId', isAuthenticated, async (req: any, res) => {
+  app.get('/api/messages/:connectionId', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
       const { connectionId } = req.params;
@@ -775,7 +791,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/messages', isAuthenticated, async (req: any, res) => {
+  app.post('/api/messages', authMiddleware, async (req: any, res) => {
     try {
       const senderId = req.user.id;
       const { connectionId, receiverId, message } = req.body;
