@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -27,9 +27,17 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
     queryKey: ['/api/auth/user'],
   });
 
-  const [showMutualGames, setShowMutualGames] = useState(user?.showMutualGames || "everyone");
-  const [showMutualFriends, setShowMutualFriends] = useState(user?.showMutualFriends || "everyone");
-  const [showMutualHobbies, setShowMutualHobbies] = useState(user?.showMutualHobbies || "everyone");
+  const [showMutualGames, setShowMutualGames] = useState("everyone");
+  const [showMutualFriends, setShowMutualFriends] = useState("everyone");
+  const [showMutualHobbies, setShowMutualHobbies] = useState("everyone");
+
+  useEffect(() => {
+    if (user) {
+      setShowMutualGames(user.showMutualGames || "everyone");
+      setShowMutualFriends(user.showMutualFriends || "everyone");
+      setShowMutualHobbies(user.showMutualHobbies || "everyone");
+    }
+  }, [user]);
 
   const updatePrivacyMutation = useMutation({
     mutationFn: async (settings: { showMutualGames?: string; showMutualFriends?: string; showMutualHobbies?: string }) => {
@@ -95,6 +103,7 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
               onValueChange={setShowMutualGames}
               className="space-y-2"
               data-testid="radio-group-mutual-games"
+              disabled={updatePrivacyMutation.isPending}
             >
               {visibilityOptions.map((option) => (
                 <div key={option.value} className="flex items-center space-x-3 space-y-0">
@@ -102,6 +111,7 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
                     value={option.value}
                     id={`games-${option.value}`}
                     data-testid={`radio-mutual-games-${option.value}`}
+                    disabled={updatePrivacyMutation.isPending}
                   />
                   <Label
                     htmlFor={`games-${option.value}`}
@@ -130,6 +140,7 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
               onValueChange={setShowMutualFriends}
               className="space-y-2"
               data-testid="radio-group-mutual-friends"
+              disabled={updatePrivacyMutation.isPending}
             >
               {visibilityOptions.map((option) => (
                 <div key={option.value} className="flex items-center space-x-3 space-y-0">
@@ -137,6 +148,7 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
                     value={option.value}
                     id={`friends-${option.value}`}
                     data-testid={`radio-mutual-friends-${option.value}`}
+                    disabled={updatePrivacyMutation.isPending}
                   />
                   <Label
                     htmlFor={`friends-${option.value}`}
@@ -165,6 +177,7 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
               onValueChange={setShowMutualHobbies}
               className="space-y-2"
               data-testid="radio-group-mutual-hobbies"
+              disabled={updatePrivacyMutation.isPending}
             >
               {visibilityOptions.map((option) => (
                 <div key={option.value} className="flex items-center space-x-3 space-y-0">
@@ -172,6 +185,7 @@ export function PrivacySettings({ userId }: PrivacySettingsProps) {
                     value={option.value}
                     id={`hobbies-${option.value}`}
                     data-testid={`radio-mutual-hobbies-${option.value}`}
+                    disabled={updatePrivacyMutation.isPending}
                   />
                   <Label
                     htmlFor={`hobbies-${option.value}`}
