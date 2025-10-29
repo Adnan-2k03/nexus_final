@@ -16,8 +16,8 @@ import fs from "fs";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Development mode flag - bypass authentication for easier development
-const DEV_MODE = process.env.AUTH_DISABLED === "true" || process.env.NODE_ENV === "development";
+// Development mode flag - bypass authentication when explicitly enabled
+const DEV_MODE = process.env.AUTH_DISABLED === "true";
 
 // Choose authentication middleware based on mode
 const authMiddleware = DEV_MODE ? devAuthMiddleware : isAuthenticated;

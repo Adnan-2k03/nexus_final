@@ -4,7 +4,7 @@ import { storage } from "./storage";
 // DEVELOPMENT MODE: This file provides authentication bypass for development
 // To enable authentication, see instructions in replit.md
 
-const DEV_MODE = process.env.AUTH_DISABLED === "true" || process.env.NODE_ENV === "development";
+const DEV_MODE = process.env.AUTH_DISABLED === "true";
 
 export const DEV_USER_ID = "dev-user-123";
 export const DEV_USER_EMAIL = "dev@gamematch.com";

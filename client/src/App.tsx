@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Components
-import { LandingPage } from "@/components/LandingPage";
+import { AuthPage } from "@/components/AuthPage";
 import { GameNavigation } from "@/components/GameNavigation";
 import { MatchFeed } from "@/components/MatchFeed";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
@@ -69,13 +69,11 @@ function Router() {
     );
   }
 
-  const handleLogin = () => {
-    // Redirect to Google OAuth endpoint
-    window.location.href = '/api/auth/google';
+  const handleAuthSuccess = () => {
+    window.location.href = '/';
   };
 
   const handleLogout = () => {
-    // Redirect to logout endpoint
     window.location.href = '/api/logout';
   };
 
@@ -309,7 +307,7 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={() => <LandingPage onLogin={handleLogin} />} />
+        <Route path="/" component={() => <AuthPage onAuthSuccess={handleAuthSuccess} />} />
       ) : (
         <>
           <Route path="/">
