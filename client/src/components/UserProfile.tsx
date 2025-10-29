@@ -183,31 +183,32 @@ export function UserProfile({
             <Accordion type="single" collapsible className="w-full">
               {gameProfiles.map((profile) => (
                 <AccordionItem key={profile.id} value={profile.id}>
-                  <AccordionTrigger className="hover:no-underline">
-                    <div className="flex items-center gap-3">
-                      <Gamepad2 className="h-5 w-5 text-primary" />
-                      <span className="text-lg font-semibold">{profile.gameName}</span>
-                      {profile.currentRank && (
-                        <Badge variant="outline" className="ml-2">
-                          {profile.currentRank}
-                        </Badge>
-                      )}
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="space-y-6 pt-6">
-                    {isOwn && (
-                      <div className="flex justify-end">
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          onClick={() => handleEditProfile(profile)}
-                          data-testid={`button-edit-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Edit {profile.gameName} Profile
-                        </Button>
+                  <div className="flex items-center justify-between gap-4 px-1">
+                    <AccordionTrigger className="hover:no-underline flex-1">
+                      <div className="flex items-center gap-3">
+                        <Gamepad2 className="h-5 w-5 text-primary" />
+                        <span className="text-lg font-semibold">{profile.gameName}</span>
+                        {profile.currentRank && (
+                          <Badge variant="outline" className="ml-2">
+                            {profile.currentRank}
+                          </Badge>
+                        )}
                       </div>
+                    </AccordionTrigger>
+                    {isOwn && (
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleEditProfile(profile)}
+                        className="flex-shrink-0"
+                        data-testid={`button-edit-game-${profile.gameName.toLowerCase().replace(/\s+/g, '-')}`}
+                      >
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit {profile.gameName} Profile
+                      </Button>
                     )}
+                  </div>
+                  <AccordionContent className="space-y-6 pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {profile.currentRank && (
                       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
@@ -250,127 +251,165 @@ export function UserProfile({
                         </CardContent>
                       </Card>
                     )}
-
-                    {profile.achievements && profile.achievements.length > 0 && (
-                      <Card className="bg-gradient-to-br from-purple-500/5 to-purple-500/10 border-purple-500/20">
-                        <CardContent className="p-4 space-y-2">
-                          <div className="flex items-center gap-2 text-purple-600 dark:text-purple-400">
-                            <Award className="h-5 w-5" />
-                            <span className="text-sm font-semibold">Achievements</span>
-                          </div>
-                          <p className="text-2xl font-bold" data-testid={`text-achievements-count-${profile.id}`}>
-                            {profile.achievements.length}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
                   </div>
 
-                  {profile.achievements && profile.achievements.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                        Esport Achievements
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {profile.achievements.map((achievement, index) => (
-                          <Card key={index} className="bg-purple-500/5 border-purple-500/20">
-                            <CardContent className="p-3">
-                              <p className="text-sm font-medium" data-testid={`text-achievement-${profile.id}-${index}`}>
-                                {achievement}
-                              </p>
-                            </CardContent>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {profile.clipUrls && profile.clipUrls.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
-                        Best Clips & Highlights
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {profile.clipUrls.map((clipUrl, index) => (
-                          <Dialog key={index}>
-                            <DialogTrigger asChild>
-                              <Card 
-                                className="cursor-pointer hover:bg-accent/50 transition-colors bg-gradient-to-br from-red-500/5 to-red-500/10 border-red-500/20"
-                                data-testid={`card-clip-${profile.id}-${index}`}
-                              >
-                                <CardContent className="p-4 flex items-center justify-center gap-3">
-                                  <Play className="h-8 w-8 text-red-600 dark:text-red-400" />
-                                  <div className="text-left flex-1">
-                                    <p className="text-sm font-semibold">Clip {index + 1}</p>
-                                    <p className="text-xs text-muted-foreground truncate">{clipUrl}</p>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-4xl">
-                              <DialogHeader>
-                                <DialogTitle>Clip {index + 1} - {profile.gameName}</DialogTitle>
-                              </DialogHeader>
-                              <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
-                                {clipUrl.includes('youtube.com') || clipUrl.includes('youtu.be') ? (
-                                  <iframe
-                                    src={clipUrl.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
-                                    className="w-full h-full"
-                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                    allowFullScreen
+                  {(() => {
+                    const achievementDetails = Array.isArray(profile.achievementDetails) 
+                      ? profile.achievementDetails as Array<{title: string; photoUrl?: string; link?: string}> 
+                      : [];
+                    return achievementDetails.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                          Esport Achievements
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {achievementDetails.map((achievement, index) => (
+                            <Card key={index} className="bg-purple-500/5 border-purple-500/20 overflow-hidden">
+                              {achievement.photoUrl && (
+                                <div className="aspect-video bg-muted relative">
+                                  <img 
+                                    src={achievement.photoUrl} 
+                                    alt={achievement.title}
+                                    className="w-full h-full object-cover"
                                   />
-                                ) : clipUrl.includes('twitch.tv') ? (
-                                  <iframe
-                                    src={clipUrl.replace('twitch.tv/', 'player.twitch.tv/?video=').replace('clips/', 'player.twitch.tv/?clip=')}
-                                    className="w-full h-full"
-                                    allowFullScreen
-                                  />
-                                ) : (
-                                  <div className="flex items-center justify-center h-full">
-                                    <a 
-                                      href={clipUrl} 
-                                      target="_blank" 
-                                      rel="noopener noreferrer"
-                                      className="text-primary hover:underline"
-                                    >
-                                      Open Clip in New Tab
-                                    </a>
-                                  </div>
+                                </div>
+                              )}
+                              <CardContent className="p-4 space-y-2">
+                                <p className="font-semibold" data-testid={`text-achievement-title-${profile.id}-${index}`}>
+                                  {achievement.title}
+                                </p>
+                                {achievement.link && (
+                                  <a 
+                                    href={achievement.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                                  >
+                                    View Details →
+                                  </a>
                                 )}
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        ))}
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
-                  {profile.stats && Object.keys(profile.stats).length > 0 && (
+                  {(() => {
+                    const clipUrls = Array.isArray(profile.clipUrls) 
+                      ? profile.clipUrls as Array<{title: string; link: string}> 
+                      : [];
+                    return clipUrls.length > 0 && (
+                      <div className="space-y-3">
+                        <h3 className="text-lg font-semibold flex items-center gap-2">
+                          <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
+                          Best Clips & Highlights
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {clipUrls.map((clip, index) => (
+                            <Dialog key={index}>
+                              <DialogTrigger asChild>
+                                <Card 
+                                  className="cursor-pointer hover:bg-accent/50 transition-colors bg-gradient-to-br from-red-500/5 to-red-500/10 border-red-500/20"
+                                  data-testid={`card-clip-${profile.id}-${index}`}
+                                >
+                                  <CardContent className="p-4 flex items-center gap-3">
+                                    <Play className="h-8 w-8 text-red-600 dark:text-red-400 flex-shrink-0" />
+                                    <div className="text-left flex-1 min-w-0">
+                                      <p className="text-sm font-semibold truncate">{clip.title}</p>
+                                      <p className="text-xs text-muted-foreground truncate">{clip.link}</p>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-4xl">
+                                <DialogHeader>
+                                  <DialogTitle>{clip.title}</DialogTitle>
+                                </DialogHeader>
+                                <div className="aspect-video w-full bg-black rounded-lg overflow-hidden">
+                                  {clip.link.includes('youtube.com') || clip.link.includes('youtu.be') ? (
+                                    <iframe
+                                      src={clip.link.replace('watch?v=', 'embed/').replace('youtu.be/', 'youtube.com/embed/')}
+                                      className="w-full h-full"
+                                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                      allowFullScreen
+                                    />
+                                  ) : clip.link.includes('twitch.tv') ? (
+                                    <iframe
+                                      src={clip.link.replace('twitch.tv/', 'player.twitch.tv/?video=').replace('clips/', 'player.twitch.tv/?clip=')}
+                                      className="w-full h-full"
+                                      allowFullScreen
+                                    />
+                                  ) : (
+                                    <div className="flex items-center justify-center h-full">
+                                      <a 
+                                        href={clip.link} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-primary hover:underline"
+                                      >
+                                        Open Clip in New Tab
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {profile.statsPhotoUrl && (
                     <div className="space-y-3">
                       <h3 className="text-lg font-semibold flex items-center gap-2">
                         <Star className="h-5 w-5 text-primary" />
-                        Stats & Details
+                        Stats Screenshot
+                        {profile.statsPhotoDate && (
+                          <span className="text-sm font-normal text-muted-foreground ml-2">
+                            ({profile.statsPhotoDate})
+                          </span>
+                        )}
                       </h3>
-                      <Card className="bg-muted/30">
-                        <CardContent className="p-4">
-                          <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {Object.entries(profile.stats as Record<string, string | number | boolean>).map(([key, value]) => (
-                              <div key={key} className="flex justify-between items-center">
-                                <dt className="text-sm text-muted-foreground capitalize">
-                                  {key.replace(/([A-Z])/g, ' $1').trim()}:
-                                </dt>
-                                <dd className="text-sm font-semibold" data-testid={`text-stat-${profile.id}-${key}`}>
-                                  {String(value)}
-                                </dd>
-                              </div>
-                            ))}
-                          </dl>
-                        </CardContent>
+                      <Card className="overflow-hidden">
+                        <img 
+                          src={profile.statsPhotoUrl} 
+                          alt="Stats screenshot"
+                          className="w-full h-auto"
+                        />
                       </Card>
                     </div>
                   )}
+
+                  {(() => {
+                    const customSections = Array.isArray(profile.customSections) 
+                      ? profile.customSections as Array<{heading: string; fields: Array<{label: string; value: string}>}> 
+                      : [];
+                    return customSections.length > 0 && customSections.map((section, sectionIndex) => (
+                      <div key={sectionIndex} className="space-y-3">
+                        <h3 className="text-lg font-semibold">{section.heading}</h3>
+                        <Card className="bg-muted/30">
+                          <CardContent className="p-4">
+                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {section.fields.map((field, fieldIndex) => (
+                                <div key={fieldIndex} className="flex justify-between items-center">
+                                  <dt className="text-sm text-muted-foreground">
+                                    {field.label}:
+                                  </dt>
+                                  <dd className="text-sm font-semibold" data-testid={`text-custom-${profile.id}-${sectionIndex}-${fieldIndex}`}>
+                                    {field.value}
+                                  </dd>
+                                </div>
+                              ))}
+                            </dl>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    ));
+                  })()}
                   </AccordionContent>
                 </AccordionItem>
               ))}

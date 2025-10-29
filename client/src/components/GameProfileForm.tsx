@@ -33,6 +33,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -373,14 +379,15 @@ export function GameProfileForm({
           <TabsContent value="default" className="mt-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Star className="h-5 w-5 text-primary" />
-                      Game Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                <Accordion type="multiple" defaultValue={["game-info", "performance", "achievements", "clips"]} className="w-full">
+                  <AccordionItem value="game-info">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Star className="h-5 w-5 text-primary" />
+                        <span className="text-lg font-semibold">Game Information</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
                     <FormField
                       control={form.control}
                       name="gameName"
@@ -412,17 +419,17 @@ export function GameProfileForm({
                         </FormItem>
                       )}
                     />
-                  </CardContent>
-                </Card>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                      Performance Metrics
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  <AccordionItem value="performance">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                        <span className="text-lg font-semibold">Performance Metrics</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
@@ -536,17 +543,17 @@ export function GameProfileForm({
                         )}
                       />
                     </div>
-                  </CardContent>
-                </Card>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                      Achievements (Max 3) *
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  <AccordionItem value="achievements">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                        <span className="text-lg font-semibold">Achievements (Max 3) *</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <FormDescription>
@@ -649,17 +656,17 @@ export function GameProfileForm({
                         ))}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
-                      Best Clips & Highlights (Max 3) *
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                  <AccordionItem value="clips">
+                    <AccordionTrigger className="hover:no-underline">
+                      <div className="flex items-center gap-2">
+                        <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
+                        <span className="text-lg font-semibold">Best Clips & Highlights (Max 3) *</span>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="space-y-4 pt-4">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <FormDescription>
@@ -734,8 +741,9 @@ export function GameProfileForm({
                         ))}
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
                 <Separator />
 
