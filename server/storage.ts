@@ -50,9 +50,11 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserByGamertag(gamertag: string): Promise<User | undefined>;
   getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<User[]>;
   upsertUser(user: UpsertUser): Promise<User>;
   upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
+  createLocalUser(userData: { gamertag: string; firstName?: string | null; lastName?: string | null; email?: string | null; age?: number | null; gender?: "male" | "female" | "custom" | "prefer_not_to_say" | null; bio?: string | null; location?: string | null; preferredGames?: string[] | null }): Promise<User>;
   updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
   updatePrivacySettings(id: string, settings: { showMutualGames?: string; showMutualFriends?: string; showMutualHobbies?: string }): Promise<User>;
   
@@ -184,27 +186,66 @@ export class DatabaseStorage implements IStorage {
   }
 
   async upsertUserByGoogleId(userData: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User> {
+    const baseGamertag = userData.email?.split('@')[0] || userData.googleId;
+    let gamertag = baseGamertag;
+    let suffix = 0;
+    
+    while (true) {
+      try {
+        const [user] = await db
+          .insert(users)
+          .values({
+            googleId: userData.googleId,
+            email: userData.email,
+            firstName: userData.firstName || null,
+            lastName: userData.lastName || null,
+            profileImageUrl: userData.profileImageUrl || null,
+            gamertag,
+          })
+          .onConflictDoUpdate({
+            target: users.googleId,
+            set: {
+              email: userData.email,
+              firstName: userData.firstName || null,
+              lastName: userData.lastName || null,
+              profileImageUrl: userData.profileImageUrl || null,
+              updatedAt: new Date(),
+            },
+          })
+          .returning();
+        return user;
+      } catch (error: any) {
+        if (error.code === '23505' && error.constraint === 'users_gamertag_unique') {
+          suffix++;
+          gamertag = `${baseGamertag}${suffix}`;
+        } else {
+          throw error;
+        }
+      }
+    }
+  }
+  
+  async createLocalUser(userData: { gamertag: string; firstName?: string | null; lastName?: string | null; email?: string | null; age?: number | null; gender?: "male" | "female" | "custom" | "prefer_not_to_say" | null; bio?: string | null; location?: string | null; preferredGames?: string[] | null }): Promise<User> {
     const [user] = await db
       .insert(users)
       .values({
-        googleId: userData.googleId,
-        email: userData.email,
+        gamertag: userData.gamertag,
         firstName: userData.firstName || null,
         lastName: userData.lastName || null,
-        profileImageUrl: userData.profileImageUrl || null,
-      })
-      .onConflictDoUpdate({
-        target: users.googleId,
-        set: {
-          email: userData.email,
-          firstName: userData.firstName || null,
-          lastName: userData.lastName || null,
-          profileImageUrl: userData.profileImageUrl || null,
-          updatedAt: new Date(),
-        },
+        email: userData.email || null,
+        age: userData.age || null,
+        gender: userData.gender || null,
+        bio: userData.bio || null,
+        location: userData.location || null,
+        preferredGames: userData.preferredGames || null,
       })
       .returning();
     return user;
+  }
+  
+  async getUserByGamertag(gamertag: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.gamertag, gamertag));
+    return user || undefined;
   }
 
   async updateUserProfile(id: string, profile: Partial<User>): Promise<User> {

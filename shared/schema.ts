@@ -28,16 +28,16 @@ export const sessions = pgTable(
   (table) => [index("IDX_session_expire").on(table.expire)],
 );
 
-// User storage table for Google OAuth
+// User storage table - supports both OAuth and local registration
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  googleId: varchar("google_id").unique().notNull(),
-  email: varchar("email").unique().notNull(),
+  googleId: varchar("google_id").unique(),
+  email: varchar("email").unique(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
   // Gaming profile fields
-  gamertag: varchar("gamertag").unique(),
+  gamertag: varchar("gamertag").unique().notNull(),
   bio: text("bio"),
   location: varchar("location"),
   latitude: real("latitude"),
@@ -212,6 +212,22 @@ export type MatchConnectionWithUser = MatchConnection & {
 };
 
 export const insertUserSchema = createInsertSchema(users);
+
+// Local registration schema - minimal fields required to create account
+export const registerUserSchema = z.object({
+  gamertag: z.string().min(3, "Gamertag must be at least 3 characters").max(20, "Gamertag must be at most 20 characters"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  email: z.string().email().optional(),
+  age: z.number().min(13, "You must be at least 13 years old").max(120).optional(),
+  gender: z.enum(["male", "female", "custom", "prefer_not_to_say"]).optional(),
+  bio: z.string().max(500).optional(),
+  location: z.string().optional(),
+  preferredGames: z.array(z.string()).optional(),
+});
+
+export type RegisterUser = z.infer<typeof registerUserSchema>;
+
 export const insertMatchRequestSchema = createInsertSchema(matchRequests).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertConnectionRequestSchema = createInsertSchema(connectionRequests).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMatchConnectionSchema = createInsertSchema(matchConnections).omit({ id: true, createdAt: true, updatedAt: true });

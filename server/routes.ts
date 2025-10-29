@@ -5,7 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./googleAuth";
 import { devAuthMiddleware, ensureDevUser } from "./devAuth";
-import { insertMatchRequestSchema } from "@shared/schema";
+import { insertMatchRequestSchema, registerUserSchema, type RegisterUser } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -44,6 +44,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+  
+  // Local registration endpoint
+  app.post('/api/auth/register', async (req: any, res) => {
+    try {
+      const validatedData = registerUserSchema.parse(req.body);
+      
+      const existingUser = await storage.getUserByGamertag(validatedData.gamertag);
+      if (existingUser) {
+        return res.status(400).json({ message: "Gamertag already taken" });
+      }
+      
+      const user = await storage.createLocalUser(validatedData);
+      
+      req.login(user, (err: any) => {
+        if (err) {
+          console.error("Error logging in after registration:", err);
+          return res.status(500).json({ message: "Registration successful but login failed" });
+        }
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid registration data", errors: error.errors });
+      } else if ((error as any).code === '23505') {
+        res.status(400).json({ message: "Gamertag or email already taken" });
+      } else {
+        console.error("Error registering user:", error);
+        res.status(500).json({ message: "Failed to register user" });
+      }
+    }
+  });
+  
+  // Local login endpoint
+  app.post('/api/auth/login', async (req: any, res) => {
+    try {
+      const { gamertag } = req.body;
+      
+      if (!gamertag) {
+        return res.status(400).json({ message: "Gamertag is required" });
+      }
+      
+      const user = await storage.getUserByGamertag(gamertag);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      req.login(user, (err: any) => {
+        if (err) {
+          console.error("Error logging in:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        res.json(user);
+      });
+    } catch (error) {
+      console.error("Error logging in:", error);
+      res.status(500).json({ message: "Failed to log in" });
     }
   });
 

@@ -108,6 +108,19 @@ export async function setupAuth(app: Express) {
         done(error);
       }
     });
+  } else {
+    passport.serializeUser((user: any, done) => {
+      done(null, user.id);
+    });
+
+    passport.deserializeUser(async (id: string, done) => {
+      try {
+        const user = await storage.getUser(id);
+        done(null, user);
+      } catch (error) {
+        done(error);
+      }
+    });
 
     app.get("/api/auth/google", 
       passport.authenticate("google", { 
