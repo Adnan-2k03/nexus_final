@@ -466,6 +466,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Photo upload route
+  const multer = require('multer');
+  const path = require('path');
+  const fs = require('fs');
+
+  // Create uploads directory if it doesn't exist
+  const uploadsDir = path.join(__dirname, '../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const storage_multer = multer.diskStorage({
+    destination: (req: any, file: any, cb: any) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req: any, file: any, cb: any) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({
+    storage: storage_multer,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req: any, file: any, cb: any) => {
+      const allowedTypes = /jpeg|jpg|png|gif|webp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+
+      if (mimetype && extname) {
+        return cb(null, true);
+      }
+      cb(new Error('Only image files are allowed!'));
+    }
+  });
+
+  // Serve uploaded files statically
+  app.use('/uploads', require('express').static(uploadsDir));
+
+  app.post('/api/upload-photo', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: 'No file uploaded' });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: fileUrl });
+    } catch (error: any) {
+      console.error('Error uploading photo:', error);
+      res.status(500).json({ message: error.message || 'Failed to upload photo' });
+    }
+  });
+
   // Game profile routes
   // Get all game profiles for a user
   app.get('/api/users/:userId/game-profiles', async (req, res) => {

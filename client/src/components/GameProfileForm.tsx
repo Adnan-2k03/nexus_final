@@ -1,7 +1,7 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,12 +27,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Plus, X, Trophy, Star, Clock, Award, Play, Trash2 } from "lucide-react";
+import { Plus, X, Trophy, Star, Award, Play, Trash2, Upload } from "lucide-react";
 import type { GameProfile } from "@shared/schema";
 import { insertGameProfileSchema } from "@shared/schema";
 
@@ -45,22 +52,27 @@ const popularGames = [
 
 const gameProfileFormSchema = z.object({
   gameName: z.string().min(1, "Game name is required"),
-  currentRank: z.string().optional(),
-  highestRank: z.string().optional(),
-  hoursPlayed: z.number().min(0).max(100000).optional().nullable(),
-  achievements: z.array(z.string().min(1, "Achievement cannot be empty")).optional(),
+  currentRank: z.string().min(1, "Current rank is required"),
+  highestRank: z.string().min(1, "Highest rank is required"),
+  hoursPlayed: z.number().min(0, "Hours played must be 0 or more").max(100000),
   achievementDetails: z.array(z.object({
     title: z.string().min(1, "Title is required"),
-    photoUrl: z.string().url("Must be a valid URL").optional(),
-    link: z.string().url("Must be a valid URL").optional(),
+    photoUrl: z.string().optional(),
+    link: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  })).min(1, "At least 1 achievement is required").max(3, "Maximum 3 achievements allowed"),
+  clipUrls: z.array(z.object({
+    title: z.string().min(1, "Title is required"),
+    link: z.string().url("Must be a valid URL").min(1, "Link is required"),
+  })).min(1, "At least 1 clip is required").max(3, "Maximum 3 clips allowed"),
+  statsPhotoUrl: z.string().optional(),
+  statsPhotoDate: z.string().min(1, "Stats date is required"),
+  customSections: z.array(z.object({
+    heading: z.string().min(1, "Heading is required"),
+    fields: z.array(z.object({
+      label: z.string().min(1, "Label is required"),
+      value: z.string().min(1, "Value is required"),
+    })),
   })).optional(),
-  clipUrls: z.array(z.string().url("Must be a valid URL")).optional(),
-  statsEntries: z.array(z.object({
-    key: z.string().min(1, "Key is required"),
-    value: z.string().min(1, "Value is required"),
-  })).optional(),
-  statsPhotoUrl: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
-  statsPhotoDate: z.string().or(z.literal("")).optional(),
 });
 
 type GameProfileFormValues = z.infer<typeof gameProfileFormSchema>;
@@ -82,12 +94,19 @@ export function GameProfileForm({
 }: GameProfileFormProps) {
   const { toast } = useToast();
   const isEditing = !!profile;
+  const [activeTab, setActiveTab] = useState("default");
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  const statsEntries = profile?.stats && typeof profile.stats === 'object'
-    ? Object.entries(profile.stats).map(([key, value]) => ({
-        key,
-        value: String(value),
-      }))
+  const clipsData = profile?.clipUrls && Array.isArray(profile.clipUrls)
+    ? profile.clipUrls as Array<{title: string; link: string}>
+    : [];
+
+  const achievementsData = profile?.achievementDetails && Array.isArray(profile.achievementDetails)
+    ? (profile.achievementDetails as Array<{title: string; photoUrl?: string; link?: string}>).slice(0, 3)
+    : [];
+
+  const customSectionsData = profile?.customSections && Array.isArray(profile.customSections)
+    ? profile.customSections as Array<{heading: string; fields: Array<{label: string; value: string}>}>
     : [];
 
   const form = useForm<GameProfileFormValues>({
@@ -96,26 +115,13 @@ export function GameProfileForm({
       gameName: profile?.gameName || "",
       currentRank: profile?.currentRank || "",
       highestRank: profile?.highestRank || "",
-      hoursPlayed: profile?.hoursPlayed || null,
-      achievements: profile?.achievements || [],
-      clipUrls: profile?.clipUrls || [],
-      statsEntries: statsEntries,
+      hoursPlayed: profile?.hoursPlayed || 0,
+      achievementDetails: achievementsData.length > 0 ? achievementsData : [{ title: "", photoUrl: "", link: "" }],
+      clipUrls: clipsData.length > 0 ? clipsData : [{ title: "", link: "" }],
+      statsPhotoUrl: profile?.statsPhotoUrl || "",
+      statsPhotoDate: profile?.statsPhotoDate || "",
+      customSections: customSectionsData,
     },
-  });
-
-  const { fields: achievementFields, append: appendAchievement, remove: removeAchievement } = useFieldArray({
-    control: form.control as any,
-    name: "achievements",
-  });
-
-  const { fields: clipFields, append: appendClip, remove: removeClip } = useFieldArray({
-    control: form.control as any,
-    name: "clipUrls",
-  });
-
-  const { fields: statsFields, append: appendStat, remove: removeStat } = useFieldArray({
-    control: form.control as any,
-    name: "statsEntries",
   });
 
   const { fields: achievementDetailFields, append: appendAchievementDetail, remove: removeAchievementDetail } = useFieldArray({
@@ -123,33 +129,133 @@ export function GameProfileForm({
     name: "achievementDetails",
   });
 
+  const { fields: clipFields, append: appendClip, remove: removeClip } = useFieldArray({
+    control: form.control as any,
+    name: "clips",
+  });
+
+  const { fields: customSectionFields, append: appendCustomSection, remove: removeCustomSection } = useFieldArray({
+    control: form.control as any,
+    name: "customSections",
+  });
+
   useEffect(() => {
     if (open) {
-      const newStatsEntries = profile?.stats && typeof profile.stats === 'object'
-        ? Object.entries(profile.stats).map(([key, value]) => ({
-            key,
-            value: String(value),
-          }))
+      const newClipsData = profile?.clipUrls && Array.isArray(profile.clipUrls)
+        ? profile.clipUrls as Array<{title: string; link: string}>
         : [];
-      
-      const achievementsData = profile?.achievementDetails && Array.isArray(profile.achievementDetails)
-        ? profile.achievementDetails as Array<{title: string; photoUrl?: string; link?: string}>
+
+      const newAchievementsData = profile?.achievementDetails && Array.isArray(profile.achievementDetails)
+        ? (profile.achievementDetails as Array<{title: string; photoUrl?: string; link?: string}>).slice(0, 3)
+        : [];
+
+      const newCustomSectionsData = profile?.customSections && Array.isArray(profile.customSections)
+        ? profile.customSections as Array<{heading: string; fields: Array<{label: string; value: string}>}>
         : [];
       
       form.reset({
         gameName: profile?.gameName || "",
         currentRank: profile?.currentRank || "",
         highestRank: profile?.highestRank || "",
-        hoursPlayed: profile?.hoursPlayed || null,
-        achievements: profile?.achievements || [],
-        achievementDetails: achievementsData,
-        clipUrls: profile?.clipUrls || [],
-        statsEntries: newStatsEntries,
+        hoursPlayed: profile?.hoursPlayed || 0,
+        achievementDetails: newAchievementsData.length > 0 ? newAchievementsData : [{ title: "", photoUrl: "", link: "" }],
+        clipUrls: newClipsData.length > 0 ? newClipsData : [{ title: "", link: "" }],
         statsPhotoUrl: profile?.statsPhotoUrl || "",
         statsPhotoDate: profile?.statsPhotoDate || "",
+        customSections: newCustomSectionsData,
       });
     }
   }, [open, profile, form]);
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      form.setValue(fieldName as any, data.url);
+      
+      toast({
+        title: "Success",
+        description: "Photo uploaded successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handleAchievementPhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      form.setValue(`achievementDetails.${index}.photoUrl` as any, data.url);
+      
+      toast({
+        title: "Success",
+        description: "Photo uploaded successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -221,28 +327,18 @@ export function GameProfileForm({
   });
 
   const onSubmit = (data: GameProfileFormValues) => {
-    const { statsEntries, achievementDetails, ...rest } = data;
+    const { customSections, achievementDetails, ...rest } = data;
     
-    const stats = statsEntries?.length
-      ? statsEntries.reduce((acc, { key, value }) => {
-          acc[key] = value;
-          return acc;
-        }, {} as Record<string, any>)
-      : undefined;
-
     const filteredAchievementDetails = achievementDetails?.filter(a => a.title.trim());
+    const filteredClips = data.clipUrls?.filter(c => c.title.trim() && c.link.trim());
+    const filteredCustomSections = customSections?.filter(s => s.heading.trim() && s.fields.length > 0);
     
     const payload = {
       ...rest,
-      hoursPlayed: rest.hoursPlayed ?? undefined,
-      currentRank: rest.currentRank || undefined,
-      highestRank: rest.highestRank || undefined,
-      achievements: rest.achievements?.filter(a => a.trim()).length ? rest.achievements.filter(a => a.trim()) : undefined,
-      achievementDetails: filteredAchievementDetails?.length ? filteredAchievementDetails : undefined,
-      clipUrls: rest.clipUrls?.filter(c => c.trim()).length ? rest.clipUrls.filter(c => c.trim()) : undefined,
-      stats: stats && Object.keys(stats).length > 0 ? stats : undefined,
+      achievementDetails: filteredAchievementDetails,
+      clipUrls: filteredClips,
+      customSections: filteredCustomSections?.length ? filteredCustomSections : undefined,
       statsPhotoUrl: rest.statsPhotoUrl?.trim() || undefined,
-      statsPhotoDate: rest.statsPhotoDate?.trim() || undefined,
     };
 
     if (isEditing) {
@@ -256,7 +352,7 @@ export function GameProfileForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle data-testid="dialog-title-game-profile">
             {isEditing ? "Edit Game Profile" : "Add Game Profile"}
@@ -268,446 +364,608 @@ export function GameProfileForm({
           </DialogDescription>
         </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Star className="h-5 w-5 text-primary" />
-                  Game Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="gameName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Game Name</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={isEditing}
-                      >
-                        <FormControl>
-                          <SelectTrigger data-testid="select-game-name">
-                            <SelectValue placeholder="Select a game" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {popularGames.map((game) => (
-                            <SelectItem key={game} value={game}>
-                              {game}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        {isEditing ? "Game cannot be changed after creation" : "Choose the game for this profile"}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="default" data-testid="tab-default-portfolio">Default Portfolio</TabsTrigger>
+            <TabsTrigger value="custom" data-testid="tab-custom-portfolio">Custom Portfolio</TabsTrigger>
+          </TabsList>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                  Performance Metrics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="currentRank"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Current Rank</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g., Diamond II" 
-                            {...field} 
-                            data-testid="input-current-rank"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+          <TabsContent value="default" className="mt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Star className="h-5 w-5 text-primary" />
+                      Game Information
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="gameName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Game Name *</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                            disabled={isEditing}
+                          >
+                            <FormControl>
+                              <SelectTrigger data-testid="select-game-name">
+                                <SelectValue placeholder="Select a game" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {popularGames.map((game) => (
+                                <SelectItem key={game} value={game}>
+                                  {game}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            {isEditing ? "Game cannot be changed after creation" : "Choose the game for this profile"}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </CardContent>
+                </Card>
 
-                  <FormField
-                    control={form.control}
-                    name="highestRank"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Highest Rank</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="e.g., Immortal I" 
-                            {...field} 
-                            data-testid="input-highest-rank"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Trophy className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+                      Performance Metrics
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="currentRank"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Current Rank *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="e.g., Diamond II" 
+                                {...field} 
+                                data-testid="input-current-rank"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                <FormField
-                  control={form.control}
-                  name="hoursPlayed"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Hours Played</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder="e.g., 1500" 
-                          {...field}
-                          onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : null)}
-                          value={field.value ?? ""}
-                          data-testid="input-hours-played"
-                        />
-                      </FormControl>
-                      <FormDescription>Total hours played in this game</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <FormField
+                        control={form.control}
+                        name="highestRank"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Highest Rank *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="e.g., Immortal I" 
+                                {...field} 
+                                data-testid="input-highest-rank"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
 
-                <Separator className="my-4" />
-
-                <div className="space-y-4">
-                  <FormLabel>Stats Screenshot (Optional)</FormLabel>
-                  <FormDescription>Upload your in-game stats screenshot to showcase your performance</FormDescription>
-                  
-                  <FormField
-                    control={form.control}
-                    name="statsPhotoUrl"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Screenshot URL</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="https://i.imgur.com/example.png" 
-                            {...field} 
-                            data-testid="input-stats-photo-url"
-                          />
-                        </FormControl>
-                        <FormDescription>Upload to imgur.com or similar and paste the URL</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="statsPhotoDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Stats Date</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="date" 
-                            {...field} 
-                            data-testid="input-stats-photo-date"
-                          />
-                        </FormControl>
-                        <FormDescription>When were these stats recorded?</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  Achievements & Esports
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Achievements</FormLabel>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => appendAchievementDetail({ title: "", photoUrl: "", link: "" })}
-                      data-testid="button-add-achievement-detail"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Achievement
-                    </Button>
-                  </div>
-                  <FormDescription>
-                    Add your tournament wins, rankings, and major accomplishments with photos and links
-                  </FormDescription>
-                  <div className="space-y-4">
-                    {achievementDetailFields.map((field, index) => (
-                      <Card key={field.id} className="p-4 bg-muted/50">
-                        <div className="space-y-3">
-                          <div className="flex items-start justify-between gap-2">
-                            <FormField
-                              control={form.control}
-                              name={`achievementDetails.${index}.title`}
-                              render={({ field }) => (
-                                <FormItem className="flex-1">
-                                  <FormLabel>Achievement Title</FormLabel>
-                                  <FormControl>
-                                    <Input 
-                                      placeholder="e.g., 1st Place in Regional Championship 2024" 
-                                      {...field}
-                                      data-testid={`input-achievement-detail-title-${index}`}
-                                    />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
+                    <FormField
+                      control={form.control}
+                      name="hoursPlayed"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Hours Played *</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              placeholder="e.g., 1500" 
+                              {...field}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : 0)}
+                              value={field.value}
+                              data-testid="input-hours-played"
                             />
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeAchievementDetail(index)}
-                              className="mt-8"
-                              data-testid={`button-remove-achievement-detail-${index}`}
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
+                          </FormControl>
+                          <FormDescription>Total hours played in this game</FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Separator className="my-4" />
+
+                    <div className="space-y-4">
+                      <FormLabel>Stats Screenshot *</FormLabel>
+                      <FormDescription>Upload your in-game stats screenshot</FormDescription>
+                      
+                      <FormField
+                        control={form.control}
+                        name="statsPhotoUrl"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Screenshot</FormLabel>
+                            <FormControl>
+                              <div className="space-y-2">
+                                <Input 
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => handlePhotoUpload(e, "statsPhotoUrl")}
+                                  disabled={uploadingPhoto}
+                                  data-testid="input-stats-photo-file"
+                                />
+                                {field.value && (
+                                  <div className="text-sm text-muted-foreground">
+                                    Current photo: {field.value}
+                                  </div>
+                                )}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="statsPhotoDate"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="block">Stats Date *</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="date" 
+                                {...field} 
+                                className="w-full block"
+                                data-testid="input-stats-photo-date"
+                              />
+                            </FormControl>
+                            <FormDescription>When were these stats recorded?</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      Achievements (Max 3) *
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <FormDescription>
+                          Add your top 3 tournament wins, rankings, and major accomplishments
+                        </FormDescription>
+                        {achievementDetailFields.length < 3 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendAchievementDetail({ title: "", photoUrl: "", link: "" })}
+                            data-testid="button-add-achievement-detail"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Achievement
+                          </Button>
+                        )}
+                      </div>
+                      <div className="space-y-4">
+                        {achievementDetailFields.map((field, index) => (
+                          <Card key={field.id} className="p-4 bg-muted/50">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`achievementDetails.${index}.title`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                      <FormLabel>Achievement Title *</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          placeholder="e.g., 1st Place in Regional Championship 2024" 
+                                          {...field}
+                                          data-testid={`input-achievement-detail-title-${index}`}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeAchievementDetail(index)}
+                                  className="mt-8"
+                                  data-testid={`button-remove-achievement-detail-${index}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              <FormField
+                                control={form.control}
+                                name={`achievementDetails.${index}.photoUrl`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Photo (Optional)</FormLabel>
+                                    <FormControl>
+                                      <div className="space-y-2">
+                                        <Input 
+                                          type="file"
+                                          accept="image/*"
+                                          onChange={(e) => handleAchievementPhotoUpload(e, index)}
+                                          disabled={uploadingPhoto}
+                                          data-testid={`input-achievement-detail-photo-${index}`}
+                                        />
+                                        {field.value && (
+                                          <div className="text-sm text-muted-foreground">
+                                            Photo uploaded
+                                          </div>
+                                        )}
+                                      </div>
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+
+                              <FormField
+                                control={form.control}
+                                name={`achievementDetails.${index}.link`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Link (Optional)</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="https://tournament.gg/results/2024" 
+                                        {...field}
+                                        data-testid={`input-achievement-detail-link-${index}`}
+                                      />
+                                    </FormControl>
+                                    <FormDescription>Link to tournament results or proof</FormDescription>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
+                      Best Clips & Highlights (Max 3) *
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <FormDescription>
+                          Add your top 3 gameplay clips from YouTube, Twitch, or other platforms
+                        </FormDescription>
+                        {clipFields.length < 3 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => appendClip({ title: "", link: "" })}
+                            data-testid="button-add-clip"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Clip
+                          </Button>
+                        )}
+                      </div>
+                      <div className="space-y-4">
+                        {clipFields.map((field, index) => (
+                          <Card key={field.id} className="p-4 bg-muted/50">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between gap-2">
+                                <FormField
+                                  control={form.control}
+                                  name={`clipUrls.${index}.title`}
+                                  render={({ field }) => (
+                                    <FormItem className="flex-1">
+                                      <FormLabel>Clip Title *</FormLabel>
+                                      <FormControl>
+                                        <Input 
+                                          placeholder="e.g., Epic 1v5 Clutch" 
+                                          {...field}
+                                          data-testid={`input-clip-title-${index}`}
+                                        />
+                                      </FormControl>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeClip(index)}
+                                  className="mt-8"
+                                  data-testid={`button-remove-clip-${index}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+
+                              <FormField
+                                control={form.control}
+                                name={`clipUrls.${index}.link`}
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Link *</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="https://youtube.com/watch?v=..." 
+                                        {...field}
+                                        data-testid={`input-clip-link-${index}`}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Separator />
+
+                <div className="flex justify-between items-center">
+                  {isEditing && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this game profile?")) {
+                          deleteMutation.mutate();
+                        }
+                      }}
+                      disabled={isPending}
+                      data-testid="button-delete-profile"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Profile
+                    </Button>
+                  )}
+                  <div className={`flex gap-2 ${!isEditing ? 'ml-auto' : ''}`}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => onOpenChange(false)}
+                      disabled={isPending}
+                      data-testid="button-cancel"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isPending}
+                      data-testid="button-save-profile"
+                    >
+                      {isPending ? "Saving..." : isEditing ? "Update Profile" : "Create Profile"}
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </Form>
+          </TabsContent>
+
+          <TabsContent value="custom" className="mt-6">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Custom Portfolio Sections</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <FormDescription>
+                      Create custom sections with your own headings and fields. All fields from the default portfolio are still required.
+                    </FormDescription>
+                    
+                    <div className="flex items-center justify-between">
+                      <FormLabel>Custom Sections</FormLabel>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => appendCustomSection({ heading: "", fields: [{ label: "", value: "" }] })}
+                        data-testid="button-add-custom-section"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Section
+                      </Button>
+                    </div>
+
+                    <div className="space-y-6">
+                      {customSectionFields.map((section, sectionIndex) => (
+                        <Card key={section.id} className="p-4 bg-muted/50">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <FormField
+                                control={form.control}
+                                name={`customSections.${sectionIndex}.heading`}
+                                render={({ field }) => (
+                                  <FormItem className="flex-1">
+                                    <FormLabel>Section Heading</FormLabel>
+                                    <FormControl>
+                                      <Input 
+                                        placeholder="e.g., Streaming Experience" 
+                                        {...field}
+                                        data-testid={`input-custom-section-heading-${sectionIndex}`}
+                                      />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => removeCustomSection(sectionIndex)}
+                                className="mt-8"
+                                data-testid={`button-remove-custom-section-${sectionIndex}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+
+                            <CustomSectionFields 
+                              form={form} 
+                              sectionIndex={sectionIndex} 
+                            />
                           </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
 
-                          <FormField
-                            control={form.control}
-                            name={`achievementDetails.${index}.photoUrl`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Photo URL (Optional)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="https://i.imgur.com/trophy.png" 
-                                    {...field}
-                                    data-testid={`input-achievement-detail-photo-${index}`}
-                                  />
-                                </FormControl>
-                                <FormDescription>Upload a trophy/certificate photo to imgur.com or similar</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                <Separator />
 
-                          <FormField
-                            control={form.control}
-                            name={`achievementDetails.${index}.link`}
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Link (Optional)</FormLabel>
-                                <FormControl>
-                                  <Input 
-                                    placeholder="https://tournament.gg/results/2024" 
-                                    {...field}
-                                    data-testid={`input-achievement-detail-link-${index}`}
-                                  />
-                                </FormControl>
-                                <FormDescription>Link to tournament results or proof</FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
-                  Best Clips & Highlights
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Clip URLs</FormLabel>
+                <div className="flex justify-between items-center">
+                  {isEditing && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => {
+                        if (confirm("Are you sure you want to delete this game profile?")) {
+                          deleteMutation.mutate();
+                        }
+                      }}
+                      disabled={isPending}
+                      data-testid="button-delete-profile-custom"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Profile
+                    </Button>
+                  )}
+                  <div className={`flex gap-2 ${!isEditing ? 'ml-auto' : ''}`}>
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
-                      onClick={() => appendClip("")}
-                      data-testid="button-add-clip"
+                      onClick={() => onOpenChange(false)}
+                      disabled={isPending}
+                      data-testid="button-cancel-custom"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Clip
+                      Cancel
+                    </Button>
+                    <Button 
+                      type="submit" 
+                      disabled={isPending}
+                      data-testid="button-save-profile-custom"
+                    >
+                      {isPending ? "Saving..." : isEditing ? "Update Profile" : "Create Profile"}
                     </Button>
                   </div>
-                  <FormDescription>
-                    YouTube, Twitch, or other video platform links
-                  </FormDescription>
-                  <div className="space-y-2">
-                    {clipFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`clipUrls.${index}`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormControl>
-                                <Input 
-                                  placeholder="https://youtube.com/..." 
-                                  {...field}
-                                  data-testid={`input-clip-url-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeClip(index)}
-                          data-testid={`button-remove-clip-${index}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  Additional Stats
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Custom Stats</FormLabel>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => appendStat({ key: "", value: "" })}
-                      data-testid="button-add-stat"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Stat
-                    </Button>
-                  </div>
-                  <FormDescription>
-                    Add game-specific stats like K/D ratio, win rate, etc.
-                  </FormDescription>
-                  <div className="space-y-2">
-                    {statsFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`statsEntries.${index}.key`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormControl>
-                                <Input 
-                                  placeholder="Stat name (e.g., K/D Ratio)" 
-                                  {...field}
-                                  data-testid={`input-stat-key-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name={`statsEntries.${index}.value`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormControl>
-                                <Input 
-                                  placeholder="Value (e.g., 2.5)" 
-                                  {...field}
-                                  data-testid={`input-stat-value-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeStat(index)}
-                          data-testid={`button-remove-stat-${index}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Separator />
-
-            <div className="flex justify-between items-center">
-              {isEditing && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={() => {
-                    if (confirm("Are you sure you want to delete this game profile?")) {
-                      deleteMutation.mutate();
-                    }
-                  }}
-                  disabled={isPending}
-                  data-testid="button-delete-profile"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete Profile
-                </Button>
-              )}
-              <div className={`flex gap-2 ${!isEditing ? 'ml-auto' : ''}`}>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isPending}
-                  data-testid="button-cancel"
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isPending}
-                  data-testid="button-save-profile"
-                >
-                  {isPending ? "Saving..." : isEditing ? "Update Profile" : "Create Profile"}
-                </Button>
-              </div>
-            </div>
-          </form>
-        </Form>
+              </form>
+            </Form>
+          </TabsContent>
+        </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function CustomSectionFields({ form, sectionIndex }: { form: any; sectionIndex: number }) {
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: `customSections.${sectionIndex}.fields`,
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <FormLabel>Fields</FormLabel>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => append({ label: "", value: "" })}
+          data-testid={`button-add-custom-field-${sectionIndex}`}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Field
+        </Button>
+      </div>
+      
+      <div className="space-y-3">
+        {fields.map((field, fieldIndex) => (
+          <div key={field.id} className="flex gap-2">
+            <FormField
+              control={form.control}
+              name={`customSections.${sectionIndex}.fields.${fieldIndex}.label`}
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="Label (e.g., Platform)" 
+                      {...field}
+                      data-testid={`input-custom-field-label-${sectionIndex}-${fieldIndex}`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name={`customSections.${sectionIndex}.fields.${fieldIndex}.value`}
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input 
+                      placeholder="Value (e.g., Twitch)" 
+                      {...field}
+                      data-testid={`input-custom-field-value-${sectionIndex}-${fieldIndex}`}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => remove(fieldIndex)}
+              data-testid={`button-remove-custom-field-${sectionIndex}-${fieldIndex}`}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
