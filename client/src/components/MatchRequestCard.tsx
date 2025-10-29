@@ -112,34 +112,36 @@ export function MatchRequestCard({
                   </div>
                 </button>
               </DialogTrigger>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-5xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Player Profile</DialogTitle>
                 </DialogHeader>
-                {isLoadingProfile ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                  </div>
-                ) : userProfile ? (
-                  <UserProfile
-                    id={userProfile.id}
-                    gamertag={userProfile.gamertag || "Unknown"}
-                    firstName={userProfile.firstName ?? undefined}
-                    lastName={userProfile.lastName ?? undefined}
-                    profileImageUrl={userProfile.profileImageUrl ?? undefined}
-                    bio={userProfile.bio ?? undefined}
-                    location={userProfile.location ?? undefined}
-                    latitude={userProfile.latitude ?? undefined}
-                    longitude={userProfile.longitude ?? undefined}
-                    age={userProfile.age ?? undefined}
-                    preferredGames={userProfile.preferredGames ?? undefined}
-                    isOwn={false}
-                  />
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    Profile not found
-                  </div>
-                )}
+                <div className="overflow-y-auto max-h-[calc(90vh-8rem)]">
+                  {isLoadingProfile ? (
+                    <div className="flex items-center justify-center py-12">
+                      <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : userProfile ? (
+                    <UserProfile
+                      id={userProfile.id}
+                      gamertag={userProfile.gamertag || "Unknown"}
+                      firstName={userProfile.firstName ?? undefined}
+                      lastName={userProfile.lastName ?? undefined}
+                      profileImageUrl={userProfile.profileImageUrl ?? undefined}
+                      bio={userProfile.bio ?? undefined}
+                      location={userProfile.location ?? undefined}
+                      latitude={userProfile.latitude ?? undefined}
+                      longitude={userProfile.longitude ?? undefined}
+                      age={userProfile.age ?? undefined}
+                      preferredGames={userProfile.preferredGames ?? undefined}
+                      isOwn={false}
+                    />
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      Profile not found
+                    </div>
+                  )}
+                </div>
               </DialogContent>
             </Dialog>
           </div>

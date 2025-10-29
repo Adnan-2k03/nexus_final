@@ -60,6 +60,7 @@ export function UserProfile({
   const [selectedClip, setSelectedClip] = useState<string | null>(null);
   const [gameProfileFormOpen, setGameProfileFormOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<GameProfile | undefined>(undefined);
+  const [showCustomSections, setShowCustomSections] = useState<{[key: string]: boolean}>({});
 
   const { data: gameProfiles = [], isLoading: isLoadingProfiles } = useQuery<GameProfile[]>({
     queryKey: ['/api/users', id, 'game-profiles'],
@@ -74,6 +75,13 @@ export function UserProfile({
   const handleEditProfile = (profile: GameProfile) => {
     setEditingProfile(profile);
     setGameProfileFormOpen(true);
+  };
+
+  const toggleCustomSections = (profileId: string) => {
+    setShowCustomSections(prev => ({
+      ...prev,
+      [profileId]: !prev[profileId]
+    }));
   };
 
   return (
@@ -209,7 +217,7 @@ export function UserProfile({
                     )}
                   </div>
                   <AccordionContent className="space-y-6 pt-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {profile.currentRank && (
                       <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
                         <CardContent className="p-4 space-y-2">
@@ -263,7 +271,7 @@ export function UserProfile({
                           <Award className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                           Esport Achievements
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           {achievementDetails.map((achievement, index) => (
                             <Card key={index} className="bg-purple-500/5 border-purple-500/20 overflow-hidden">
                               {achievement.photoUrl && (
@@ -307,7 +315,7 @@ export function UserProfile({
                           <Play className="h-5 w-5 text-red-600 dark:text-red-400" />
                           Best Clips & Highlights
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                           {clipUrls.map((clip, index) => (
                             <Dialog key={index}>
                               <DialogTrigger asChild>
@@ -388,27 +396,48 @@ export function UserProfile({
                     const customSections = Array.isArray(profile.customSections) 
                       ? profile.customSections as Array<{heading: string; fields: Array<{label: string; value: string}>}> 
                       : [];
-                    return customSections.length > 0 && customSections.map((section, sectionIndex) => (
-                      <div key={sectionIndex} className="space-y-3">
-                        <h3 className="text-lg font-semibold">{section.heading}</h3>
-                        <Card className="bg-muted/30">
-                          <CardContent className="p-4">
-                            <dl className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                              {section.fields.map((field, fieldIndex) => (
-                                <div key={fieldIndex} className="flex justify-between items-center">
-                                  <dt className="text-sm text-muted-foreground">
-                                    {field.label}:
-                                  </dt>
-                                  <dd className="text-sm font-semibold" data-testid={`text-custom-${profile.id}-${sectionIndex}-${fieldIndex}`}>
-                                    {field.value}
-                                  </dd>
-                                </div>
-                              ))}
-                            </dl>
-                          </CardContent>
-                        </Card>
+                    if (customSections.length === 0) return null;
+                    
+                    return (
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-lg font-semibold flex items-center gap-2">
+                            <Star className="h-5 w-5 text-primary" />
+                            Custom Portfolio
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleCustomSections(profile.id)}
+                            data-testid={`button-toggle-custom-${profile.id}`}
+                          >
+                            {showCustomSections[profile.id] ? 'Hide Custom Portfolio' : 'View Custom Portfolio'}
+                          </Button>
+                        </div>
+                        
+                        {showCustomSections[profile.id] && customSections.map((section, sectionIndex) => (
+                          <div key={sectionIndex} className="space-y-3 mt-4">
+                            <h4 className="text-base font-semibold text-primary">{section.heading}</h4>
+                            <Card className="bg-muted/30">
+                              <CardContent className="p-4">
+                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                  {section.fields.map((field, fieldIndex) => (
+                                    <div key={fieldIndex} className="space-y-1">
+                                      <dt className="text-sm text-muted-foreground">
+                                        {field.label}
+                                      </dt>
+                                      <dd className="text-sm font-semibold" data-testid={`text-custom-${profile.id}-${sectionIndex}-${fieldIndex}`}>
+                                        {field.value}
+                                      </dd>
+                                    </div>
+                                  ))}
+                                </dl>
+                              </CardContent>
+                            </Card>
+                          </div>
+                        ))}
                       </div>
-                    ));
+                    );
                   })()}
                   </AccordionContent>
                 </AccordionItem>
