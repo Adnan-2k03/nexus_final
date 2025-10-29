@@ -49,11 +49,18 @@ const gameProfileFormSchema = z.object({
   highestRank: z.string().optional(),
   hoursPlayed: z.number().min(0).max(100000).optional().nullable(),
   achievements: z.array(z.string().min(1, "Achievement cannot be empty")).optional(),
+  achievementDetails: z.array(z.object({
+    title: z.string().min(1, "Title is required"),
+    photoUrl: z.string().url("Must be a valid URL").optional(),
+    link: z.string().url("Must be a valid URL").optional(),
+  })).optional(),
   clipUrls: z.array(z.string().url("Must be a valid URL")).optional(),
   statsEntries: z.array(z.object({
     key: z.string().min(1, "Key is required"),
     value: z.string().min(1, "Value is required"),
   })).optional(),
+  statsPhotoUrl: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
+  statsPhotoDate: z.string().or(z.literal("")).optional(),
 });
 
 type GameProfileFormValues = z.infer<typeof gameProfileFormSchema>;
@@ -111,6 +118,11 @@ export function GameProfileForm({
     name: "statsEntries",
   });
 
+  const { fields: achievementDetailFields, append: appendAchievementDetail, remove: removeAchievementDetail } = useFieldArray({
+    control: form.control as any,
+    name: "achievementDetails",
+  });
+
   useEffect(() => {
     if (open) {
       const newStatsEntries = profile?.stats && typeof profile.stats === 'object'
@@ -120,14 +132,21 @@ export function GameProfileForm({
           }))
         : [];
       
+      const achievementsData = profile?.achievementDetails && Array.isArray(profile.achievementDetails)
+        ? profile.achievementDetails as Array<{title: string; photoUrl?: string; link?: string}>
+        : [];
+      
       form.reset({
         gameName: profile?.gameName || "",
         currentRank: profile?.currentRank || "",
         highestRank: profile?.highestRank || "",
         hoursPlayed: profile?.hoursPlayed || null,
         achievements: profile?.achievements || [],
+        achievementDetails: achievementsData,
         clipUrls: profile?.clipUrls || [],
         statsEntries: newStatsEntries,
+        statsPhotoUrl: profile?.statsPhotoUrl || "",
+        statsPhotoDate: profile?.statsPhotoDate || "",
       });
     }
   }, [open, profile, form]);
@@ -202,7 +221,7 @@ export function GameProfileForm({
   });
 
   const onSubmit = (data: GameProfileFormValues) => {
-    const { statsEntries, ...rest } = data;
+    const { statsEntries, achievementDetails, ...rest } = data;
     
     const stats = statsEntries?.length
       ? statsEntries.reduce((acc, { key, value }) => {
@@ -211,14 +230,19 @@ export function GameProfileForm({
         }, {} as Record<string, any>)
       : undefined;
 
+    const filteredAchievementDetails = achievementDetails?.filter(a => a.title.trim());
+    
     const payload = {
       ...rest,
       hoursPlayed: rest.hoursPlayed ?? undefined,
       currentRank: rest.currentRank || undefined,
       highestRank: rest.highestRank || undefined,
       achievements: rest.achievements?.filter(a => a.trim()).length ? rest.achievements.filter(a => a.trim()) : undefined,
+      achievementDetails: filteredAchievementDetails?.length ? filteredAchievementDetails : undefined,
       clipUrls: rest.clipUrls?.filter(c => c.trim()).length ? rest.clipUrls.filter(c => c.trim()) : undefined,
       stats: stats && Object.keys(stats).length > 0 ? stats : undefined,
+      statsPhotoUrl: rest.statsPhotoUrl?.trim() || undefined,
+      statsPhotoDate: rest.statsPhotoDate?.trim() || undefined,
     };
 
     if (isEditing) {
@@ -355,6 +379,51 @@ export function GameProfileForm({
                     </FormItem>
                   )}
                 />
+
+                <Separator className="my-4" />
+
+                <div className="space-y-4">
+                  <FormLabel>Stats Screenshot (Optional)</FormLabel>
+                  <FormDescription>Upload your in-game stats screenshot to showcase your performance</FormDescription>
+                  
+                  <FormField
+                    control={form.control}
+                    name="statsPhotoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Screenshot URL</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="https://i.imgur.com/example.png" 
+                            {...field} 
+                            data-testid="input-stats-photo-url"
+                          />
+                        </FormControl>
+                        <FormDescription>Upload to imgur.com or similar and paste the URL</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="statsPhotoDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Stats Date</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="date" 
+                            {...field} 
+                            data-testid="input-stats-photo-date"
+                          />
+                        </FormControl>
+                        <FormDescription>When were these stats recorded?</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -373,45 +442,89 @@ export function GameProfileForm({
                       type="button"
                       variant="outline"
                       size="sm"
-                      onClick={() => appendAchievement("")}
-                      data-testid="button-add-achievement"
+                      onClick={() => appendAchievementDetail({ title: "", photoUrl: "", link: "" })}
+                      data-testid="button-add-achievement-detail"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Add Achievement
                     </Button>
                   </div>
                   <FormDescription>
-                    Add your tournament wins, rankings, and major accomplishments
+                    Add your tournament wins, rankings, and major accomplishments with photos and links
                   </FormDescription>
-                  <div className="space-y-2">
-                    {achievementFields.map((field, index) => (
-                      <div key={field.id} className="flex gap-2">
-                        <FormField
-                          control={form.control}
-                          name={`achievements.${index}`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <FormControl>
-                                <Input 
-                                  placeholder="e.g., 1st Place in Regional Championship 2024" 
-                                  {...field}
-                                  data-testid={`input-achievement-${index}`}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeAchievement(index)}
-                          data-testid={`button-remove-achievement-${index}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+                  <div className="space-y-4">
+                    {achievementDetailFields.map((field, index) => (
+                      <Card key={field.id} className="p-4 bg-muted/50">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <FormField
+                              control={form.control}
+                              name={`achievementDetails.${index}.title`}
+                              render={({ field }) => (
+                                <FormItem className="flex-1">
+                                  <FormLabel>Achievement Title</FormLabel>
+                                  <FormControl>
+                                    <Input 
+                                      placeholder="e.g., 1st Place in Regional Championship 2024" 
+                                      {...field}
+                                      data-testid={`input-achievement-detail-title-${index}`}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeAchievementDetail(index)}
+                              className="mt-8"
+                              data-testid={`button-remove-achievement-detail-${index}`}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+
+                          <FormField
+                            control={form.control}
+                            name={`achievementDetails.${index}.photoUrl`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Photo URL (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="https://i.imgur.com/trophy.png" 
+                                    {...field}
+                                    data-testid={`input-achievement-detail-photo-${index}`}
+                                  />
+                                </FormControl>
+                                <FormDescription>Upload a trophy/certificate photo to imgur.com or similar</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={form.control}
+                            name={`achievementDetails.${index}.link`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Link (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    placeholder="https://tournament.gg/results/2024" 
+                                    {...field}
+                                    data-testid={`input-achievement-detail-link-${index}`}
+                                  />
+                                </FormControl>
+                                <FormDescription>Link to tournament results or proof</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </Card>
                     ))}
                   </div>
                 </div>
