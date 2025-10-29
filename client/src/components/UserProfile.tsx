@@ -408,39 +408,48 @@ export function UserProfile({
                         <div className="flex items-center justify-between">
                           <h3 className="text-lg font-semibold flex items-center gap-2">
                             <Star className="h-5 w-5 text-primary" />
-                            Custom Portfolio
+                            Custom Additions
                           </h3>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => toggleCustomSections(profile.id)}
-                            data-testid={`button-toggle-custom-${profile.id}`}
-                          >
-                            {showCustomSections[profile.id] ? 'Hide Custom Portfolio' : 'Check Out More'}
-                          </Button>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                data-testid={`button-toggle-custom-${profile.id}`}
+                              >
+                                Check Out More
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle>Custom Additions - {profile.gameName}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-4 mt-4">
+                                {customSections.map((section, sectionIndex) => (
+                                  <div key={sectionIndex} className="space-y-3">
+                                    <h4 className="text-base font-semibold text-primary">{section.heading}</h4>
+                                    <Card className="bg-muted/30">
+                                      <CardContent className="p-4">
+                                        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                          {section.fields.map((field, fieldIndex) => (
+                                            <div key={fieldIndex} className="space-y-1">
+                                              <dt className="text-sm text-muted-foreground">
+                                                {field.label}
+                                              </dt>
+                                              <dd className="text-sm font-semibold" data-testid={`text-custom-${profile.id}-${sectionIndex}-${fieldIndex}`}>
+                                                {field.value}
+                                              </dd>
+                                            </div>
+                                          ))}
+                                        </dl>
+                                      </CardContent>
+                                    </Card>
+                                  </div>
+                                ))}
+                              </div>
+                            </DialogContent>
+                          </Dialog>
                         </div>
-                        
-                        {showCustomSections[profile.id] && customSections.map((section, sectionIndex) => (
-                          <div key={sectionIndex} className="space-y-3 mt-4">
-                            <h4 className="text-base font-semibold text-primary">{section.heading}</h4>
-                            <Card className="bg-muted/30">
-                              <CardContent className="p-4">
-                                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  {section.fields.map((field, fieldIndex) => (
-                                    <div key={fieldIndex} className="space-y-1">
-                                      <dt className="text-sm text-muted-foreground">
-                                        {field.label}
-                                      </dt>
-                                      <dd className="text-sm font-semibold" data-testid={`text-custom-${profile.id}-${sectionIndex}-${fieldIndex}`}>
-                                        {field.value}
-                                      </dd>
-                                    </div>
-                                  ))}
-                                </dl>
-                              </CardContent>
-                            </Card>
-                          </div>
-                        ))}
                       </div>
                     );
                   })()}

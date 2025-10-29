@@ -4,12 +4,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -45,6 +46,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [gameFilter, setGameFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const { toast } = useToast();
 
   if (!currentUserId) {
@@ -148,18 +150,29 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     return false;
   };
 
+  // Apply search filter
+  const filterBySearch = (item: MatchConnectionWithUser) => {
+    if (!searchTerm) return true;
+    const isRequester = item.requesterId === currentUserId;
+    const otherGamertag = isRequester ? item.accepterGamertag : item.requesterGamertag;
+    return otherGamertag?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
+  };
+
   // Split match connections into categories
   const incomingApplications = connections
     .filter(c => c.status === 'pending' && c.accepterId === currentUserId)
-    .filter(filterByType);
+    .filter(filterByType)
+    .filter(filterBySearch);
   
   const yourApplications = connections
     .filter(c => c.status === 'pending' && c.requesterId === currentUserId)
-    .filter(filterByType);
+    .filter(filterByType)
+    .filter(filterBySearch);
   
   const acceptedConnections = connections
     .filter(c => c.status === 'accepted')
-    .filter(filterByType);
+    .filter(filterByType)
+    .filter(filterBySearch);
 
   const LoadingSkeleton = () => (
     <div className="space-y-4">
@@ -196,7 +209,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">My Matches</h1>
+            <h1 className="text-2xl font-bold text-foreground">Matches</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
@@ -399,7 +412,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">My Matches</h1>
+            <h1 className="text-2xl font-bold text-foreground">Matches</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
@@ -432,7 +445,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Users className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">My Connections</h1>
+          <h1 className="text-2xl font-bold text-foreground">Matches</h1>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-sm">
@@ -447,6 +460,20 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
+        </div>
+      </div>
+
+      <div className="mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search by gamertag..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+            data-testid="input-search-connections"
+          />
         </div>
       </div>
 

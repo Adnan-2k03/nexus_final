@@ -373,7 +373,7 @@ export function GameProfileForm({
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="default" data-testid="tab-default-portfolio">Default Portfolio</TabsTrigger>
-            <TabsTrigger value="custom" data-testid="tab-custom-portfolio">Custom Portfolio</TabsTrigger>
+            <TabsTrigger value="custom" data-testid="tab-custom-portfolio">Add more...</TabsTrigger>
           </TabsList>
 
           <TabsContent value="default" className="mt-6">
@@ -792,7 +792,7 @@ export function GameProfileForm({
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Custom Portfolio Sections</CardTitle>
+                    <CardTitle className="text-lg">Custom Sections</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <FormDescription>
