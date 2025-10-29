@@ -8,11 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, MapPin } from "lucide-react";
+import { X, Plus, MapPin, User as UserIcon, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
+import { PrivacySettings } from "./PrivacySettings";
 
 interface ProfileSetupProps {
   user?: User | null;
@@ -134,17 +136,30 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-3xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="text-center">
-            {user?.gamertag ? "Edit Your Profile" : "Setup Your Gaming Profile"}
+            {user?.gamertag ? "Edit Your Profile & Settings" : "Setup Your Gaming Profile"}
           </CardTitle>
           <p className="text-sm text-muted-foreground text-center">
-            {user?.gamertag ? "Update your information and preferred games" : "Tell other players about yourself to find the perfect teammates"}
+            {user?.gamertag ? "Update your information, games, and privacy settings" : "Tell other players about yourself to find the perfect teammates"}
           </p>
         </CardHeader>
         <CardContent className="space-y-6">
+          <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="profile" className="gap-2" data-testid="tab-profile">
+                <UserIcon className="h-4 w-4" />
+                Profile Info
+              </TabsTrigger>
+              <TabsTrigger value="privacy" className="gap-2" data-testid="tab-privacy">
+                <Shield className="h-4 w-4" />
+                Privacy Settings
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile" className="space-y-6 mt-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {/* Gamertag */}
@@ -374,6 +389,12 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
               </div>
             </form>
           </Form>
+            </TabsContent>
+            
+            <TabsContent value="privacy" className="mt-6">
+              {user && <PrivacySettings userId={user.id} />}
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>

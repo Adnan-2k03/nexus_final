@@ -37,7 +37,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Book, Music, Palette, Film, Coffee, Plane, Heart, Trash2, Edit, Plus, Sparkles } from "lucide-react";
+import { Book, Music, Palette, Film, Coffee, Plane, Heart, Trash2, Edit, Plus, Sparkles, Pen } from "lucide-react";
 import type { Hobby } from "@shared/schema";
 import { insertHobbySchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -49,6 +49,7 @@ const hobbyCategories = [
   { value: "art", label: "Art & Design", icon: Palette },
   { value: "movies", label: "Movies & TV", icon: Film },
   { value: "dance", label: "Dance", icon: Music },
+  { value: "writing", label: "Writing", icon: Pen },
   { value: "cooking", label: "Cooking & Food", icon: Coffee },
   { value: "travel", label: "Travel", icon: Plane },
   { value: "other", label: "Other", icon: Heart },
@@ -260,7 +261,28 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
                               <Textarea
                                 placeholder="Share more about this interest..."
                                 {...field}
+                                value={field.value || ""}
                                 data-testid="input-description"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="link"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Link (Optional)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="url"
+                                placeholder="https://example.com/your-content"
+                                {...field}
+                                value={field.value || ""}
+                                data-testid="input-link"
                               />
                             </FormControl>
                             <FormMessage />
@@ -327,9 +349,20 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
                                     {hobby.title}
                                   </h4>
                                   {hobby.description && (
-                                    <p className="text-sm text-muted-foreground" data-testid={`text-hobby-description-${hobby.id}`}>
+                                    <p className="text-sm text-muted-foreground mb-2" data-testid={`text-hobby-description-${hobby.id}`}>
                                       {hobby.description}
                                     </p>
+                                  )}
+                                  {hobby.link && (
+                                    <a
+                                      href={hobby.link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-xs text-primary hover:underline inline-flex items-center gap-1"
+                                      data-testid={`link-hobby-${hobby.id}`}
+                                    >
+                                      View Link →
+                                    </a>
                                   )}
                                 </div>
                                 {isOwn && (
