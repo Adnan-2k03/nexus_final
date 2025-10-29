@@ -475,6 +475,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/user/privacy', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { updatePrivacySettingsSchema } = await import("@shared/schema");
+      
+      const validatedSettings = updatePrivacySettingsSchema.parse(req.body);
+      const updatedUser = await storage.updatePrivacySettings(userId, validatedSettings);
+      
+      res.json(updatedUser);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid privacy settings", errors: error.errors });
+      } else {
+        console.error("Error updating privacy settings:", error);
+        res.status(500).json({ message: "Failed to update privacy settings" });
+      }
+    }
+  });
+
   // Photo upload route
   // Create uploads directory if it doesn't exist
   const uploadsDir = path.join(__dirname, '../uploads');
