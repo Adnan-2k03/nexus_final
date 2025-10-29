@@ -6,6 +6,7 @@ import {
   hiddenMatches,
   chatMessages,
   gameProfiles,
+  hobbies,
   type User,
   type UpsertUser,
   type MatchRequest,
@@ -24,6 +25,8 @@ import {
   type InsertChatMessage,
   type GameProfile,
   type InsertGameProfile,
+  type Hobby,
+  type InsertHobby,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
@@ -86,6 +89,18 @@ export interface IStorage {
   getUserGameProfiles(userId: string): Promise<GameProfile[]>;
   getGameProfile(id: string): Promise<GameProfile | undefined>;
   deleteGameProfile(id: string, userId: string): Promise<void>;
+  
+  // Hobby/Interest operations
+  createHobby(hobby: InsertHobby): Promise<Hobby>;
+  updateHobby(id: string, hobby: Partial<Hobby>): Promise<Hobby>;
+  getUserHobbies(userId: string, category?: string): Promise<Hobby[]>;
+  getHobby(id: string): Promise<Hobby | undefined>;
+  deleteHobby(id: string, userId: string): Promise<void>;
+  
+  // Mutuals calculation
+  getMutualGames(userId1: string, userId2: string): Promise<string[]>;
+  getMutualFriends(userId1: string, userId2: string): Promise<User[]>;
+  getMutualHobbies(userId1: string, userId2: string): Promise<{category: string; count: number}[]>;
 }
 
 // Database storage implementation using PostgreSQL
@@ -617,6 +632,152 @@ export class DatabaseStorage implements IStorage {
     }
     
     await db.delete(gameProfiles).where(eq(gameProfiles.id, id));
+  }
+
+  // Hobby/Interest operations
+  async createHobby(hobbyData: InsertHobby): Promise<Hobby> {
+    const [newHobby] = await db
+      .insert(hobbies)
+      .values({
+        ...hobbyData,
+        id: randomUUID(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    
+    return newHobby;
+  }
+
+  async updateHobby(id: string, hobbyData: Partial<Hobby>): Promise<Hobby> {
+    const [updatedHobby] = await db
+      .update(hobbies)
+      .set({ ...hobbyData, updatedAt: new Date() })
+      .where(eq(hobbies.id, id))
+      .returning();
+    
+    if (!updatedHobby) {
+      throw new Error('Hobby not found');
+    }
+    
+    return updatedHobby;
+  }
+
+  async getUserHobbies(userId: string, category?: string): Promise<Hobby[]> {
+    const conditions = [eq(hobbies.userId, userId)];
+    
+    if (category) {
+      conditions.push(eq(hobbies.category, category));
+    }
+    
+    const userHobbies = await db
+      .select()
+      .from(hobbies)
+      .where(and(...conditions))
+      .orderBy(desc(hobbies.updatedAt));
+    
+    return userHobbies;
+  }
+
+  async getHobby(id: string): Promise<Hobby | undefined> {
+    const [hobby] = await db
+      .select()
+      .from(hobbies)
+      .where(eq(hobbies.id, id));
+    return hobby || undefined;
+  }
+
+  async deleteHobby(id: string, userId: string): Promise<void> {
+    // First verify the user owns this hobby
+    const [hobby] = await db
+      .select()
+      .from(hobbies)
+      .where(eq(hobbies.id, id));
+    
+    if (!hobby) {
+      throw new Error('Hobby not found');
+    }
+    
+    if (hobby.userId !== userId) {
+      throw new Error('Unauthorized to delete this hobby');
+    }
+    
+    await db.delete(hobbies).where(eq(hobbies.id, id));
+  }
+
+  // Mutuals calculation
+  async getMutualGames(userId1: string, userId2: string): Promise<string[]> {
+    const [user1, user2] = await Promise.all([
+      this.getUser(userId1),
+      this.getUser(userId2),
+    ]);
+    
+    if (!user1 || !user2) return [];
+    
+    const games1 = user1.preferredGames || [];
+    const games2 = user2.preferredGames || [];
+    
+    return games1.filter(game => games2.includes(game));
+  }
+
+  async getMutualFriends(userId1: string, userId2: string): Promise<User[]> {
+    // Get all accepted connections for both users
+    const [connections1, connections2] = await Promise.all([
+      db.select().from(connectionRequests)
+        .where(
+          and(
+            or(
+              eq(connectionRequests.senderId, userId1),
+              eq(connectionRequests.receiverId, userId1)
+            ),
+            eq(connectionRequests.status, 'accepted')
+          )
+        ),
+      db.select().from(connectionRequests)
+        .where(
+          and(
+            or(
+              eq(connectionRequests.senderId, userId2),
+              eq(connectionRequests.receiverId, userId2)
+            ),
+            eq(connectionRequests.status, 'accepted')
+          )
+        ),
+    ]);
+    
+    // Extract user IDs from connections
+    const friends1 = connections1.map(c => c.senderId === userId1 ? c.receiverId : c.senderId);
+    const friends2 = connections2.map(c => c.senderId === userId2 ? c.receiverId : c.senderId);
+    
+    // Find mutual friend IDs
+    const mutualFriendIds = friends1.filter(id => friends2.includes(id));
+    
+    // Fetch user details for mutual friends
+    if (mutualFriendIds.length === 0) return [];
+    
+    const mutualFriends = await db.select().from(users)
+      .where(or(...mutualFriendIds.map(id => eq(users.id, id))));
+    
+    return mutualFriends;
+  }
+
+  async getMutualHobbies(userId1: string, userId2: string): Promise<{category: string; count: number}[]> {
+    const [hobbies1, hobbies2] = await Promise.all([
+      this.getUserHobbies(userId1),
+      this.getUserHobbies(userId2),
+    ]);
+    
+    // Group by category and count mutual hobbies
+    const categories1 = hobbies1.map(h => h.category);
+    const categories2 = hobbies2.map(h => h.category);
+    
+    const mutualCategories = Array.from(new Set(categories1.filter(c => categories2.includes(c))));
+    
+    return mutualCategories.map(category => ({
+      category,
+      count: hobbies1.filter(h => h.category === category).length +
+             hobbies2.filter(h => h.category === category).length
+    }));
   }
 }
 

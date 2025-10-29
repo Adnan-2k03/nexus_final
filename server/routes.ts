@@ -587,6 +587,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Hobbies/Interests routes
+  app.get('/api/users/:userId/hobbies', async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { category } = req.query;
+      const hobbies = await storage.getUserHobbies(userId, category as string);
+      res.json(hobbies);
+    } catch (error: any) {
+      console.error('Error fetching hobbies:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post('/api/hobbies', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const hobbyData = { ...req.body, userId };
+      const hobby = await storage.createHobby(hobbyData);
+      res.status(201).json(hobby);
+    } catch (error: any) {
+      console.error('Error creating hobby:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.patch('/api/hobbies/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const hobby = await storage.getHobby(id);
+      
+      if (!hobby) {
+        return res.status(404).json({ error: 'Hobby not found' });
+      }
+      
+      if (hobby.userId !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const updatedHobby = await storage.updateHobby(id, req.body);
+      res.json(updatedHobby);
+    } catch (error: any) {
+      console.error('Error updating hobby:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.delete('/api/hobbies/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.user.id;
+      await storage.deleteHobby(id, userId);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error('Error deleting hobby:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Mutuals routes
+  app.get('/api/mutuals/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const { userId } = req.params;
+      
+      // Get user privacy settings
+      const targetUser = await storage.getUser(userId);
+      if (!targetUser) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Check if users are connected
+      const connections = await storage.getUserConnections(currentUserId);
+      const isConnected = connections.some(c => 
+        (c.requesterId === userId || c.accepterId === userId) && c.status === 'accepted'
+      );
+      
+      const result: any = {};
+      
+      // Apply privacy settings
+      if (targetUser.showMutualGames === 'everyone' || 
+          (targetUser.showMutualGames === 'connections' && isConnected)) {
+        result.mutualGames = await storage.getMutualGames(currentUserId, userId);
+      }
+      
+      if (targetUser.showMutualFriends === 'everyone' || 
+          (targetUser.showMutualFriends === 'connections' && isConnected)) {
+        result.mutualFriends = await storage.getMutualFriends(currentUserId, userId);
+      }
+      
+      if (targetUser.showMutualHobbies === 'everyone' || 
+          (targetUser.showMutualHobbies === 'connections' && isConnected)) {
+        result.mutualHobbies = await storage.getMutualHobbies(currentUserId, userId);
+      }
+      
+      res.json(result);
+    } catch (error: any) {
+      console.error('Error calculating mutuals:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Hidden matches routes
   app.get('/api/hidden-matches', isAuthenticated, async (req: any, res) => {
     try {
