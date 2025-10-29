@@ -46,6 +46,10 @@ export const users = pgTable("users", {
   gender: genderEnum("gender"),
   language: varchar("language"),
   preferredGames: text("preferred_games").array(),
+  // Privacy settings for mutuals display
+  showMutualGames: varchar("show_mutual_games").default("everyone"), // everyone, connections, nobody
+  showMutualFriends: varchar("show_mutual_friends").default("everyone"),
+  showMutualHobbies: varchar("show_mutual_hobbies").default("everyone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -127,6 +131,23 @@ export const gameProfiles = pgTable("game_profiles", {
   index("idx_user_game_profiles").on(table.userId),
 ]);
 
+// Hobbies/Interests table - stores user interests beyond gaming
+export const hobbies = pgTable("hobbies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  category: varchar("category").notNull(), // anime, dance, books, music, art, writing, etc.
+  title: varchar("title").notNull(),
+  description: text("description"),
+  link: varchar("link"), // URL to content, video, article, etc.
+  imageUrl: varchar("image_url"), // Optional image
+  metadata: jsonb("metadata"), // Additional flexible data
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_user_hobbies").on(table.userId),
+  index("idx_hobbies_category").on(table.category),
+]);
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
@@ -141,6 +162,8 @@ export type InsertChatMessage = typeof chatMessages.$inferInsert;
 export type ChatMessage = typeof chatMessages.$inferSelect;
 export type InsertGameProfile = typeof gameProfiles.$inferInsert;
 export type GameProfile = typeof gameProfiles.$inferSelect;
+export type InsertHobby = typeof hobbies.$inferInsert;
+export type Hobby = typeof hobbies.$inferSelect;
 
 // Enhanced match request type that includes user profile data
 export type MatchRequestWithUser = MatchRequest & {
@@ -179,3 +202,4 @@ export const insertMatchConnectionSchema = createInsertSchema(matchConnections).
 export const insertHiddenMatchSchema = createInsertSchema(hiddenMatches).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
 export const insertGameProfileSchema = createInsertSchema(gameProfiles).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+export const insertHobbySchema = createInsertSchema(hobbies).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
