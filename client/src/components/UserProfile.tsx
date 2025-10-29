@@ -416,7 +416,7 @@ export function UserProfile({
                             onClick={() => toggleCustomSections(profile.id)}
                             data-testid={`button-toggle-custom-${profile.id}`}
                           >
-                            {showCustomSections[profile.id] ? 'Hide Custom Portfolio' : 'View Custom Portfolio'}
+                            {showCustomSections[profile.id] ? 'Hide Custom Portfolio' : 'Check Out More'}
                           </Button>
                         </div>
                         
