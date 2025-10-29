@@ -16,6 +16,7 @@ import {
 import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus } from "lucide-react";
 import type { GameProfile } from "@shared/schema";
 import { GameProfileForm } from "./GameProfileForm";
+import { CustomPortfolio } from "./CustomPortfolio";
 
 interface UserProfileProps {
   id: string;
@@ -130,24 +131,27 @@ export function UserProfile({
               </div>
             </div>
 
-            <div className="flex gap-2">
-              {isOwn ? (
-                <>
-                  <Button size="sm" variant="outline" onClick={onEdit} data-testid="button-edit-profile">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Profile
+            <div className="flex flex-col gap-2">
+              <div className="flex gap-2">
+                {isOwn ? (
+                  <>
+                    <Button size="sm" variant="outline" onClick={onEdit} data-testid="button-edit-profile">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                    <Button size="sm" onClick={handleAddGame} data-testid="button-add-game-profile">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Game
+                    </Button>
+                  </>
+                ) : (
+                  <Button size="sm" onClick={onMessage} data-testid="button-message-user">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Message
                   </Button>
-                  <Button size="sm" onClick={handleAddGame} data-testid="button-add-game-profile">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Game
-                  </Button>
-                </>
-              ) : (
-                <Button size="sm" onClick={onMessage} data-testid="button-message-user">
-                  <MessageCircle className="h-4 w-4 mr-2" />
-                  Message
-                </Button>
-              )}
+                )}
+              </div>
+              <CustomPortfolio userId={id} isOwn={isOwn} />
             </div>
           </div>
         </CardHeader>
