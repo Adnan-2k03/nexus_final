@@ -1,6 +1,7 @@
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
@@ -109,6 +110,27 @@ export function GameProfileForm({
     control: form.control as any,
     name: "statsEntries",
   });
+
+  useEffect(() => {
+    if (open) {
+      const newStatsEntries = profile?.stats && typeof profile.stats === 'object'
+        ? Object.entries(profile.stats).map(([key, value]) => ({
+            key,
+            value: String(value),
+          }))
+        : [];
+      
+      form.reset({
+        gameName: profile?.gameName || "",
+        currentRank: profile?.currentRank || "",
+        highestRank: profile?.highestRank || "",
+        hoursPlayed: profile?.hoursPlayed || null,
+        achievements: profile?.achievements || [],
+        clipUrls: profile?.clipUrls || [],
+        statsEntries: newStatsEntries,
+      });
+    }
+  }, [open, profile, form]);
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {

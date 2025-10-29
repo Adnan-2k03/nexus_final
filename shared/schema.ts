@@ -116,7 +116,10 @@ export const gameProfiles = pgTable("game_profiles", {
   hoursPlayed: integer("hours_played"),
   clipUrls: text("clip_urls").array(),
   achievements: text("achievements").array(),
+  achievementDetails: jsonb("achievement_details"),
   stats: jsonb("stats"),
+  statsPhotoUrl: varchar("stats_photo_url"),
+  statsPhotoDate: varchar("stats_photo_date"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
