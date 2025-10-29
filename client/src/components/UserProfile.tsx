@@ -17,6 +17,7 @@ import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, S
 import type { GameProfile } from "@shared/schema";
 import { GameProfileForm } from "./GameProfileForm";
 import { CustomPortfolio } from "./CustomPortfolio";
+import { Mutuals } from "./Mutuals";
 
 interface UserProfileProps {
   id: string;
