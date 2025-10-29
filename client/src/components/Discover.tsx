@@ -464,24 +464,30 @@ export function Discover({ currentUserId }: DiscoverProps) {
       {/* Profile View Dialog */}
       {selectedUser && (
         <Dialog open={!!selectedUser} onOpenChange={(open) => !open && setSelectedUser(null)}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-5xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Player Profile</DialogTitle>
             </DialogHeader>
-            <UserProfile
-              id={selectedUser.id}
-              gamertag={selectedUser.gamertag || "Unknown"}
-              firstName={selectedUser.firstName ?? undefined}
-              lastName={selectedUser.lastName ?? undefined}
-              profileImageUrl={selectedUser.profileImageUrl ?? undefined}
-              bio={selectedUser.bio ?? undefined}
-              location={selectedUser.location ?? undefined}
-              latitude={selectedUser.latitude ?? undefined}
-              longitude={selectedUser.longitude ?? undefined}
-              age={selectedUser.age ?? undefined}
-              preferredGames={selectedUser.preferredGames ?? undefined}
-              isOwn={selectedUser.id === currentUserId}
-            />
+            <div className="overflow-y-auto max-h-[calc(90vh-8rem)]">
+              <UserProfile
+                id={selectedUser.id}
+                gamertag={selectedUser.gamertag || "Unknown"}
+                firstName={selectedUser.firstName ?? undefined}
+                lastName={selectedUser.lastName ?? undefined}
+                profileImageUrl={selectedUser.profileImageUrl ?? undefined}
+                bio={selectedUser.bio ?? undefined}
+                location={selectedUser.location ?? undefined}
+                latitude={selectedUser.latitude ?? undefined}
+                longitude={selectedUser.longitude ?? undefined}
+                age={selectedUser.age ?? undefined}
+                preferredGames={selectedUser.preferredGames ?? undefined}
+                isOwn={selectedUser.id === currentUserId}
+                onMessage={() => {
+                  handleConnectUser(selectedUser.id);
+                  setSelectedUser(null);
+                }}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       )}
