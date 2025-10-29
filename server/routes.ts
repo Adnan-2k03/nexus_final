@@ -1,10 +1,19 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./googleAuth";
 import { insertMatchRequestSchema } from "@shared/schema";
 import { z } from "zod";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -467,10 +476,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Photo upload route
-  const multer = require('multer');
-  const path = require('path');
-  const fs = require('fs');
-
   // Create uploads directory if it doesn't exist
   const uploadsDir = path.join(__dirname, '../uploads');
   if (!fs.existsSync(uploadsDir)) {
@@ -503,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Serve uploaded files statically
-  app.use('/uploads', require('express').static(uploadsDir));
+  app.use('/uploads', express.static(uploadsDir));
 
   app.post('/api/upload-photo', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {

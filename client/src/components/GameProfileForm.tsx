@@ -131,7 +131,7 @@ export function GameProfileForm({
 
   const { fields: clipFields, append: appendClip, remove: removeClip } = useFieldArray({
     control: form.control as any,
-    name: "clips",
+    name: "clipUrls",
   });
 
   const { fields: customSectionFields, append: appendCustomSection, remove: removeCustomSection } = useFieldArray({
