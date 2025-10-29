@@ -6,6 +6,14 @@ GameMatch is a social gaming web application that enables real-time matchmaking 
 
 ## Recent Changes
 
+**October 29, 2025**
+- Completed verification of all profile creation features
+- Documented comprehensive portfolio system for users
+- Verified user profile setup (gamertag, bio, location, age, gender, language, preferred games)
+- Verified game profile portfolios (ranks, hours played, achievements, clips, custom stats)
+- Confirmed all CRUD operations with proper authorization and error handling
+- Added step-by-step guide for creating gaming portfolios
+
 **October 25, 2025**
 - Fixed database referential integrity with CASCADE DELETE constraints
 - Added CASCADE DELETE to matchConnections and hiddenMatches tables
@@ -82,6 +90,18 @@ GameMatch is a social gaming web application that enables real-time matchmaking 
 - **Profile Information**: Bio, location, age, gender, language preferences
 - **Gaming Preferences**: List of preferred games
 - **Profile Images**: Integration with Google account profile pictures
+- **Location Services**: Optional geolocation for distance-based matching
+
+### Game Profile Portfolios
+Every user can create detailed gaming portfolios for each game they play:
+- **Game Selection**: Choose from popular games or add custom games
+- **Rank Information**: Track current rank and highest rank achieved
+- **Play Time**: Record total hours played
+- **Achievements**: List gaming achievements and milestones
+- **Gameplay Clips**: Add URLs to highlight videos and gameplay clips
+- **Custom Statistics**: Add game-specific stats (K/D ratio, win rate, etc.)
+- **Portfolio Management**: Full CRUD operations - create, view, edit, and delete game profiles
+- **Public Visibility**: Game profiles are visible to all users for showcasing skills
 
 ### Communication
 - **Messages**: Direct messaging between matched players
@@ -133,6 +153,61 @@ The application requires the following environment variables:
 - **Development Callback URL**: `https://{REPLIT_DEV_DOMAIN}/api/auth/google/callback`
 - **Production Callback URL**: `https://{YOUR_DOMAIN}/api/auth/google/callback`
 - Both URLs must be registered in Google Cloud Console under "Authorized redirect URIs"
+
+## How to Create Your Gaming Portfolio
+
+GameMatch allows every user to create and showcase detailed gaming portfolios. Here's how:
+
+### Step 1: Initial Setup (First-Time Users)
+1. Click **"Get Started"** or **"Start Matching"** on the homepage
+2. Sign in with your Google account via OAuth
+3. Complete your profile setup:
+   - Choose a unique **gamertag** (3-20 characters)
+   - Add your **bio** (optional, up to 200 characters)
+   - Set your **location** (optional, enables location-based matching)
+   - Add your **age** (optional, 13-100)
+   - Select your **gender** and **language** preferences
+   - Choose your **preferred games** from the list
+
+### Step 2: Navigate to Your Profile
+1. Once logged in, use the navigation menu to go to **"My Profile"**
+2. Your basic profile will display your gamertag, bio, and preferred games
+
+### Step 3: Add Game Profiles
+For each game you want to showcase:
+1. Click the **"Add Game"** button on your profile page
+2. Fill in your gaming achievements:
+   - **Game Name**: Select from popular games or enter a custom game
+   - **Current Rank**: Your present rank/tier
+   - **Highest Rank**: Your peak rank achieved
+   - **Hours Played**: Total time invested in the game
+   - **Achievements**: Click "+" to add individual achievements
+   - **Gameplay Clips**: Click "+" to add URLs to your highlight videos
+   - **Custom Stats**: Add game-specific statistics like:
+     - K/D Ratio
+     - Win Rate
+     - Average Score
+     - Any other relevant metrics
+3. Click **"Create Profile"** to save
+
+### Step 4: Manage Your Portfolio
+- **View**: All your game profiles appear on your profile page
+- **Edit**: Click on any game profile to update information
+- **Delete**: Remove outdated game profiles as needed
+- **Showcase**: Your portfolio is visible to all users, helping teammates find you
+
+### What Makes Your Portfolio Stand Out
+✓ **Multiple Games**: Create separate profiles for every game you play
+✓ **Detailed Stats**: Add custom statistics unique to each game
+✓ **Visual Proof**: Include links to gameplay clips and highlights
+✓ **Achievements**: List all your gaming accomplishments
+✓ **Keep Updated**: Regularly update ranks and stats to stay current
+
+### Privacy Note
+- Your basic profile information (gamertag, bio, location) is visible to other users
+- All game profiles are publicly visible to showcase your skills
+- Only you can edit or delete your own profiles
+- Messages and connections are private between connected users
 
 ## Development Workflow
 
