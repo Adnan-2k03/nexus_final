@@ -61,25 +61,23 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search games, descriptions, or gamer tags..."
-          value={search}
-          onChange={(e) => handleSearchChange(e.target.value)}
-          className="pl-10 pr-4"
-          data-testid="input-search"
-        />
-      </div>
-
-      {/* Filter Toggle */}
-      <div className="flex items-center justify-between">
+      {/* Search Bar with Filter Toggle */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search games, descriptions, or gamer tags..."
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            className="pl-10 pr-4"
+            data-testid="input-search"
+          />
+        </div>
         <Button
           variant="outline"
-          size="sm"
+          size="default"
           onClick={() => setShowFilters(!showFilters)}
-          className="gap-2"
+          className="gap-2 shrink-0"
           data-testid="button-toggle-filters"
         >
           <Filter className="h-4 w-4" />
@@ -90,13 +88,12 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
             </Badge>
           )}
         </Button>
-
         {hasActiveFilters && (
           <Button
             variant="ghost"
-            size="sm"
+            size="default"
             onClick={clearAllFilters}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground shrink-0"
             data-testid="button-clear-all-filters"
           >
             Clear all
