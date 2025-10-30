@@ -321,6 +321,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         accepterId,
       });
       
+      // Notify the accepter that someone applied to their match
+      const requesterUser = await storage.getUser(requesterId);
+      await storage.createNotification({
+        userId: accepterId,
+        type: "match_application",
+        title: "New Match Application",
+        message: `${requesterUser?.gamertag || "Someone"} wants to join your ${matchRequest.gameName} ${matchRequest.gameMode} match`,
+        relatedUserId: requesterId,
+        relatedMatchId: requestId,
+        isRead: "false",
+      });
+      
       // Broadcast match connection to both users
       (app as any).broadcast?.toUsers([requesterId, accepterId], {
         type: 'match_connection_created',
@@ -354,6 +366,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedConnection = await storage.updateMatchConnectionStatus(id, status);
+      
+      // Notify the requester of the status change
+      if (status === 'accepted') {
+        const accepterUser = await storage.getUser(connectionToUpdate.accepterId);
+        await storage.createNotification({
+          userId: connectionToUpdate.requesterId,
+          type: "match_accepted",
+          title: "Match Application Accepted",
+          message: `${accepterUser?.gamertag || "Someone"} accepted your match application`,
+          relatedUserId: connectionToUpdate.accepterId,
+          relatedMatchId: connectionToUpdate.requestId,
+          isRead: "false",
+        });
+      } else if (status === 'declined') {
+        const accepterUser = await storage.getUser(connectionToUpdate.accepterId);
+        await storage.createNotification({
+          userId: connectionToUpdate.requesterId,
+          type: "match_declined",
+          title: "Match Application Declined",
+          message: `${accepterUser?.gamertag || "Someone"} declined your match application`,
+          relatedUserId: connectionToUpdate.accepterId,
+          relatedMatchId: connectionToUpdate.requestId,
+          isRead: "false",
+        });
+      }
       
       // Broadcast connection status update to participants
       (app as any).broadcast?.toUsers([connectionToUpdate.requesterId, connectionToUpdate.accepterId], {
@@ -440,9 +477,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Connection request not found or you are not authorized to modify it" });
       }
       
-      // If declined, delete the request instead of updating status
+      // If declined, delete the request and notify sender
       if (status === 'declined') {
         await storage.deleteConnectionRequest(id, userId);
+        
+        // Notify the sender that their request was declined
+        const receiverUser = await storage.getUser(requestToUpdate.receiverId);
+        await storage.createNotification({
+          userId: requestToUpdate.senderId,
+          type: "connection_declined",
+          title: "Connection Request Declined",
+          message: `${receiverUser?.gamertag || "Someone"} declined your connection request`,
+          relatedUserId: requestToUpdate.receiverId,
+          isRead: "false",
+        });
         
         (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {
           type: 'connection_request_deleted',
@@ -454,6 +502,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const updatedRequest = await storage.updateConnectionRequestStatus(id, status);
+      
+      // If accepted, notify the sender
+      if (status === 'accepted') {
+        const receiverUser = await storage.getUser(requestToUpdate.receiverId);
+        await storage.createNotification({
+          userId: requestToUpdate.senderId,
+          type: "connection_accepted",
+          title: "Connection Request Accepted",
+          message: `${receiverUser?.gamertag || "Someone"} accepted your connection request`,
+          relatedUserId: requestToUpdate.receiverId,
+          isRead: "false",
+        });
+      }
       
       (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {
         type: 'connection_request_updated',
