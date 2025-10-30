@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ProfileDialog } from "@/components/ui/profile-dialog";
 import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2, ChevronDown, ChevronUp, Search } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
@@ -244,17 +245,11 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       <Card key={connection.id} className="hover:shadow-md transition-shadow" data-testid={`connection-card-${connection.id}`}>
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
-            <div 
-              className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => setViewProfileUserId(otherUserId)}
-              data-testid={`button-view-profile-${connection.id}`}
+            <ProfileDialog 
+              userId={otherUserId} 
+              gamertag={displayName} 
+              profileImageUrl={avatarUrl}
             >
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={avatarUrl} />
-                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                  {displayName[0]?.toUpperCase() || "?"}
-                </AvatarFallback>
-              </Avatar>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-foreground underline-offset-4 hover:underline">
@@ -265,7 +260,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                   {isRequester ? "Applied to your match" : "You applied to their match"}
                 </p>
               </div>
-            </div>
+            </ProfileDialog>
             <Badge 
               variant={
                 connection.status === 'accepted' ? 'default' : 'secondary'

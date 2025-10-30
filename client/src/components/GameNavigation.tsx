@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { 
   Home, 
   Plus, 
@@ -11,7 +12,8 @@ import {
   Menu,
   X,
   Users,
-  Search
+  Search,
+  MoreVertical
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -103,29 +105,34 @@ export function GameNavigation({
             <ThemeSelector />
           </div>
           
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onNavigate('settings')}
-            className="flex-col h-16 w-16"
-            data-testid="nav-settings"
-          >
-            <Settings className="h-5 w-5" />
-            <span className="text-xs mt-1">Settings</span>
-          </Button>
-          
-          {user && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onLogout}
-              className="flex-col h-16 w-16"
-              data-testid="nav-logout"
-            >
-              <LogOut className="h-5 w-5" />
-              <span className="text-xs mt-1">Logout</span>
-            </Button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-col h-16 w-16"
+                data-testid="nav-menu"
+              >
+                <MoreVertical className="h-5 w-5" />
+                <span className="text-xs mt-1">Menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={() => onNavigate('settings')} data-testid="nav-settings">
+                <Settings className="h-4 w-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              {user && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onLogout} data-testid="nav-logout">
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Logout
+                  </DropdownMenuItem>
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </nav>
 

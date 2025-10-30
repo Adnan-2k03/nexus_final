@@ -9,6 +9,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ProfileDialog } from "@/components/ui/profile-dialog";
 import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, ChevronUp, CheckCircle, X, UserMinus } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -272,12 +273,11 @@ export function Messages({ currentUserId }: MessagesProps) {
                           <Card key={request.id} className="hover:shadow-md transition-shadow" data-testid={`connection-request-${request.id}`}>
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
-                                <Avatar className="h-12 w-12">
-                                  <AvatarImage src={avatarUrl} />
-                                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                    {displayName[0]?.toUpperCase() || "?"}
-                                  </AvatarFallback>
-                                </Avatar>
+                                <ProfileDialog 
+                                  userId={otherUserId} 
+                                  gamertag={displayName} 
+                                  profileImageUrl={avatarUrl}
+                                />
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-semibold text-foreground truncate">
                                     {displayName}
@@ -335,12 +335,11 @@ export function Messages({ currentUserId }: MessagesProps) {
                           <Card key={request.id} className="hover:shadow-md transition-shadow" data-testid={`connection-sent-${request.id}`}>
                             <CardContent className="p-4">
                               <div className="flex items-center gap-3">
-                                <Avatar className="h-12 w-12">
-                                  <AvatarImage src={avatarUrl} />
-                                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                    {displayName[0]?.toUpperCase() || "?"}
-                                  </AvatarFallback>
-                                </Avatar>
+                                <ProfileDialog 
+                                  userId={otherUserId} 
+                                  gamertag={displayName} 
+                                  profileImageUrl={avatarUrl}
+                                />
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-semibold text-foreground truncate">
                                     {displayName}
@@ -392,12 +391,13 @@ export function Messages({ currentUserId }: MessagesProps) {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <Avatar className="h-12 w-12">
-                      <AvatarImage src={avatarUrl} />
-                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                        {displayName[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <ProfileDialog 
+                        userId={otherUserId} 
+                        gamertag={displayName} 
+                        profileImageUrl={avatarUrl}
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
                         <h3 className="font-semibold text-foreground truncate">
