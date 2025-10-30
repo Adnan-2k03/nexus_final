@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
-import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2, ChevronDown, ChevronUp, Search } from "lucide-react";
+import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshCw, Filter, Trash2, ChevronDown, ChevronUp, Search, FileText } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -43,6 +43,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const { lastMessage } = useWebSocket();
   const [openChatId, setOpenChatId] = useState<string | null>(null);
   const [viewProfileUserId, setViewProfileUserId] = useState<string | null>(null);
+  const [viewMatchDetailsId, setViewMatchDetailsId] = useState<string | null>(null);
   const [requestTypeFilter, setRequestTypeFilter] = useState<string>("all");
   const [gameFilter, setGameFilter] = useState<string>("all");
   const [showFilters, setShowFilters] = useState(false);
@@ -77,6 +78,18 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       return response.json();
     },
     enabled: !!viewProfileUserId,
+  });
+
+  // Fetch match request details when viewing
+  const { data: matchRequestDetails } = useQuery({
+    queryKey: ['/api/match-requests', viewMatchDetailsId],
+    queryFn: async () => {
+      if (!viewMatchDetailsId) throw new Error('No match ID');
+      const response = await fetch(`/api/match-requests/${viewMatchDetailsId}`);
+      if (!response.ok) throw new Error('Failed to fetch match request');
+      return response.json();
+    },
+    enabled: !!viewMatchDetailsId,
   });
 
   const handleRefresh = () => {
@@ -335,17 +348,29 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             {showActions === 'chat' && (
               <Dialog open={openChatId === connection.id} onOpenChange={(open) => setOpenChatId(open ? connection.id : null)}>
                 <div className="flex gap-2 items-center justify-between w-full">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-1 text-primary hover:text-primary"
-                    onClick={() => setOpenChatId(connection.id)}
-                    data-testid={`button-open-connection-${connection.id}`}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <Phone className="h-4 w-4" />
-                    <span className="text-xs">Chat & Voice</span>
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-1 text-primary hover:text-primary"
+                      onClick={() => setOpenChatId(connection.id)}
+                      data-testid={`button-open-connection-${connection.id}`}
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <Phone className="h-4 w-4" />
+                      <span className="text-xs">Chat & Voice</span>
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="gap-1"
+                      onClick={() => setViewMatchDetailsId(connection.requestId)}
+                      data-testid={`button-match-details-${connection.id}`}
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span className="text-xs">Match Details</span>
+                    </Button>
+                  </div>
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -719,6 +744,62 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                     <p className="text-sm text-muted-foreground">{viewedUserProfile.language}</p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Match Details Dialog */}
+      <Dialog open={!!viewMatchDetailsId} onOpenChange={(open) => !open && setViewMatchDetailsId(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Match Request Details</DialogTitle>
+            <DialogDescription>Original match request information</DialogDescription>
+          </DialogHeader>
+          {matchRequestDetails && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground">Game</h4>
+                  <p className="text-lg font-semibold">{matchRequestDetails.gameName}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground">Mode</h4>
+                  <Badge variant="secondary">{matchRequestDetails.gameMode}</Badge>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Badge variant={matchRequestDetails.matchType === 'lfg' ? 'default' : 'secondary'}>
+                  {matchRequestDetails.matchType === 'lfg' ? 'Looking for Group' : 'Looking for Opponent'}
+                </Badge>
+                <Badge variant="outline">
+                  {matchRequestDetails.duration === 'short-term' ? 'Short-term' : 'Long-term'}
+                </Badge>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-sm text-muted-foreground mb-1">Description</h4>
+                <p className="text-sm">{matchRequestDetails.description}</p>
+              </div>
+
+              {matchRequestDetails.region && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Region</h4>
+                  <Badge variant="outline">{matchRequestDetails.region}</Badge>
+                </div>
+              )}
+
+              {matchRequestDetails.tournamentName && (
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Tournament</h4>
+                  <p className="text-sm">{matchRequestDetails.tournamentName}</p>
+                </div>
+              )}
+
+              <div className="text-xs text-muted-foreground pt-2 border-t">
+                Match ID: {matchRequestDetails.id}
               </div>
             </div>
           )}

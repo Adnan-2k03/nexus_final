@@ -224,6 +224,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get single match request by ID
+  app.get('/api/match-requests/:id', authMiddleware, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      
+      const matchRequests = await storage.getMatchRequests();
+      const matchRequest = matchRequests.find(r => r.id === id);
+      
+      if (!matchRequest) {
+        return res.status(404).json({ message: "Match request not found" });
+      }
+      
+      res.json(matchRequest);
+    } catch (error) {
+      console.error("Error fetching match request:", error);
+      res.status(500).json({ message: "Failed to fetch match request" });
+    }
+  });
+
   app.delete('/api/match-requests/:id', authMiddleware, async (req: any, res) => {
     try {
       const { id } = req.params;

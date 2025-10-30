@@ -202,8 +202,9 @@ export function MatchFeed({
 
 
   const filterMatches = (match: MatchRequestDisplay) => {
-    // Don't show matches user has already applied to
-    if (appliedMatchIds.includes(match.id)) {
+    // Don't show matches user has already applied to (UNLESS they created it)
+    // Creators should always see their own match requests
+    if (appliedMatchIds.includes(match.id) && match.userId !== currentUserId) {
       return false;
     }
     
