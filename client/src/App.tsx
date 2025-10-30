@@ -16,7 +16,6 @@ import { MatchFeed } from "@/components/MatchFeed";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
 import { UserProfile } from "@/components/UserProfile";
 import { ProfileSetup } from "@/components/ProfileSetup";
-import { ThemeSelector } from "@/components/ThemeSelector";
 import { Connections } from "@/components/Connections";
 import { Messages } from "@/components/Messages";
 import { Discover } from "@/components/Discover";
@@ -208,10 +207,7 @@ function Router() {
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
             <div className="max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
-                <ThemeSelector />
-              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-6">My Profile</h1>
               {user && user.gamertag && (
                 <UserProfile
                   {...mapUserForComponents(user)}
@@ -257,15 +253,11 @@ function Router() {
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
             <div className="max-w-2xl mx-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-                <ThemeSelector />
-              </div>
+              <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
               <div className="space-y-6">
                 <div className="p-6 bg-card rounded-lg border">
                   <h3 className="font-semibold mb-2">Appearance</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Choose from multiple theme options</p>
-                  <ThemeSelector />
+                  <p className="text-sm text-muted-foreground">Theme can be changed from the navigation menu</p>
                 </div>
                 <div className="p-6 bg-card rounded-lg border">
                   <h3 className="font-semibold mb-2">Notifications</h3>

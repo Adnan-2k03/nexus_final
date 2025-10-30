@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { ThemeSelector } from "./ThemeSelector";
 
 interface GameNavigationProps {
   currentPage: "home" | "search" | "create" | "profile" | "messages" | "settings" | "profile-setup" | "connections";
@@ -98,6 +99,10 @@ export function GameNavigation({
         </div>
 
         <div className="flex flex-col gap-2">
+          <div className="flex items-center justify-center">
+            <ThemeSelector />
+          </div>
+          
           <Button
             variant="ghost"
             size="sm"
@@ -143,6 +148,8 @@ export function GameNavigation({
             </Avatar>
           )}
           
+          <ThemeSelector />
+          
           <Button
             variant="ghost"
             size="sm"
@@ -164,6 +171,11 @@ export function GameNavigation({
               ))}
               
               <div className="border-t border-border pt-4 mt-4 space-y-2">
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm font-medium">Theme</span>
+                  <ThemeSelector />
+                </div>
+                
                 <Button
                   variant="ghost"
                   onClick={() => {

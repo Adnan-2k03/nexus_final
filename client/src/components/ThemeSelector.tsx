@@ -14,7 +14,7 @@ const themes = [
   { 
     value: "dark" as const, 
     label: "Gaming Dark", 
-    description: "Classic dark gaming theme",
+    description: "Classic dark mode",
     color: "bg-[hsl(230,85%,65%)]"
   },
   { 
@@ -25,21 +25,21 @@ const themes = [
   },
   { 
     value: "midnight" as const, 
-    label: "Midnight Blue", 
-    description: "Deep blue aesthetic",
-    color: "bg-[hsl(210,85%,60%)]"
+    label: "Neon Cyber", 
+    description: "Cyan glow vibes",
+    color: "bg-[hsl(180,100%,50%)]"
   },
   { 
     value: "forest" as const, 
-    label: "Forest Green", 
-    description: "Natural green vibes",
-    color: "bg-[hsl(145,70%,50%)]"
+    label: "Vibrant Purple", 
+    description: "Electric purple energy",
+    color: "bg-[hsl(280,90%,65%)]"
   },
   { 
     value: "sunset" as const, 
-    label: "Sunset Orange", 
-    description: "Warm orange glow",
-    color: "bg-[hsl(25,90%,55%)]"
+    label: "Electric Teal", 
+    description: "Teal with glow effects",
+    color: "bg-[hsl(165,85%,55%)]"
   },
   { 
     value: "system" as const, 
