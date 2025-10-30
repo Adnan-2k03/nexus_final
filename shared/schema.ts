@@ -9,6 +9,7 @@ import {
   integer,
   real,
   pgEnum,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -18,6 +19,14 @@ export const matchRequestStatusEnum = pgEnum("match_request_status", ["waiting",
 export const matchTypeEnum = pgEnum("match_type", ["lfg", "lfo"]);
 export const durationEnum = pgEnum("duration", ["short-term", "long-term"]);
 export const genderEnum = pgEnum("gender", ["male", "female", "custom", "prefer_not_to_say"]);
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "connection_request",
+  "connection_accepted",
+  "connection_declined",
+  "match_application",
+  "match_accepted",
+  "match_declined"
+]);
 
 // Session storage table for authentication
 export const sessions = pgTable(
@@ -118,7 +127,7 @@ export const chatMessages = pgTable("chat_messages", {
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  type: varchar("type").notNull(), // connection_accepted, connection_declined, match_application, match_accepted, match_declined
+  type: varchar("type").notNull(), // connection_request, connection_accepted, connection_declined, match_application, match_accepted, match_declined
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   relatedUserId: varchar("related_user_id").references(() => users.id), // The user who triggered this notification
