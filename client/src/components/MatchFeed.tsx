@@ -55,7 +55,7 @@ export function MatchFeed({
   const { isConnected, lastMessage } = useWebSocket();
   const [filters, setFilters] = useState<{ search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string }>({});
   const [showHidden, setShowHidden] = useState(false);
-  const [duration, setDuration] = useState<"short-term" | "long-term">("short-term");
+  const [showLongTerm, setShowLongTerm] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -235,8 +235,22 @@ export function MatchFeed({
     return true;
   };
 
-  const lfgMatches = transformedMatches.filter(match => match.matchType === 'lfg' && match.duration === duration && filterMatches(match));
-  const lfoMatches = transformedMatches.filter(match => match.matchType === 'lfo' && match.duration === duration && filterMatches(match));
+  const lfgMatches = transformedMatches.filter(match => {
+    if (match.matchType !== 'lfg') return false;
+    if (!filterMatches(match)) return false;
+    // Show short-term by default, include long-term only when toggle is enabled
+    if (match.duration === 'short-term') return true;
+    if (match.duration === 'long-term' && showLongTerm) return true;
+    return false;
+  });
+  const lfoMatches = transformedMatches.filter(match => {
+    if (match.matchType !== 'lfo') return false;
+    if (!filterMatches(match)) return false;
+    // Show short-term by default, include long-term only when toggle is enabled
+    if (match.duration === 'short-term') return true;
+    if (match.duration === 'long-term' && showLongTerm) return true;
+    return false;
+  });
 
   const handleRefresh = () => {
     refetch();
@@ -303,17 +317,9 @@ export function MatchFeed({
             {showHidden ? "Show All" : "Hidden"}
           </Button>
           <Button
-            variant={duration === "short-term" ? "default" : "outline"}
+            variant={showLongTerm ? "default" : "outline"}
             size="sm"
-            onClick={() => setDuration("short-term")}
-            data-testid="button-duration-short-term"
-          >
-            Short-term
-          </Button>
-          <Button
-            variant={duration === "long-term" ? "default" : "outline"}
-            size="sm"
-            onClick={() => setDuration("long-term")}
+            onClick={() => setShowLongTerm(!showLongTerm)}
             data-testid="button-duration-long-term"
           >
             Long-term

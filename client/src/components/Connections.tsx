@@ -424,6 +424,52 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             </Button>
           </div>
         </div>
+
+        {/* Search and Filter Bar */}
+        <div className="mb-6 flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by gamertag..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+              data-testid="input-search-connections"
+            />
+          </div>
+          <Popover open={showFilters} onOpenChange={setShowFilters}>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
+                <Filter className="h-4 w-4 mr-1" />
+                Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64" data-testid="popover-request-filters">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-3">Filter Requests</h4>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Request Type</label>
+                  <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                    <SelectTrigger data-testid="select-request-type">
+                      <SelectValue placeholder="All Requests" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Applications</SelectItem>
+                      <SelectItem value="1v1">1v1 Match Applications</SelectItem>
+                      <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                      <SelectItem value="3v3">3v3 Match Applications</SelectItem>
+                      <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+
         <div className="text-center py-12">
           <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No connections yet</h3>
@@ -461,8 +507,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="relative">
+      {/* Search and Filter Bar */}
+      <div className="mb-6 flex gap-2">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             type="text"
@@ -473,44 +520,39 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             data-testid="input-search-connections"
           />
         </div>
+        <Popover open={showFilters} onOpenChange={setShowFilters}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
+              <Filter className="h-4 w-4 mr-1" />
+              Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-64" data-testid="popover-request-filters">
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold mb-3">Filter Requests</h4>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Request Type</label>
+                <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                  <SelectTrigger data-testid="select-request-type">
+                    <SelectValue placeholder="All Requests" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Applications</SelectItem>
+                    <SelectItem value="1v1">1v1 Match Applications</SelectItem>
+                    <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                    <SelectItem value="3v3">3v3 Match Applications</SelectItem>
+                    <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       <div className="space-y-8">
-        {/* Filter Section - Show at top if any pending requests */}
-        {incomingApplications.length > 0 && (
-          <div className="flex items-center justify-end gap-2">
-            <Popover open={showFilters} onOpenChange={setShowFilters}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" data-testid="button-toggle-request-filters">
-                  <Filter className="h-4 w-4 mr-1" />
-                  Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64" data-testid="popover-request-filters">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-3">Filter Requests</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Request Type</label>
-                    <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
-                      <SelectTrigger data-testid="select-request-type">
-                        <SelectValue placeholder="All Requests" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Applications</SelectItem>
-                        <SelectItem value="1v1">1v1 Match Applications</SelectItem>
-                        <SelectItem value="2v2">2v2 Match Applications</SelectItem>
-                        <SelectItem value="3v3">3v3 Match Applications</SelectItem>
-                        <SelectItem value="squad">Team/Squad Finder</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        )}
 
         {/* Pending Applications - Collapsible Section */}
         {(incomingApplications.length > 0 || yourApplications.length > 0) && (
