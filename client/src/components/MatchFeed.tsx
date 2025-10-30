@@ -55,6 +55,7 @@ export function MatchFeed({
   const { isConnected, lastMessage } = useWebSocket();
   const [filters, setFilters] = useState<{ search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string }>({});
   const [showHidden, setShowHidden] = useState(false);
+  const [duration, setDuration] = useState<"short-term" | "long-term">("short-term");
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -234,8 +235,8 @@ export function MatchFeed({
     return true;
   };
 
-  const lfgMatches = transformedMatches.filter(match => match.matchType === 'lfg' && filterMatches(match));
-  const lfoMatches = transformedMatches.filter(match => match.matchType === 'lfo' && filterMatches(match));
+  const lfgMatches = transformedMatches.filter(match => match.matchType === 'lfg' && match.duration === duration && filterMatches(match));
+  const lfoMatches = transformedMatches.filter(match => match.matchType === 'lfo' && match.duration === duration && filterMatches(match));
 
   const handleRefresh = () => {
     refetch();
@@ -334,6 +335,28 @@ export function MatchFeed({
         onFilterChange={setFilters}
         activeFilters={filters}
       />
+
+      {/* Duration Toggle */}
+      <div className="flex items-center justify-center gap-2 p-2 bg-card border border-border rounded-lg">
+        <Button
+          variant={duration === "short-term" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setDuration("short-term")}
+          className="flex-1"
+          data-testid="button-duration-short-term"
+        >
+          Short-term
+        </Button>
+        <Button
+          variant={duration === "long-term" ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setDuration("long-term")}
+          className="flex-1"
+          data-testid="button-duration-long-term"
+        >
+          Long-term
+        </Button>
+      </div>
 
       {/* Match Feed with Tabs */}
       <Tabs defaultValue="lfg" className="w-full">

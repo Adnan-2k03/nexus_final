@@ -13,6 +13,7 @@ const createMatchSchema = z.object({
   gameName: z.string().min(1, "Game name is required"),
   gameMode: z.string().min(1, "Game mode is required"),
   matchType: z.enum(["lfg", "lfo"], { required_error: "Match type is required" }),
+  duration: z.enum(["short-term", "long-term"], { required_error: "Duration is required" }),
   description: z.string().min(10, "Description must be at least 10 characters"),
   tournamentName: z.string().optional(),
   region: z.string().min(1, "Region is required"),
@@ -33,6 +34,7 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
       gameName: "",
       gameMode: "",
       matchType: "lfg",
+      duration: "short-term",
       description: "",
       tournamentName: "",
       region: "",
@@ -87,6 +89,32 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
                           <Target className="h-4 w-4" />
                           <span>LFO - Looking for Opponent (Find challengers)</span>
                         </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="duration"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Duration</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-duration">
+                        <SelectValue placeholder="Select duration" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="short-term">
+                        Short-term (Quick matches, casual play)
+                      </SelectItem>
+                      <SelectItem value="long-term">
+                        Long-term (Consistent team, competitive)
                       </SelectItem>
                     </SelectContent>
                   </Select>

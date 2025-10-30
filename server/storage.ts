@@ -320,6 +320,7 @@ export class DatabaseStorage implements IStorage {
         gameName: matchRequests.gameName,
         gameMode: matchRequests.gameMode,
         matchType: matchRequests.matchType,
+        duration: matchRequests.duration,
         tournamentName: matchRequests.tournamentName,
         description: matchRequests.description,
         status: matchRequests.status,
