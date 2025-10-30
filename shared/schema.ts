@@ -114,6 +114,22 @@ export const chatMessages = pgTable("chat_messages", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Notifications table - stores user notifications for various events
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: varchar("type").notNull(), // connection_accepted, connection_declined, match_application, match_accepted, match_declined
+  title: varchar("title").notNull(),
+  message: text("message").notNull(),
+  relatedUserId: varchar("related_user_id").references(() => users.id), // The user who triggered this notification
+  relatedMatchId: varchar("related_match_id").references(() => matchRequests.id),
+  isRead: varchar("is_read").notNull().default("false"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_notifications").on(table.userId),
+  index("idx_notifications_read").on(table.isRead),
+]);
+
 // Game profiles table - stores detailed game achievements per user per game
 export const gameProfiles = pgTable("game_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -200,6 +216,8 @@ export type InsertHiddenMatch = typeof hiddenMatches.$inferInsert;
 export type HiddenMatch = typeof hiddenMatches.$inferSelect;
 export type InsertChatMessage = typeof chatMessages.$inferInsert;
 export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
 export type InsertGameProfile = typeof gameProfiles.$inferInsert;
 export type GameProfile = typeof gameProfiles.$inferSelect;
 export type InsertHobby = typeof hobbies.$inferInsert;
@@ -264,11 +282,12 @@ export const registerUserSchema = z.object({
 
 export type RegisterUser = z.infer<typeof registerUserSchema>;
 
-export const insertMatchRequestSchema = createInsertSchema(matchRequests).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+export const insertMatchRequestSchema = createInsertSchema(matchRequests).omit({ id: true, userId: true, createdAt: true, updatedAt: true }).required({ matchType: true, duration: true });
 export const insertConnectionRequestSchema = createInsertSchema(connectionRequests).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertMatchConnectionSchema = createInsertSchema(matchConnections).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertHiddenMatchSchema = createInsertSchema(hiddenMatches).omit({ id: true, createdAt: true });
 export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ id: true, createdAt: true });
+export const insertNotificationSchema = createInsertSchema(notifications).omit({ id: true, createdAt: true });
 export const insertGameProfileSchema = createInsertSchema(gameProfiles).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertHobbySchema = createInsertSchema(hobbies).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertPortfolioPageSchema = createInsertSchema(portfolioPages).omit({ id: true, userId: true, createdAt: true, updatedAt: true });

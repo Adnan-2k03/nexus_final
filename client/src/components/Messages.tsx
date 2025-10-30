@@ -232,6 +232,82 @@ export function Messages({ currentUserId }: MessagesProps) {
         <LoadingSkeleton />
       ) : (
         <div className="space-y-6">
+          {/* Active Conversations */}
+          {filteredConnections.length === 0 && pendingReceivedRequests.length === 0 && pendingSentRequests.length === 0 ? (
+            <div className="text-center py-12">
+              <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
+              <p className="text-muted-foreground max-w-md mx-auto">
+                Connect with other players through the Discover tab to start chatting here.
+              </p>
+            </div>
+          ) : filteredConnections.length > 0 ? (
+            <div className="space-y-3">
+              {filteredConnections.map((request) => {
+            const isSender = request.senderId === currentUserId;
+            const otherUserId = isSender ? request.receiverId : request.senderId;
+            const otherUser = getUserData(otherUserId);
+            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+            const avatarUrl = otherUser?.profileImageUrl || undefined;
+            const timeAgo = formatTimeAgo(request.updatedAt);
+
+            return (
+              <Card
+                key={request.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => setSelectedConnection(request)}
+                data-testid={`conversation-${request.id}`}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div onClick={(e) => e.stopPropagation()} className="relative">
+                      <ProfileDialog 
+                        userId={otherUserId} 
+                        gamertag={displayName} 
+                        profileImageUrl={avatarUrl}
+                        connectionId={request.id}
+                        currentUserId={currentUserId}
+                      />
+                      {isUserOnline(otherUserId) && (
+                        <div 
+                          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"
+                          data-testid={`online-indicator-${otherUserId}`}
+                        />
+                      )}
+                      {isUserInVoice(otherUserId) && (
+                        <div 
+                          className="absolute -top-1 -right-1 h-5 w-5 bg-primary rounded-full border-2 border-background flex items-center justify-center"
+                          data-testid={`voice-indicator-${otherUserId}`}
+                        >
+                          <Phone className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="font-semibold text-foreground truncate">
+                          {displayName}
+                        </h3>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {timeAgo}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {isUserInVoice(otherUserId) ? "Waiting in voice channel" : "Click to chat or join voice"}
+                      </p>
+                    </div>
+                    <div className="flex gap-1">
+                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+            </div>
+          ) : null}
+
           {/* Pending Connection Requests Folder */}
           {(pendingReceivedRequests.length > 0 || pendingSentRequests.length > 0) && (
             <Collapsible open={pendingRequestsOpen} onOpenChange={setPendingRequestsOpen}>
@@ -366,82 +442,6 @@ export function Messages({ currentUserId }: MessagesProps) {
               </Card>
             </Collapsible>
           )}
-
-          {/* Active Conversations */}
-          {filteredConnections.length === 0 && pendingReceivedRequests.length === 0 && pendingSentRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Connect with other players through the Discover tab to start chatting here.
-              </p>
-            </div>
-          ) : filteredConnections.length > 0 ? (
-            <div className="space-y-3">
-              {filteredConnections.map((request) => {
-            const isSender = request.senderId === currentUserId;
-            const otherUserId = isSender ? request.receiverId : request.senderId;
-            const otherUser = getUserData(otherUserId);
-            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-            const avatarUrl = otherUser?.profileImageUrl || undefined;
-            const timeAgo = formatTimeAgo(request.updatedAt);
-
-            return (
-              <Card
-                key={request.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setSelectedConnection(request)}
-                data-testid={`conversation-${request.id}`}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-3">
-                    <div onClick={(e) => e.stopPropagation()} className="relative">
-                      <ProfileDialog 
-                        userId={otherUserId} 
-                        gamertag={displayName} 
-                        profileImageUrl={avatarUrl}
-                        connectionId={request.id}
-                        currentUserId={currentUserId}
-                      />
-                      {isUserOnline(otherUserId) && (
-                        <div 
-                          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"
-                          data-testid={`online-indicator-${otherUserId}`}
-                        />
-                      )}
-                      {isUserInVoice(otherUserId) && (
-                        <div 
-                          className="absolute -top-1 -right-1 h-5 w-5 bg-primary rounded-full border-2 border-background flex items-center justify-center"
-                          data-testid={`voice-indicator-${otherUserId}`}
-                        >
-                          <Phone className="h-3 w-3 text-primary-foreground" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h3 className="font-semibold text-foreground truncate">
-                          {displayName}
-                        </h3>
-                        <span className="text-xs text-muted-foreground whitespace-nowrap">
-                          {timeAgo}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {isUserInVoice(otherUserId) ? "Waiting in voice channel" : "Click to chat or join voice"}
-                      </p>
-                    </div>
-                    <div className="flex gap-1">
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-            </div>
-          ) : null}
         </div>
       )}
 

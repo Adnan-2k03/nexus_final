@@ -600,6 +600,26 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
       <div className="space-y-8">
 
+        {/* Match Connections Section */}
+        {acceptedConnections.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-primary" />
+                Match Connections
+              </h2>
+              <Badge variant="default" className="text-xs">
+                {acceptedConnections.length} active
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {acceptedConnections.map((connection) => 
+                renderConnectionCard(connection, 'chat', connection.requesterId === currentUserId)
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Pending Applications - Collapsible Section */}
         {(incomingApplications.length > 0 || yourApplications.length > 0) && (
           <Collapsible open={pendingRequestsOpen} onOpenChange={setPendingRequestsOpen}>
@@ -680,26 +700,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               </CollapsibleContent>
             </Card>
           </Collapsible>
-        )}
-
-        {/* Match Connections Section */}
-        {acceptedConnections.length > 0 && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <MessageCircle className="h-5 w-5 text-primary" />
-                Match Connections
-              </h2>
-              <Badge variant="default" className="text-xs">
-                {acceptedConnections.length} active
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {acceptedConnections.map((connection) => 
-                renderConnectionCard(connection, 'chat', connection.requesterId === currentUserId)
-              )}
-            </div>
-          </div>
         )}
 
       </div>
