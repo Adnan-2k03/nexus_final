@@ -5,6 +5,7 @@ import {
   connectionRequests,
   hiddenMatches,
   chatMessages,
+  notifications,
   gameProfiles,
   hobbies,
   voiceChannels,
@@ -25,6 +26,8 @@ import {
   type ChatMessage,
   type ChatMessageWithSender,
   type InsertChatMessage,
+  type Notification,
+  type InsertNotification,
   type GameProfile,
   type InsertGameProfile,
   type Hobby,
@@ -93,6 +96,13 @@ export interface IStorage {
   sendMessage(message: InsertChatMessage): Promise<ChatMessage>;
   getMessages(connectionId: string): Promise<ChatMessageWithSender[]>;
   getRecentMessages(userId: string): Promise<ChatMessageWithSender[]>;
+  
+  // Notification operations
+  createNotification(notification: InsertNotification): Promise<Notification>;
+  getUserNotifications(userId: string, unreadOnly?: boolean): Promise<Notification[]>;
+  markNotificationAsRead(id: string, userId: string): Promise<Notification>;
+  deleteNotification(id: string, userId: string): Promise<void>;
+  getUnreadNotificationCount(userId: string): Promise<number>;
   
   // Game profile operations
   createGameProfile(profile: InsertGameProfile): Promise<GameProfile>;
@@ -654,6 +664,86 @@ export class DatabaseStorage implements IStorage {
       .limit(50);
     
     return messages;
+  }
+
+  // Notification operations
+  async createNotification(notificationData: InsertNotification): Promise<Notification> {
+    const [notification] = await db
+      .insert(notifications)
+      .values(notificationData)
+      .returning();
+    return notification;
+  }
+
+  async getUserNotifications(userId: string, unreadOnly: boolean = false): Promise<Notification[]> {
+    const conditions = [eq(notifications.userId, userId)];
+    
+    if (unreadOnly) {
+      conditions.push(eq(notifications.isRead, "false"));
+    }
+    
+    const userNotifications = await db
+      .select()
+      .from(notifications)
+      .where(and(...conditions))
+      .orderBy(desc(notifications.createdAt))
+      .limit(50);
+    
+    return userNotifications;
+  }
+
+  async markNotificationAsRead(id: string, userId: string): Promise<Notification> {
+    // Verify the user owns this notification
+    const [notification] = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id));
+    
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+    
+    if (notification.userId !== userId) {
+      throw new Error('Unauthorized to modify this notification');
+    }
+    
+    const [updatedNotification] = await db
+      .update(notifications)
+      .set({ isRead: "true" })
+      .where(eq(notifications.id, id))
+      .returning();
+    
+    return updatedNotification;
+  }
+
+  async deleteNotification(id: string, userId: string): Promise<void> {
+    // Verify the user owns this notification
+    const [notification] = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.id, id));
+    
+    if (!notification) {
+      throw new Error('Notification not found');
+    }
+    
+    if (notification.userId !== userId) {
+      throw new Error('Unauthorized to delete this notification');
+    }
+    
+    await db.delete(notifications).where(eq(notifications.id, id));
+  }
+
+  async getUnreadNotificationCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(notifications)
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, "false")
+      ));
+    
+    return result[0]?.count || 0;
   }
 
   // Game profile operations
