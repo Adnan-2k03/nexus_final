@@ -407,6 +407,7 @@ export function MatchFeed({
                 status={match.status}
                 timeAgo={match.timeAgo}
                 isOwn={match.userId === currentUserId}
+                currentUserId={currentUserId}
                 onAccept={() => onAcceptMatch(match.id)}
                 onDecline={() => onDeclineMatch(match.id)}
                 onDelete={() => onDeleteMatch(match.id)}
@@ -452,6 +453,7 @@ export function MatchFeed({
                 status={match.status}
                 timeAgo={match.timeAgo}
                 isOwn={match.userId === currentUserId}
+                currentUserId={currentUserId}
                 onAccept={() => onAcceptMatch(match.id)}
                 onDecline={() => onDeclineMatch(match.id)}
                 onDelete={() => onDeleteMatch(match.id)}

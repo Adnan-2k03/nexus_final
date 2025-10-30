@@ -279,6 +279,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                                   userId={otherUserId} 
                                   gamertag={displayName} 
                                   profileImageUrl={avatarUrl}
+                                  currentUserId={currentUserId}
                                 />
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-semibold text-foreground truncate">
@@ -341,6 +342,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                                   userId={otherUserId} 
                                   gamertag={displayName} 
                                   profileImageUrl={avatarUrl}
+                                  currentUserId={currentUserId}
                                 />
                                 <div className="flex-1 min-w-0">
                                   <h3 className="font-semibold text-foreground truncate">
@@ -399,6 +401,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                         gamertag={displayName} 
                         profileImageUrl={avatarUrl}
                         connectionId={request.id}
+                        currentUserId={currentUserId}
                       />
                       {isUserOnline(otherUserId) && (
                         <div 

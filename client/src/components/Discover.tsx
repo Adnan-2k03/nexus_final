@@ -172,16 +172,8 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const filteredUsers = users?.filter(user => {
     if (user.id === currentUserId) return false;
     
-    // Filter out users with accepted match connections
-    const hasMatchConnection = userConnections.some(
-      (conn: any) => 
-        conn.status === 'accepted' && 
-        (conn.requesterId === user.id || conn.accepterId === user.id)
-    );
-    
-    if (hasMatchConnection) return false;
-    
-    // Filter out users with accepted direct connection requests
+    // Only filter out users with accepted direct connection requests (friend connections)
+    // Users with match connections should still be visible in discover
     const hasDirectConnection = connectionRequests.some(
       (req: any) => 
         req.status === 'accepted' &&
@@ -207,20 +199,8 @@ export function Discover({ currentUserId }: DiscoverProps) {
   };
 
   const handleConnectUser = (userId: string) => {
-    // Check if already connected
-    const existingConnection = userConnections.find(
-      (conn: any) => conn.requesterId === userId || conn.accepterId === userId
-    );
-    
-    if (existingConnection && existingConnection.status === 'accepted') {
-      toast({
-        title: "Already Connected",
-        description: "You already have a connection with this user. Check your Connections tab.",
-      });
-      return;
-    }
-
-    // Check if connection request already sent (only check pending/accepted status)
+    // Only check for direct connection requests (not match connections)
+    // Users with match connections should be able to friend-connect
     const existingRequest = connectionRequests.find(
       (req: any) => 
         (req.status === 'pending' || req.status === 'accepted') &&
@@ -229,10 +209,17 @@ export function Discover({ currentUserId }: DiscoverProps) {
     );
     
     if (existingRequest) {
-      toast({
-        title: "Request Already Sent",
-        description: "You already have a pending connection request with this user.",
-      });
+      if (existingRequest.status === 'accepted') {
+        toast({
+          title: "Already Connected",
+          description: "You already have a friend connection with this user.",
+        });
+      } else {
+        toast({
+          title: "Request Already Sent",
+          description: "You already have a pending connection request with this user.",
+        });
+      }
       return;
     }
 

@@ -262,6 +262,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               userId={otherUserId} 
               gamertag={displayName} 
               profileImageUrl={avatarUrl}
+              currentUserId={currentUserId}
             >
               <div>
                 <div className="flex items-center gap-2">
@@ -302,6 +303,16 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             {showActions === 'confirm' && (
               <div className="flex gap-2">
                 <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => setViewMatchDetailsId(connection.requestId)}
+                  data-testid={`button-match-details-${connection.id}`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="text-xs">Match Details</span>
+                </Button>
+                <Button 
                   variant="default" 
                   size="sm" 
                   className="gap-1"
@@ -328,6 +339,16 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             
             {showActions === 'waiting' && (
               <div className="flex gap-2 items-center">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="gap-1"
+                  onClick={() => setViewMatchDetailsId(connection.requestId)}
+                  data-testid={`button-match-details-${connection.id}`}
+                >
+                  <FileText className="h-4 w-4" />
+                  <span className="text-xs">Match Details</span>
+                </Button>
                 <Badge variant="secondary" className="text-xs">
                   Waiting for confirmation
                 </Badge>

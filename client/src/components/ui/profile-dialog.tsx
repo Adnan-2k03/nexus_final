@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Loader2, UserMinus } from "lucide-react";
+import { Loader2, UserMinus, UserPlus } from "lucide-react";
 import { UserProfile } from "../UserProfile";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +17,7 @@ interface ProfileDialogProps {
   children?: React.ReactNode;
   trigger?: React.ReactNode;
   connectionId?: string;
+  currentUserId?: string;
 }
 
 export function ProfileDialog({ 
@@ -25,7 +26,8 @@ export function ProfileDialog({
   profileImageUrl,
   children,
   trigger,
-  connectionId
+  connectionId,
+  currentUserId
 }: ProfileDialogProps) {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -40,6 +42,17 @@ export function ProfileDialog({
       return response.json();
     },
     enabled: open,
+    retry: false,
+  });
+
+  const { data: connectionRequests = [] } = useQuery<any[]>({
+    queryKey: ['/api/connection-requests'],
+    queryFn: async () => {
+      const response = await fetch('/api/connection-requests');
+      if (!response.ok) throw new Error('Failed to fetch connection requests');
+      return response.json();
+    },
+    enabled: open && !!currentUserId,
     retry: false,
   });
 
@@ -65,6 +78,58 @@ export function ProfileDialog({
       });
     },
   });
+
+  const createConnectionRequestMutation = useMutation({
+    mutationFn: async (targetUserId: string) => {
+      return await apiRequest('POST', '/api/connection-requests', {
+        receiverId: targetUserId,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      toast({
+        title: "Connection Request Sent",
+        description: "Your connection request has been sent successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Unable to Connect",
+        description: error.message || "Failed to send connection request",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const existingDirectConnection = connectionRequests.find(
+    (req: any) => 
+      (req.status === 'pending' || req.status === 'accepted') &&
+      ((req.senderId === currentUserId && req.receiverId === userId) ||
+      (req.receiverId === currentUserId && req.senderId === userId))
+  );
+
+  const canConnect = currentUserId && 
+    currentUserId !== userId && 
+    !connectionId && 
+    !existingDirectConnection;
+
+  const handleConnect = () => {
+    if (existingDirectConnection) {
+      if (existingDirectConnection.status === 'accepted') {
+        toast({
+          title: "Already Connected",
+          description: "You already have a friend connection with this user.",
+        });
+      } else {
+        toast({
+          title: "Request Already Sent",
+          description: "You already have a pending connection request with this user.",
+        });
+      }
+      return;
+    }
+    createConnectionRequestMutation.mutate(userId);
+  };
 
   const defaultTrigger = (
     <button 
@@ -150,6 +215,21 @@ export function ProfileDialog({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+        )}
+        {canConnect && (
+          <div className="pt-4 border-t mt-4">
+            <Button 
+              variant="default" 
+              size="sm" 
+              className="w-full gap-2"
+              onClick={handleConnect}
+              disabled={createConnectionRequestMutation.isPending}
+              data-testid="button-connect-profile"
+            >
+              <UserPlus className="h-4 w-4" />
+              {createConnectionRequestMutation.isPending ? "Sending Request..." : "Connect"}
+            </Button>
           </div>
         )}
       </DialogContent>

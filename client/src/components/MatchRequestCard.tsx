@@ -20,6 +20,7 @@ interface MatchRequestCardProps {
   onDecline?: () => void;
   onDelete?: () => void;
   isOwn?: boolean;
+  currentUserId?: string;
 }
 
 export function MatchRequestCard({
@@ -38,6 +39,7 @@ export function MatchRequestCard({
   onDecline,
   onDelete,
   isOwn = false,
+  currentUserId,
 }: MatchRequestCardProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -73,6 +75,7 @@ export function MatchRequestCard({
               userId={userId} 
               gamertag={gamertag} 
               profileImageUrl={profileImageUrl}
+              currentUserId={currentUserId}
             >
               <div className="min-w-0">
                 <h3 className="font-semibold text-sm text-foreground hover:text-primary cursor-pointer truncate" data-testid={`text-gamertag-${id}`}>
