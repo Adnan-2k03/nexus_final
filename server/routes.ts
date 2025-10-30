@@ -933,6 +933,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notification routes
+  app.get('/api/notifications', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { unreadOnly } = req.query;
+      
+      const notifications = await storage.getUserNotifications(
+        userId,
+        unreadOnly === 'true'
+      );
+      
+      res.json(notifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get('/api/notifications/unread-count', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const count = await storage.getUnreadNotificationCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+      res.status(500).json({ message: "Failed to fetch unread count" });
+    }
+  });
+
+  app.patch('/api/notifications/:id/read', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      const notification = await storage.markNotificationAsRead(id, userId);
+      
+      res.json(notification);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to mark notification as read";
+      
+      if (errorMessage.includes("not found")) {
+        return res.status(404).json({ message: errorMessage });
+      }
+      if (errorMessage.includes("Unauthorized")) {
+        return res.status(403).json({ message: errorMessage });
+      }
+      
+      console.error("Error marking notification as read:", error);
+      res.status(500).json({ message: errorMessage });
+    }
+  });
+
+  app.delete('/api/notifications/:id', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { id } = req.params;
+      
+      await storage.deleteNotification(id, userId);
+      
+      res.status(204).send();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete notification";
+      
+      if (errorMessage.includes("not found")) {
+        return res.status(404).json({ message: errorMessage });
+      }
+      if (errorMessage.includes("Unauthorized")) {
+        return res.status(403).json({ message: errorMessage });
+      }
+      
+      console.error("Error deleting notification:", error);
+      res.status(500).json({ message: errorMessage });
+    }
+  });
+
   // Voice channel routes
   app.get('/api/voice/channel/:connectionId', authMiddleware, async (req: any, res) => {
     try {
