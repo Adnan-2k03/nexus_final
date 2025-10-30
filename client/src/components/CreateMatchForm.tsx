@@ -7,11 +7,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Gamepad2, Plus } from "lucide-react";
+import { Gamepad2, Plus, Users, Target } from "lucide-react";
 
 const createMatchSchema = z.object({
   gameName: z.string().min(1, "Game name is required"),
   gameMode: z.string().min(1, "Game mode is required"),
+  matchType: z.enum(["lfg", "lfo"], { required_error: "Match type is required" }),
   description: z.string().min(10, "Description must be at least 10 characters"),
   tournamentName: z.string().optional(),
   region: z.string().min(1, "Region is required"),
@@ -31,6 +32,7 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
     defaultValues: {
       gameName: "",
       gameMode: "",
+      matchType: "lfg",
       description: "",
       tournamentName: "",
       region: "",
@@ -61,6 +63,38 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+            <FormField
+              control={form.control}
+              name="matchType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Match Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-match-type">
+                        <SelectValue placeholder="Select match type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="lfg">
+                        <div className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          <span>LFG - Looking for Group (Find teammates)</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="lfo">
+                        <div className="flex items-center gap-2">
+                          <Target className="h-4 w-4" />
+                          <span>LFO - Looking for Opponent (Find challengers)</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

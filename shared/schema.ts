@@ -15,6 +15,7 @@ import { z } from "zod";
 
 // Enums
 export const matchRequestStatusEnum = pgEnum("match_request_status", ["waiting", "connected", "declined"]);
+export const matchTypeEnum = pgEnum("match_type", ["lfg", "lfo"]);
 export const genderEnum = pgEnum("gender", ["male", "female", "custom", "prefer_not_to_say"]);
 
 // Session storage table for authentication
@@ -60,6 +61,7 @@ export const matchRequests = pgTable("match_requests", {
   userId: varchar("user_id").notNull().references(() => users.id),
   gameName: varchar("game_name").notNull(),
   gameMode: varchar("game_mode").notNull(), // 1v1, 2v2, 3v3, etc.
+  matchType: matchTypeEnum("match_type").notNull().default("lfg"), // lfg (Looking for Group) or lfo (Looking for Opponent)
   tournamentName: varchar("tournament_name"),
   description: text("description").notNull(),
   status: matchRequestStatusEnum("status").notNull().default("waiting"),

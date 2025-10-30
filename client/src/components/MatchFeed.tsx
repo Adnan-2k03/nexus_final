@@ -2,12 +2,14 @@ import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { MatchRequestCard } from "./MatchRequestCard";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { MatchRequestWithUser, MatchConnection } from "@shared/schema";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { GameFilters } from "./GameFilters";
-import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye } from "lucide-react";
+import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye, Users, Target } from "lucide-react";
 
 // Utility function to format time ago
 function formatTimeAgo(date: string | Date | null): string {
@@ -196,7 +198,7 @@ export function MatchFeed({
 
 
 
-  const filteredMatches = transformedMatches.filter(match => {
+  const filterMatches = (match: MatchRequestDisplay) => {
     // Don't show matches user has already applied to
     if (appliedMatchIds.includes(match.id)) {
       return false;
@@ -228,7 +230,10 @@ export function MatchFeed({
       return false;
     }
     return true;
-  });
+  };
+
+  const lfgMatches = transformedMatches.filter(match => match.matchType === 'lfg' && filterMatches(match));
+  const lfoMatches = transformedMatches.filter(match => match.matchType === 'lfo' && filterMatches(match));
 
   const handleRefresh = () => {
     refetch();
@@ -328,49 +333,109 @@ export function MatchFeed({
         activeFilters={filters}
       />
 
-      {/* Match Feed */}
-      <div className="space-y-4">
-        {isFetchingMatches ? (
-          <LoadingSkeleton />
-        ) : filteredMatches.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <div className="text-muted-foreground space-y-2">
-                <p className="text-lg">No matches found</p>
-                <p className="text-sm">Try adjusting your filters or create a new match request</p>
-              </div>
-              <Button 
-                onClick={onCreateMatch}
-                className="mt-4 gap-2"
-                data-testid="button-create-first-match"
-              >
-                <Plus className="h-4 w-4" />
-                Create Your First Match
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredMatches.map((match) => (
-            <MatchRequestCard
-              key={match.id}
-              id={match.id}
-              userId={match.userId}
-              gamertag={match.gamertag}
-              profileImageUrl={match.profileImageUrl}
-              gameName={match.gameName}
-              gameMode={match.gameMode}
-              description={match.description}
-              region={match.region}
-              tournamentName={match.tournamentName}
-              status={match.status}
-              timeAgo={match.timeAgo}
-              isOwn={match.userId === currentUserId}
-              onAccept={() => onAcceptMatch(match.id)}
-              onDecline={() => onDeclineMatch(match.id)}
-            />
-          ))
-        )}
-      </div>
+      {/* Match Feed with Tabs */}
+      <Tabs defaultValue="lfg" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="lfg" className="gap-2" data-testid="tab-lfg">
+            <Users className="h-4 w-4" />
+            LFG (Looking for Group)
+            <Badge variant="secondary" className="ml-1">{lfgMatches.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="lfo" className="gap-2" data-testid="tab-lfo">
+            <Target className="h-4 w-4" />
+            LFO (Looking for Opponent)
+            <Badge variant="secondary" className="ml-1">{lfoMatches.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="lfg" className="mt-6 space-y-4">
+          {isFetchingMatches ? (
+            <LoadingSkeleton />
+          ) : lfgMatches.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                <div className="text-muted-foreground space-y-2">
+                  <p className="text-lg font-semibold">No LFG matches found</p>
+                  <p className="text-sm">Looking for teammates to form a group? Create a match request to find players!</p>
+                </div>
+                <Button 
+                  onClick={onCreateMatch}
+                  className="mt-4 gap-2"
+                  data-testid="button-create-lfg-match"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create LFG Request
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            lfgMatches.map((match) => (
+              <MatchRequestCard
+                key={match.id}
+                id={match.id}
+                userId={match.userId}
+                gamertag={match.gamertag}
+                profileImageUrl={match.profileImageUrl}
+                gameName={match.gameName}
+                gameMode={match.gameMode}
+                description={match.description}
+                region={match.region}
+                tournamentName={match.tournamentName}
+                status={match.status}
+                timeAgo={match.timeAgo}
+                isOwn={match.userId === currentUserId}
+                onAccept={() => onAcceptMatch(match.id)}
+                onDecline={() => onDeclineMatch(match.id)}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="lfo" className="mt-6 space-y-4">
+          {isFetchingMatches ? (
+            <LoadingSkeleton />
+          ) : lfoMatches.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Target className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                <div className="text-muted-foreground space-y-2">
+                  <p className="text-lg font-semibold">No LFO matches found</p>
+                  <p className="text-sm">Looking for opponents to compete against? Create a match request to find challengers!</p>
+                </div>
+                <Button 
+                  onClick={onCreateMatch}
+                  className="mt-4 gap-2"
+                  data-testid="button-create-lfo-match"
+                >
+                  <Plus className="h-4 w-4" />
+                  Create LFO Request
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            lfoMatches.map((match) => (
+              <MatchRequestCard
+                key={match.id}
+                id={match.id}
+                userId={match.userId}
+                gamertag={match.gamertag}
+                profileImageUrl={match.profileImageUrl}
+                gameName={match.gameName}
+                gameMode={match.gameMode}
+                description={match.description}
+                region={match.region}
+                tournamentName={match.tournamentName}
+                status={match.status}
+                timeAgo={match.timeAgo}
+                isOwn={match.userId === currentUserId}
+                onAccept={() => onAcceptMatch(match.id)}
+                onDecline={() => onDeclineMatch(match.id)}
+              />
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Live Updates Indicator */}
       {isConnected && (
