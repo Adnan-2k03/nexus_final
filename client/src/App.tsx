@@ -19,6 +19,7 @@ import { ProfileSetup } from "@/components/ProfileSetup";
 import { Connections } from "@/components/Connections";
 import { Messages } from "@/components/Messages";
 import { Discover } from "@/components/Discover";
+import { Settings } from "@/components/Settings";
 import NotFound from "@/pages/not-found";
 
 // Types
@@ -274,19 +275,7 @@ function Router() {
       case "settings":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <div className="max-w-2xl mx-auto">
-              <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
-              <div className="space-y-6">
-                <div className="p-6 bg-card rounded-lg border">
-                  <h3 className="font-semibold mb-2">Appearance</h3>
-                  <p className="text-sm text-muted-foreground">Theme can be changed from the navigation menu</p>
-                </div>
-                <div className="p-6 bg-card rounded-lg border">
-                  <h3 className="font-semibold mb-2">Notifications</h3>
-                  <p className="text-sm text-muted-foreground">Notification preferences coming soon</p>
-                </div>
-              </div>
-            </div>
+            <Settings user={user} />
           </div>
         );
       case "profile-setup":

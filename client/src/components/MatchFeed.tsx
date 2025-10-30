@@ -303,6 +303,22 @@ export function MatchFeed({
             {showHidden ? "Show All" : "Hidden"}
           </Button>
           <Button
+            variant={duration === "short-term" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDuration("short-term")}
+            data-testid="button-duration-short-term"
+          >
+            Short-term
+          </Button>
+          <Button
+            variant={duration === "long-term" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setDuration("long-term")}
+            data-testid="button-duration-long-term"
+          >
+            Long-term
+          </Button>
+          <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
@@ -336,40 +352,16 @@ export function MatchFeed({
         activeFilters={filters}
       />
 
-      {/* Duration Toggle */}
-      <div className="flex items-center justify-center gap-2 p-2 bg-card border border-border rounded-lg">
-        <Button
-          variant={duration === "short-term" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setDuration("short-term")}
-          className="flex-1"
-          data-testid="button-duration-short-term"
-        >
-          Short-term
-        </Button>
-        <Button
-          variant={duration === "long-term" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setDuration("long-term")}
-          className="flex-1"
-          data-testid="button-duration-long-term"
-        >
-          Long-term
-        </Button>
-      </div>
-
       {/* Match Feed with Tabs */}
       <Tabs defaultValue="lfg" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="lfg" className="gap-2" data-testid="tab-lfg">
             <Users className="h-4 w-4" />
             LFG (Looking for Group)
-            <Badge variant="secondary" className="ml-1">{lfgMatches.length}</Badge>
           </TabsTrigger>
           <TabsTrigger value="lfo" className="gap-2" data-testid="tab-lfo">
             <Target className="h-4 w-4" />
             LFO (Looking for Opponent)
-            <Badge variant="secondary" className="ml-1">{lfoMatches.length}</Badge>
           </TabsTrigger>
         </TabsList>
 

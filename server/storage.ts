@@ -52,6 +52,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByGamertag(gamertag: string): Promise<User | undefined>;
   getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<User[]>;
+  getUserCount(): Promise<number>;
   upsertUser(user: UpsertUser): Promise<User>;
   upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
   createLocalUser(userData: { gamertag: string; firstName?: string | null; lastName?: string | null; email?: string | null; age?: number | null; gender?: "male" | "female" | "custom" | "prefer_not_to_say" | null; bio?: string | null; location?: string | null; preferredGames?: string[] | null }): Promise<User>;
@@ -168,6 +169,11 @@ export class DatabaseStorage implements IStorage {
     }
     
     return allUsers;
+  }
+
+  async getUserCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(users);
+    return result[0]?.count || 0;
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {

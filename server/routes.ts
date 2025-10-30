@@ -124,6 +124,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // User count endpoint
+  app.get('/api/users/count', async (req, res) => {
+    try {
+      const count = await storage.getUserCount();
+      res.json(count);
+    } catch (error) {
+      console.error("Error fetching user count:", error);
+      res.status(500).json({ message: "Failed to fetch user count" });
+    }
+  });
+
   // Match request routes
   app.get('/api/match-requests', async (req, res) => {
     try {
