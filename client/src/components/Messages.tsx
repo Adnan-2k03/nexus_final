@@ -14,6 +14,7 @@ import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, Chevron
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import type { ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
@@ -42,6 +43,7 @@ export function Messages({ currentUserId }: MessagesProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const { toast } = useToast();
+  const { isUserOnline } = useOnlineStatus();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -391,12 +393,19 @@ export function Messages({ currentUserId }: MessagesProps) {
               >
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
-                    <div onClick={(e) => e.stopPropagation()}>
+                    <div onClick={(e) => e.stopPropagation()} className="relative">
                       <ProfileDialog 
                         userId={otherUserId} 
                         gamertag={displayName} 
                         profileImageUrl={avatarUrl}
+                        connectionId={request.id}
                       />
+                      {isUserOnline(otherUserId) && (
+                        <div 
+                          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"
+                          data-testid={`online-indicator-${otherUserId}`}
+                        />
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">

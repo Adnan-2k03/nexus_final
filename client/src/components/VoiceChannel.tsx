@@ -496,6 +496,26 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
               </Button>
             </div>
             
+            {/* Teammate Presence Indicator */}
+            <div className="bg-background/50 rounded p-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">{otherUserName || 'Teammate'}:</span>
+                <div className="flex items-center gap-2">
+                  {otherUserReady ? (
+                    <>
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid="teammate-ready-indicator"></div>
+                      <span className="font-medium text-green-600 dark:text-green-400">In Voice Channel</span>
+                    </>
+                  ) : (
+                    <>
+                      <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
+                      <span className="font-medium text-muted-foreground">Not in Channel</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Connection Status Indicators */}
             <div className="bg-background/50 rounded p-3 space-y-2">
               <div className="flex items-center justify-between text-xs">
