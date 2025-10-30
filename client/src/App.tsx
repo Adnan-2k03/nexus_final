@@ -179,6 +179,27 @@ function Router() {
     }
   };
 
+  const handleDeleteMatch = async (matchId: string) => {
+    try {
+      const response = await fetch(`/api/match-requests/${matchId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to delete match request');
+      }
+
+      console.log('Match request deleted successfully');
+      
+      // Refresh match feed to remove the deleted request
+      queryClient.invalidateQueries({ queryKey: ['/api/match-requests'] });
+    } catch (error) {
+      console.error('Error deleting match request:', error);
+      // TODO: Show error message to user
+    }
+  };
+
   const renderMainContent = () => {
     if (showCreateForm) {
       return (
@@ -199,6 +220,7 @@ function Router() {
               onCreateMatch={handleCreateMatch}
               onAcceptMatch={handleAcceptMatch}
               onDeclineMatch={handleDeclineMatch}
+              onDeleteMatch={handleDeleteMatch}
               currentUserId={user?.id}
             />
           </div>
@@ -289,6 +311,7 @@ function Router() {
               onCreateMatch={handleCreateMatch}
               onAcceptMatch={handleAcceptMatch}
               onDeclineMatch={handleDeclineMatch}
+              onDeleteMatch={handleDeleteMatch}
               currentUserId={user?.id}
             />
           </div>

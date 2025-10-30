@@ -40,6 +40,7 @@ interface MatchFeedProps {
   onCreateMatch: () => void;
   onAcceptMatch: (id: string) => void;
   onDeclineMatch: (id: string) => void;
+  onDeleteMatch: (id: string) => void;
   currentUserId?: string;
 }
 
@@ -47,6 +48,7 @@ export function MatchFeed({
   onCreateMatch, 
   onAcceptMatch, 
   onDeclineMatch,
+  onDeleteMatch,
   currentUserId = "user1"
 }: MatchFeedProps) {
   const queryClient = useQueryClient();
@@ -387,6 +389,7 @@ export function MatchFeed({
                 isOwn={match.userId === currentUserId}
                 onAccept={() => onAcceptMatch(match.id)}
                 onDecline={() => onDeclineMatch(match.id)}
+                onDelete={() => onDeleteMatch(match.id)}
               />
             ))
           )}
@@ -431,6 +434,7 @@ export function MatchFeed({
                 isOwn={match.userId === currentUserId}
                 onAccept={() => onAcceptMatch(match.id)}
                 onDecline={() => onDeclineMatch(match.id)}
+                onDelete={() => onDeleteMatch(match.id)}
               />
             ))
           )}

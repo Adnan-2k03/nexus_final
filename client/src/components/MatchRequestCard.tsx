@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
-import { Clock, MapPin, Users, Trophy } from "lucide-react";
+import { Clock, MapPin, Users, Trophy, Trash2 } from "lucide-react";
 
 interface MatchRequestCardProps {
   id: string;
@@ -18,6 +18,7 @@ interface MatchRequestCardProps {
   timeAgo: string;
   onAccept?: () => void;
   onDecline?: () => void;
+  onDelete?: () => void;
   isOwn?: boolean;
 }
 
@@ -35,6 +36,7 @@ export function MatchRequestCard({
   timeAgo,
   onAccept,
   onDecline,
+  onDelete,
   isOwn = false,
 }: MatchRequestCardProps) {
   const getStatusColor = (status: string) => {
@@ -140,6 +142,21 @@ export function MatchRequestCard({
             data-testid={`button-decline-${id}`}
           >
             Pass
+          </Button>
+        </CardFooter>
+      )}
+      
+      {isOwn && (
+        <CardFooter className="pt-3">
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={onDelete}
+            className="w-full gap-2"
+            data-testid={`button-delete-${id}`}
+          >
+            <Trash2 className="h-4 w-4" />
+            Delete Request
           </Button>
         </CardFooter>
       )}
