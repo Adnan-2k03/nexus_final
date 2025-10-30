@@ -4,6 +4,13 @@
 
 GameMatch is a social gaming web application designed for real-time matchmaking between gamers. The platform enables users to create and browse match requests, find teammates, and form gaming groups across various popular games. It features a mobile-first design, instant notifications, and real-time updates to facilitate seamless gaming coordination and enhance the social gaming experience. The project aims to provide a robust platform for gamers to connect and play, addressing the need for efficient team-finding and community building in the gaming world.
 
+## Recent Changes
+
+### October 30, 2025
+- **Connections/Messages Sorting**: Modified Connections and Messages tabs to prioritize accepted connections at the top, with pending requests appearing below in collapsible sections for better UX.
+- **LFO Bug Fix**: Fixed issue where LFO (Looking for Opponents) match requests were appearing in the LFG tab by requiring `matchType` and `duration` fields in the schema validation, preventing database defaults from overriding user selections.
+- **Notifications Schema**: Created database schema for notifications system (foundation laid for future implementation of request status notifications).
+
 ## User Preferences
 
 - **Communication Style**: Simple, everyday language
