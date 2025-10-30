@@ -14,6 +14,13 @@ run = ["npm", "run", "start"]
 localPort = 5000
 externalPort = 80
 
+<<<<<<< HEAD
+=======
+[[ports]]
+localPort = 45753
+externalPort = 3001
+
+>>>>>>> 628f9d7 (Improve voice call visibility and connection persistence)
 [env]
 PORT = "5000"
 
