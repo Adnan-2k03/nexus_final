@@ -88,43 +88,7 @@ export function ProfileDialog({
       </DialogTrigger>
       <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>Player Profile</DialogTitle>
-            {connectionId && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    data-testid="button-disconnect-profile"
-                  >
-                    <UserMinus className="h-4 w-4" />
-                    Disconnect
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Disconnect from {gamertag}?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      This will remove your connection with {gamertag}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel data-testid="button-cancel-disconnect-profile">Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => disconnectMutation.mutate()}
-                      disabled={disconnectMutation.isPending}
-                      className="bg-destructive hover:bg-destructive/90"
-                      data-testid="button-confirm-disconnect-profile"
-                    >
-                      {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
-          </div>
+          <DialogTitle>Player Profile</DialogTitle>
         </DialogHeader>
         <div className="overflow-y-auto max-h-[calc(90vh-8rem)]">
           {isLoading ? (
@@ -152,6 +116,42 @@ export function ProfileDialog({
             </div>
           )}
         </div>
+        {connectionId && (
+          <div className="pt-4 border-t mt-4">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full gap-2 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  data-testid="button-disconnect-profile"
+                >
+                  <UserMinus className="h-4 w-4" />
+                  Remove Connection
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Disconnect from {gamertag}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will remove your connection with {gamertag}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel data-testid="button-cancel-disconnect-profile">Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={() => disconnectMutation.mutate()}
+                    disabled={disconnectMutation.isPending}
+                    className="bg-destructive hover:bg-destructive/90"
+                    data-testid="button-confirm-disconnect-profile"
+                  >
+                    {disconnectMutation.isPending ? "Disconnecting..." : "Disconnect"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

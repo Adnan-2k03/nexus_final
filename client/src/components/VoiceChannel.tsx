@@ -226,6 +226,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   };
 
   const leaveChannel = () => {
+    // Broadcast that we're leaving the voice channel
+    sendMessage({
+      type: 'voice_channel_left',
+      connectionId,
+      targetUserId: otherUserId
+    });
+    
     // Stop all local tracks
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach(track => track.stop());
@@ -387,14 +394,10 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     handleSignaling();
   }, [lastMessage, connectionId, otherUserId]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (isInChannel) {
-        leaveChannel();
-      }
-    };
-  }, [isInChannel]);
+  // Note: We don't cleanup on unmount to allow voice calls to persist across navigation
+  // Voice calls will only disconnect when:
+  // 1. User explicitly clicks "Leave" button
+  // 2. User joins another voice channel with a different user
 
   return (
     <div className="space-y-4">
@@ -496,25 +499,34 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
               </Button>
             </div>
             
-            {/* Teammate Presence Indicator */}
-            <div className="bg-background/50 rounded p-3">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{otherUserName || 'Teammate'}:</span>
-                <div className="flex items-center gap-2">
-                  {otherUserReady ? (
-                    <>
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid="teammate-ready-indicator"></div>
-                      <span className="font-medium text-green-600 dark:text-green-400">In Voice Channel</span>
-                    </>
-                  ) : (
-                    <>
-                      <div className="h-2 w-2 bg-gray-500 rounded-full"></div>
-                      <span className="font-medium text-muted-foreground">Not in Channel</span>
-                    </>
-                  )}
+            {/* Teammate Presence Indicator - More Prominent */}
+            {!otherUserReady ? (
+              <div className="bg-yellow-500/10 border-2 border-yellow-500/30 rounded-lg p-4 animate-pulse">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Phone className="h-8 w-8 text-yellow-600 dark:text-yellow-500" />
+                    <div className="absolute inset-0 h-8 w-8 bg-yellow-500/30 rounded-full animate-ping"></div>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-sm text-yellow-700 dark:text-yellow-500">
+                      Waiting for {otherUserName || 'teammate'}...
+                    </h4>
+                    <p className="text-xs text-yellow-600/90 dark:text-yellow-500/80">
+                      You're in the voice channel. Waiting for them to join.
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-green-500/10 border-2 border-green-500/30 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" data-testid="teammate-ready-indicator"></div>
+                  <span className="font-semibold text-sm text-green-600 dark:text-green-400">
+                    {otherUserName || 'Teammate'} joined the voice channel
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Connection Status Indicators */}
             <div className="bg-background/50 rounded p-3 space-y-2">

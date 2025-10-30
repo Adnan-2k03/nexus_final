@@ -43,7 +43,7 @@ export function Messages({ currentUserId }: MessagesProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const { toast } = useToast();
-  const { isUserOnline } = useOnlineStatus();
+  const { isUserOnline, isUserInVoice } = useOnlineStatus();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -406,6 +406,14 @@ export function Messages({ currentUserId }: MessagesProps) {
                           data-testid={`online-indicator-${otherUserId}`}
                         />
                       )}
+                      {isUserInVoice(otherUserId) && (
+                        <div 
+                          className="absolute -top-1 -right-1 h-5 w-5 bg-primary rounded-full border-2 border-background flex items-center justify-center"
+                          data-testid={`voice-indicator-${otherUserId}`}
+                        >
+                          <Phone className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-2">
@@ -417,7 +425,7 @@ export function Messages({ currentUserId }: MessagesProps) {
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        Click to chat or join voice
+                        {isUserInVoice(otherUserId) ? "Waiting in voice channel" : "Click to chat or join voice"}
                       </p>
                     </div>
                     <div className="flex gap-1">
