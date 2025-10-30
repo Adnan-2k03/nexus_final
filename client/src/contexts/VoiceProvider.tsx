@@ -67,15 +67,15 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Create peer connection
-  const createPeerConnection = useCallback((otherUserId: string) => {
+  const createPeerConnection = useCallback((otherUserId: string, connectionId: string) => {
     const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
     pc.onicecandidate = (event) => {
-      if (event.candidate && state.connectionId) {
+      if (event.candidate) {
         sendMessage({
           type: 'webrtc_ice_candidate',
           targetUserId: otherUserId,
-          connectionId: state.connectionId,
+          connectionId: connectionId,
           candidate: event.candidate,
         });
       }
@@ -92,7 +92,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
     };
 
     return pc;
-  }, [sendMessage, state.connectionId]);
+  }, [sendMessage]);
 
   // Join voice channel
   const joinChannel = useCallback(async (connectionId: string, otherUserId: string) => {
@@ -126,7 +126,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
       }));
 
       // Create peer connection and add local tracks
-      const pc = createPeerConnection(otherUserId);
+      const pc = createPeerConnection(otherUserId, connectionId);
       peerConnectionRef.current = pc;
 
       stream.getTracks().forEach(track => {
@@ -217,7 +217,7 @@ export function VoiceProvider({ children }: { children: React.ReactNode }) {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             localStreamRef.current = stream;
 
-            const pc = createPeerConnection(data.fromUserId);
+            const pc = createPeerConnection(data.fromUserId, data.connectionId);
             peerConnectionRef.current = pc;
 
             stream.getTracks().forEach(track => {
