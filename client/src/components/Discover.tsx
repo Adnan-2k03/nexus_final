@@ -379,7 +379,15 @@ export function Discover({ currentUserId }: DiscoverProps) {
         <div className="text-center py-12">
           <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
           <p className="text-lg font-medium text-foreground">No gamers found</p>
-          <p className="text-sm text-muted-foreground mt-2">Try adjusting your filters</p>
+          <p className="text-sm text-muted-foreground mt-2 mb-3">Try adjusting your filters or search criteria</p>
+          <Button 
+            variant="outline"
+            onClick={handleClearFilters}
+            className="gap-2"
+            data-testid="button-clear-filters-main"
+          >
+            Clear All Filters
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

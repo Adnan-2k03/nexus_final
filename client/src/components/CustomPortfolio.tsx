@@ -165,7 +165,7 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
           data-testid="button-view-custom-portfolio"
         >
           <Sparkles className="h-4 w-4" />
-          View Custom Portfolio
+          {isOwn ? "Edit Custom Portfolio" : "View Custom Portfolio"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-full sm:max-w-3xl lg:max-w-5xl h-[90vh]">

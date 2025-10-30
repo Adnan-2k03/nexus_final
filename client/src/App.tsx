@@ -16,7 +16,7 @@ import { MatchFeed } from "@/components/MatchFeed";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
 import { UserProfile } from "@/components/UserProfile";
 import { ProfileSetup } from "@/components/ProfileSetup";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemeSelector } from "@/components/ThemeSelector";
 import { Connections } from "@/components/Connections";
 import { Messages } from "@/components/Messages";
 import { Discover } from "@/components/Discover";
@@ -210,7 +210,7 @@ function Router() {
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
-                <ThemeToggle />
+                <ThemeSelector />
               </div>
               {user && user.gamertag && (
                 <UserProfile
@@ -259,13 +259,13 @@ function Router() {
             <div className="max-w-2xl mx-auto">
               <div className="flex items-center justify-between mb-6">
                 <h1 className="text-2xl font-bold text-foreground">Settings</h1>
-                <ThemeToggle />
+                <ThemeSelector />
               </div>
               <div className="space-y-6">
                 <div className="p-6 bg-card rounded-lg border">
                   <h3 className="font-semibold mb-2">Appearance</h3>
-                  <p className="text-sm text-muted-foreground mb-4">Toggle between light and dark themes</p>
-                  <ThemeToggle />
+                  <p className="text-sm text-muted-foreground mb-4">Choose from multiple theme options</p>
+                  <ThemeSelector />
                 </div>
                 <div className="p-6 bg-card rounded-lg border">
                   <h3 className="font-semibold mb-2">Notifications</h3>
