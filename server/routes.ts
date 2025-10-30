@@ -323,7 +323,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Notify the accepter that someone applied to their match
       const requesterUser = await storage.getUser(requesterId);
-      await storage.createNotification({
+      const notification = await storage.createNotification({
         userId: accepterId,
         type: "match_application",
         title: "New Match Application",
@@ -331,6 +331,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         relatedUserId: requesterId,
         relatedMatchId: requestId,
         isRead: "false",
+      });
+      
+      // Broadcast notification in real-time
+      (app as any).broadcast?.toUsers([accepterId], {
+        type: 'new_notification',
+        data: notification
       });
       
       // Broadcast match connection to both users
@@ -370,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Notify the requester of the status change
       if (status === 'accepted') {
         const accepterUser = await storage.getUser(connectionToUpdate.accepterId);
-        await storage.createNotification({
+        const notification = await storage.createNotification({
           userId: connectionToUpdate.requesterId,
           type: "match_accepted",
           title: "Match Application Accepted",
@@ -379,9 +385,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relatedMatchId: connectionToUpdate.requestId,
           isRead: "false",
         });
+        
+        // Broadcast notification in real-time
+        (app as any).broadcast?.toUsers([connectionToUpdate.requesterId], {
+          type: 'new_notification',
+          data: notification
+        });
       } else if (status === 'declined') {
         const accepterUser = await storage.getUser(connectionToUpdate.accepterId);
-        await storage.createNotification({
+        const notification = await storage.createNotification({
           userId: connectionToUpdate.requesterId,
           type: "match_declined",
           title: "Match Application Declined",
@@ -389,6 +401,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           relatedUserId: connectionToUpdate.accepterId,
           relatedMatchId: connectionToUpdate.requestId,
           isRead: "false",
+        });
+        
+        // Broadcast notification in real-time
+        (app as any).broadcast?.toUsers([connectionToUpdate.requesterId], {
+          type: 'new_notification',
+          data: notification
         });
       }
       
@@ -483,13 +501,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Notify the sender that their request was declined
         const receiverUser = await storage.getUser(requestToUpdate.receiverId);
-        await storage.createNotification({
+        const notification = await storage.createNotification({
           userId: requestToUpdate.senderId,
           type: "connection_declined",
           title: "Connection Request Declined",
           message: `${receiverUser?.gamertag || "Someone"} declined your connection request`,
           relatedUserId: requestToUpdate.receiverId,
           isRead: "false",
+        });
+        
+        // Broadcast notification in real-time
+        (app as any).broadcast?.toUsers([requestToUpdate.senderId], {
+          type: 'new_notification',
+          data: notification
         });
         
         (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {
@@ -506,13 +530,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // If accepted, notify the sender
       if (status === 'accepted') {
         const receiverUser = await storage.getUser(requestToUpdate.receiverId);
-        await storage.createNotification({
+        const notification = await storage.createNotification({
           userId: requestToUpdate.senderId,
           type: "connection_accepted",
           title: "Connection Request Accepted",
           message: `${receiverUser?.gamertag || "Someone"} accepted your connection request`,
           relatedUserId: requestToUpdate.receiverId,
           isRead: "false",
+        });
+        
+        // Broadcast notification in real-time
+        (app as any).broadcast?.toUsers([requestToUpdate.senderId], {
+          type: 'new_notification',
+          data: notification
         });
       }
       

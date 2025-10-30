@@ -14,10 +14,58 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { useEffect } from "react";
 import type { Notification } from "@shared/schema";
 
 export function NotificationBell() {
   const { toast } = useToast();
+
+  // Set up WebSocket connection for real-time notifications
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected for notifications');
+      ws.send(JSON.stringify({ type: 'ping' }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        
+        if (message.type === 'new_notification') {
+          // Invalidate queries to refresh notifications
+          queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+          queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
+          
+          // Show toast notification
+          const notification = message.data as Notification;
+          toast({
+            title: notification.title,
+            description: notification.message,
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, [toast]);
 
   const { data: notifications = [], isLoading } = useQuery<Notification[]>({
     queryKey: ["/api/notifications"],
