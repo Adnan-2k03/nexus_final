@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Phone, PhoneOff, Mic, MicOff } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { queryClient } from "@/lib/queryClient";
 import type { ChatMessageWithSender } from "@shared/schema";
+import { useVoice } from "@/contexts/VoiceProvider";
 
 interface ChatProps {
   connectionId: string;
@@ -21,6 +22,7 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   const [message, setMessage] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const { lastMessage: wsMessage } = useWebSocket();
+  const { state: voiceState, joinChannel, leaveChannel, toggleMute } = useVoice();
 
   // Fetch messages for this connection
   const { data: messages = [], isLoading } = useQuery<ChatMessageWithSender[]>({
@@ -93,8 +95,65 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const isInVoiceChannel = voiceState.isInChannel && voiceState.connectionId === connectionId;
+
   return (
     <div className="flex flex-col h-full">
+      {/* Voice Channel - Persists across navigation */}
+      <div className="border-b p-3 bg-muted/30">
+        {!isInVoiceChannel ? (
+          <Button
+            onClick={() => joinChannel(connectionId, otherUserId)}
+            disabled={voiceState.isConnecting}
+            size="sm"
+            variant="default"
+            className="w-full"
+            data-testid="button-join-voice"
+          >
+            {voiceState.isConnecting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Joining...
+              </>
+            ) : (
+              <>
+                <Phone className="h-4 w-4 mr-2" />
+                Join Voice Channel
+              </>
+            )}
+          </Button>
+        ) : (
+          <div className="flex gap-2">
+            <div className="flex-1 flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded px-3 py-2">
+              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                In Voice Call
+              </span>
+            </div>
+            <Button
+              onClick={toggleMute}
+              size="sm"
+              variant={voiceState.isMuted ? "destructive" : "secondary"}
+              data-testid="button-toggle-mute"
+            >
+              {voiceState.isMuted ? (
+                <MicOff className="h-4 w-4" />
+              ) : (
+                <Mic className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              onClick={leaveChannel}
+              size="sm"
+              variant="destructive"
+              data-testid="button-leave-voice"
+            >
+              <PhoneOff className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Messages Area */}
       <ScrollArea className="flex-1 p-4" ref={scrollRef} data-testid="chat-messages-area">
         {isLoading ? (

@@ -166,6 +166,28 @@ export const portfolioPages = pgTable("portfolio_pages", {
   index("idx_user_portfolios").on(table.userId),
 ]);
 
+// Voice Channels table - tracks active voice channels per connection
+export const voiceChannels = pgTable("voice_channels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  connectionId: varchar("connection_id").notNull().unique(), // References either connectionRequests or matchConnections - UNIQUE to prevent duplicate channels
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_connection_voice_channels").on(table.connectionId),
+]);
+
+// Voice Participants table - tracks who's currently in each voice channel
+export const voiceParticipants = pgTable("voice_participants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  voiceChannelId: varchar("voice_channel_id").notNull().references(() => voiceChannels.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isMuted: varchar("is_muted").default("false"),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => [
+  index("idx_voice_channel_participants").on(table.voiceChannelId),
+  index("idx_user_voice_participants").on(table.userId),
+  index("idx_unique_voice_participant").on(table.voiceChannelId, table.userId), // Composite unique constraint
+]);
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
@@ -184,6 +206,10 @@ export type InsertHobby = typeof hobbies.$inferInsert;
 export type Hobby = typeof hobbies.$inferSelect;
 export type InsertPortfolioPage = typeof portfolioPages.$inferInsert;
 export type PortfolioPage = typeof portfolioPages.$inferSelect;
+export type InsertVoiceChannel = typeof voiceChannels.$inferInsert;
+export type VoiceChannel = typeof voiceChannels.$inferSelect;
+export type InsertVoiceParticipant = typeof voiceParticipants.$inferInsert;
+export type VoiceParticipant = typeof voiceParticipants.$inferSelect;
 
 // Enhanced match request type that includes user profile data
 export type MatchRequestWithUser = MatchRequest & {
@@ -215,6 +241,12 @@ export type MatchConnectionWithUser = MatchConnection & {
   gameMode?: string | null;
 };
 
+// Voice participant with user information
+export type VoiceParticipantWithUser = VoiceParticipant & {
+  gamertag: string | null;
+  profileImageUrl: string | null;
+};
+
 export const insertUserSchema = createInsertSchema(users);
 
 // Local registration schema - minimal fields required to create account
@@ -240,6 +272,8 @@ export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({ i
 export const insertGameProfileSchema = createInsertSchema(gameProfiles).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertHobbySchema = createInsertSchema(hobbies).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertPortfolioPageSchema = createInsertSchema(portfolioPages).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
+export const insertVoiceChannelSchema = createInsertSchema(voiceChannels).omit({ id: true, createdAt: true });
+export const insertVoiceParticipantSchema = createInsertSchema(voiceParticipants).omit({ id: true, joinedAt: true });
 
 // Privacy settings validation
 export const privacyVisibilityEnum = z.enum(["everyone", "connections", "nobody"]);

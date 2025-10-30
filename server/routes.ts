@@ -914,6 +914,165 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Voice channel routes
+  app.get('/api/voice/channel/:connectionId', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { connectionId } = req.params;
+      
+      // Verify user is part of this connection
+      const userConnections = await storage.getUserConnections(userId);
+      const connectionRequests = await storage.getConnectionRequests(userId);
+      
+      const hasMatchConnectionAccess = userConnections.some(c => c.id === connectionId);
+      const hasConnectionRequestAccess = connectionRequests.some(c => c.id === connectionId && c.status === 'accepted');
+      
+      if (!hasMatchConnectionAccess && !hasConnectionRequestAccess) {
+        return res.status(403).json({ message: "You don't have access to this voice channel" });
+      }
+      
+      const channel = await storage.getVoiceChannel(connectionId);
+      if (!channel) {
+        return res.json({ channel: null, participants: [] });
+      }
+      
+      const participants = await storage.getVoiceParticipants(channel.id);
+      res.json({ channel, participants });
+    } catch (error) {
+      console.error("Error fetching voice channel:", error);
+      res.status(500).json({ message: "Failed to fetch voice channel" });
+    }
+  });
+
+  app.post('/api/voice/join', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { connectionId } = req.body;
+      
+      if (!connectionId) {
+        return res.status(400).json({ message: "connectionId is required" });
+      }
+      
+      // Verify user is part of this connection
+      const userConnections = await storage.getUserConnections(userId);
+      const connectionRequests = await storage.getConnectionRequests(userId);
+      
+      const hasMatchConnectionAccess = userConnections.some(c => c.id === connectionId);
+      const hasConnectionRequestAccess = connectionRequests.some(c => c.id === connectionId && c.status === 'accepted');
+      
+      if (!hasMatchConnectionAccess && !hasConnectionRequestAccess) {
+        return res.status(403).json({ message: "You don't have access to this voice channel" });
+      }
+      
+      // Leave any existing voice channel first
+      const existingChannel = await storage.getUserActiveVoiceChannel(userId);
+      if (existingChannel) {
+        await storage.leaveVoiceChannel(existingChannel.id, userId);
+      }
+      
+      // Get or create voice channel for this connection
+      const channel = await storage.getOrCreateVoiceChannel(connectionId);
+      
+      // Join the channel
+      const participant = await storage.joinVoiceChannel(channel.id, userId);
+      const participants = await storage.getVoiceParticipants(channel.id);
+      
+      // Broadcast to other participants
+      const otherUserIds = participants
+        .filter(p => p.userId !== userId)
+        .map(p => p.userId);
+      
+      if (otherUserIds.length > 0) {
+        (app as any).broadcast?.toUsers(otherUserIds, {
+          type: 'voice_participant_joined',
+          data: { connectionId, participant, participants },
+          message: 'User joined voice channel'
+        });
+      }
+      
+      res.json({ channel, participant, participants });
+    } catch (error) {
+      console.error("Error joining voice channel:", error);
+      res.status(500).json({ message: "Failed to join voice channel" });
+    }
+  });
+
+  app.post('/api/voice/leave', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { connectionId } = req.body;
+      
+      if (!connectionId) {
+        return res.status(400).json({ message: "connectionId is required" });
+      }
+      
+      const channel = await storage.getVoiceChannel(connectionId);
+      if (!channel) {
+        return res.json({ success: true });
+      }
+      
+      // Get participants before leaving
+      const participantsBefore = await storage.getVoiceParticipants(channel.id);
+      const otherUserIds = participantsBefore
+        .filter(p => p.userId !== userId)
+        .map(p => p.userId);
+      
+      await storage.leaveVoiceChannel(channel.id, userId);
+      
+      // Broadcast to other participants
+      if (otherUserIds.length > 0) {
+        const participantsAfter = await storage.getVoiceParticipants(channel.id);
+        (app as any).broadcast?.toUsers(otherUserIds, {
+          type: 'voice_participant_left',
+          data: { connectionId, userId, participants: participantsAfter },
+          message: 'User left voice channel'
+        });
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving voice channel:", error);
+      res.status(500).json({ message: "Failed to leave voice channel" });
+    }
+  });
+
+  app.post('/api/voice/mute', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { connectionId, isMuted } = req.body;
+      
+      if (!connectionId || isMuted === undefined) {
+        return res.status(400).json({ message: "connectionId and isMuted are required" });
+      }
+      
+      const channel = await storage.getVoiceChannel(connectionId);
+      if (!channel) {
+        return res.status(404).json({ message: "Voice channel not found" });
+      }
+      
+      const participant = await storage.updateParticipantMuteStatus(channel.id, userId, isMuted);
+      const participants = await storage.getVoiceParticipants(channel.id);
+      
+      // Broadcast mute status to other participants
+      const otherUserIds = participants
+        .filter(p => p.userId !== userId)
+        .map(p => p.userId);
+      
+      if (otherUserIds.length > 0) {
+        (app as any).broadcast?.toUsers(otherUserIds, {
+          type: 'voice_participant_muted',
+          data: { connectionId, userId, isMuted, participants },
+          message: 'User mute status changed'
+        });
+      }
+      
+      res.json({ participant, participants });
+    } catch (error) {
+      console.error("Error updating mute status:", error);
+      res.status(500).json({ message: "Failed to update mute status" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Set up WebSocket server for real-time match updates
@@ -1001,7 +1160,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if user is authenticated through the session
         if (mockReq.session?.passport?.user) {
           authenticatedUserId = mockReq.session.passport.user;
-          const userId = authenticatedUserId; // Create a typed constant for use in async callbacks
+          const userId: string = authenticatedUserId as string; // Create a typed constant for use in async callbacks
           connectedClients.set(clientId, { ws, userId: authenticatedUserId, lastPong: Date.now() });
           
           ws.send(JSON.stringify({

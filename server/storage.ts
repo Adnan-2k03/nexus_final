@@ -7,6 +7,8 @@ import {
   chatMessages,
   gameProfiles,
   hobbies,
+  voiceChannels,
+  voiceParticipants,
   type User,
   type UpsertUser,
   type MatchRequest,
@@ -27,6 +29,11 @@ import {
   type InsertGameProfile,
   type Hobby,
   type InsertHobby,
+  type VoiceChannel,
+  type InsertVoiceChannel,
+  type VoiceParticipant,
+  type VoiceParticipantWithUser,
+  type InsertVoiceParticipant,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
@@ -105,6 +112,16 @@ export interface IStorage {
   getMutualGames(userId1: string, userId2: string): Promise<string[]>;
   getMutualFriends(userId1: string, userId2: string): Promise<User[]>;
   getMutualHobbies(userId1: string, userId2: string): Promise<{category: string; count: number}[]>;
+  
+  // Voice channel operations
+  getOrCreateVoiceChannel(connectionId: string): Promise<VoiceChannel>;
+  getVoiceChannel(connectionId: string): Promise<VoiceChannel | undefined>;
+  deleteVoiceChannel(voiceChannelId: string): Promise<void>;
+  joinVoiceChannel(voiceChannelId: string, userId: string): Promise<VoiceParticipant>;
+  leaveVoiceChannel(voiceChannelId: string, userId: string): Promise<void>;
+  getVoiceParticipants(voiceChannelId: string): Promise<VoiceParticipantWithUser[]>;
+  updateParticipantMuteStatus(voiceChannelId: string, userId: string, isMuted: boolean): Promise<VoiceParticipant>;
+  getUserActiveVoiceChannel(userId: string): Promise<VoiceChannel | undefined>;
 }
 
 // Database storage implementation using PostgreSQL
@@ -842,6 +859,128 @@ export class DatabaseStorage implements IStorage {
       count: hobbies1.filter(h => h.category === category).length +
              hobbies2.filter(h => h.category === category).length
     }));
+  }
+
+  // Voice channel operations
+  async getOrCreateVoiceChannel(connectionId: string): Promise<VoiceChannel> {
+    // First try to get existing channel
+    const existing = await this.getVoiceChannel(connectionId);
+    if (existing) return existing;
+    
+    // Use INSERT ... ON CONFLICT to handle race conditions
+    const [channel] = await db
+      .insert(voiceChannels)
+      .values({ connectionId })
+      .onConflictDoUpdate({
+        target: voiceChannels.connectionId,
+        set: { createdAt: sql`EXCLUDED.created_at` }
+      })
+      .returning();
+    return channel;
+  }
+
+  async getVoiceChannel(connectionId: string): Promise<VoiceChannel | undefined> {
+    const [channel] = await db
+      .select()
+      .from(voiceChannels)
+      .where(eq(voiceChannels.connectionId, connectionId));
+    return channel || undefined;
+  }
+
+  async deleteVoiceChannel(voiceChannelId: string): Promise<void> {
+    await db.delete(voiceChannels).where(eq(voiceChannels.id, voiceChannelId));
+  }
+
+  async joinVoiceChannel(voiceChannelId: string, userId: string): Promise<VoiceParticipant> {
+    // Check if user is already in this channel
+    const [existing] = await db
+      .select()
+      .from(voiceParticipants)
+      .where(
+        and(
+          eq(voiceParticipants.voiceChannelId, voiceChannelId),
+          eq(voiceParticipants.userId, userId)
+        )
+      );
+    
+    if (existing) return existing;
+    
+    // Add user to channel with ON CONFLICT to handle race conditions
+    const [participant] = await db
+      .insert(voiceParticipants)
+      .values({ voiceChannelId, userId, isMuted: "false" })
+      .onConflictDoUpdate({
+        target: [voiceParticipants.voiceChannelId, voiceParticipants.userId],
+        set: { joinedAt: sql`EXCLUDED.joined_at` }
+      })
+      .returning();
+    
+    return participant;
+  }
+
+  async leaveVoiceChannel(voiceChannelId: string, userId: string): Promise<void> {
+    await db
+      .delete(voiceParticipants)
+      .where(
+        and(
+          eq(voiceParticipants.voiceChannelId, voiceChannelId),
+          eq(voiceParticipants.userId, userId)
+        )
+      );
+    
+    // Clean up empty voice channels
+    const participants = await this.getVoiceParticipants(voiceChannelId);
+    if (participants.length === 0) {
+      await this.deleteVoiceChannel(voiceChannelId);
+    }
+  }
+
+  async getVoiceParticipants(voiceChannelId: string): Promise<VoiceParticipantWithUser[]> {
+    const participants = await db
+      .select({
+        id: voiceParticipants.id,
+        voiceChannelId: voiceParticipants.voiceChannelId,
+        userId: voiceParticipants.userId,
+        isMuted: voiceParticipants.isMuted,
+        joinedAt: voiceParticipants.joinedAt,
+        gamertag: users.gamertag,
+        profileImageUrl: users.profileImageUrl,
+      })
+      .from(voiceParticipants)
+      .leftJoin(users, eq(voiceParticipants.userId, users.id))
+      .where(eq(voiceParticipants.voiceChannelId, voiceChannelId));
+    
+    return participants;
+  }
+
+  async updateParticipantMuteStatus(voiceChannelId: string, userId: string, isMuted: boolean): Promise<VoiceParticipant> {
+    const [participant] = await db
+      .update(voiceParticipants)
+      .set({ isMuted: isMuted ? "true" : "false" })
+      .where(
+        and(
+          eq(voiceParticipants.voiceChannelId, voiceChannelId),
+          eq(voiceParticipants.userId, userId)
+        )
+      )
+      .returning();
+    
+    return participant;
+  }
+
+  async getUserActiveVoiceChannel(userId: string): Promise<VoiceChannel | undefined> {
+    const [result] = await db
+      .select({
+        id: voiceChannels.id,
+        connectionId: voiceChannels.connectionId,
+        createdAt: voiceChannels.createdAt,
+      })
+      .from(voiceParticipants)
+      .innerJoin(voiceChannels, eq(voiceParticipants.voiceChannelId, voiceChannels.id))
+      .where(eq(voiceParticipants.userId, userId))
+      .limit(1);
+    
+    return result || undefined;
   }
 }
 
