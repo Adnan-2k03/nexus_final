@@ -238,18 +238,16 @@ export function MatchFeed({
   const lfgMatches = transformedMatches.filter(match => {
     if (match.matchType !== 'lfg') return false;
     if (!filterMatches(match)) return false;
-    // Show short-term by default, include long-term only when toggle is enabled
-    if (match.duration === 'short-term') return true;
-    if (match.duration === 'long-term' && showLongTerm) return true;
-    return false;
+    // Show only short-term by default, or only long-term when toggle is enabled
+    const targetDuration = showLongTerm ? 'long-term' : 'short-term';
+    return match.duration === targetDuration;
   });
   const lfoMatches = transformedMatches.filter(match => {
     if (match.matchType !== 'lfo') return false;
     if (!filterMatches(match)) return false;
-    // Show short-term by default, include long-term only when toggle is enabled
-    if (match.duration === 'short-term') return true;
-    if (match.duration === 'long-term' && showLongTerm) return true;
-    return false;
+    // Show only short-term by default, or only long-term when toggle is enabled
+    const targetDuration = showLongTerm ? 'long-term' : 'short-term';
+    return match.duration === targetDuration;
   });
 
   const handleRefresh = () => {
@@ -322,7 +320,7 @@ export function MatchFeed({
             onClick={() => setShowLongTerm(!showLongTerm)}
             data-testid="button-duration-long-term"
           >
-            Long-term
+            {showLongTerm ? "Long-term" : "Short-term"}
           </Button>
           <Button
             variant="outline"
