@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeSelector } from "./ThemeSelector";
+import { NotificationBell } from "./NotificationBell";
 
 interface GameNavigationProps {
   currentPage: "home" | "search" | "create" | "profile" | "messages" | "settings" | "profile-setup" | "connections";
@@ -102,6 +103,10 @@ export function GameNavigation({
 
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-center">
+            <NotificationBell />
+          </div>
+          
+          <div className="flex items-center justify-center">
             <ThemeSelector />
           </div>
           
@@ -154,6 +159,8 @@ export function GameNavigation({
               </AvatarFallback>
             </Avatar>
           )}
+          
+          <NotificationBell />
           
           <ThemeSelector />
           
