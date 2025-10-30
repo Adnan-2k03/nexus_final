@@ -169,7 +169,30 @@ export function Discover({ currentUserId }: DiscoverProps) {
     },
   });
 
-  const filteredUsers = users?.filter(user => user.id !== currentUserId) || [];
+  const filteredUsers = users?.filter(user => {
+    if (user.id === currentUserId) return false;
+    
+    // Filter out users with accepted match connections
+    const hasMatchConnection = userConnections.some(
+      (conn: any) => 
+        conn.status === 'accepted' && 
+        (conn.requesterId === user.id || conn.accepterId === user.id)
+    );
+    
+    if (hasMatchConnection) return false;
+    
+    // Filter out users with accepted direct connection requests
+    const hasDirectConnection = connectionRequests.some(
+      (req: any) => 
+        req.status === 'accepted' &&
+        ((req.senderId === currentUserId && req.receiverId === user.id) ||
+        (req.receiverId === currentUserId && req.senderId === user.id))
+    );
+    
+    if (hasDirectConnection) return false;
+    
+    return true;
+  }) || [];
 
   const handleClearFilters = () => {
     setSearchTerm("");

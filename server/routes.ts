@@ -1001,6 +1001,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Check if user is authenticated through the session
         if (mockReq.session?.passport?.user) {
           authenticatedUserId = mockReq.session.passport.user;
+          const userId = authenticatedUserId; // Create a typed constant for use in async callbacks
           connectedClients.set(clientId, { ws, userId: authenticatedUserId, lastPong: Date.now() });
           
           ws.send(JSON.stringify({
@@ -1010,6 +1011,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }));
           
           console.log(`WebSocket client ${clientId} authenticated as user ${authenticatedUserId}`);
+          
+          // Broadcast online status to connected users
+          try {
+            const userConnections = await storage.getUserConnections(userId);
+            const connectionRequests = await storage.getConnectionRequests(userId);
+            
+            const connectedUserIds = new Set<string>();
+            
+            // Add users from accepted match connections
+            userConnections.filter(c => c.status === 'accepted').forEach(conn => {
+              const otherUserId = conn.requesterId === userId ? conn.accepterId : conn.requesterId;
+              connectedUserIds.add(otherUserId);
+            });
+            
+            // Add users from accepted direct connections
+            connectionRequests.filter(c => c.status === 'accepted').forEach(req => {
+              const otherUserId = req.senderId === userId ? req.receiverId : req.senderId;
+              connectedUserIds.add(otherUserId);
+            });
+            
+            // Broadcast to all connected users
+            if (connectedUserIds.size > 0) {
+              broadcastToUsers(Array.from(connectedUserIds), {
+                type: 'user_online',
+                userId: userId
+              });
+            }
+          } catch (error) {
+            console.error('Error broadcasting online status:', error);
+          }
         } else {
           // Not authenticated - still allow connection but mark as anonymous
           connectedClients.set(clientId, { ws, lastPong: Date.now() });
@@ -1168,9 +1199,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
 
-    ws.on('close', () => {
+    ws.on('close', async () => {
+      const client = connectedClients.get(clientId);
+      const userId = client?.userId;
+      
       connectedClients.delete(clientId);
       console.log(`WebSocket client disconnected: ${clientId}`);
+      
+      // Broadcast offline status to connected users if this was the last connection for this user
+      if (userId) {
+        // Check if user has any other active connections
+        const hasOtherConnections = Array.from(connectedClients.values()).some(c => c.userId === userId);
+        
+        if (!hasOtherConnections) {
+          try {
+            const userConnections = await storage.getUserConnections(userId);
+            const connectionRequests = await storage.getConnectionRequests(userId);
+            
+            const connectedUserIds = new Set<string>();
+            
+            // Add users from accepted match connections
+            userConnections.filter(c => c.status === 'accepted').forEach(conn => {
+              const otherUserId = conn.requesterId === userId ? conn.accepterId : conn.requesterId;
+              connectedUserIds.add(otherUserId);
+            });
+            
+            // Add users from accepted direct connections
+            connectionRequests.filter(c => c.status === 'accepted').forEach(req => {
+              const otherUserId = req.senderId === userId ? req.receiverId : req.senderId;
+              connectedUserIds.add(otherUserId);
+            });
+            
+            // Broadcast to all connected users
+            if (connectedUserIds.size > 0) {
+              broadcastToUsers(Array.from(connectedUserIds), {
+                type: 'user_offline',
+                userId: userId
+              });
+            }
+          } catch (error) {
+            console.error('Error broadcasting offline status:', error);
+          }
+        }
+      }
     });
 
     ws.on('error', (error) => {
