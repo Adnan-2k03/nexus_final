@@ -6,7 +6,14 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### October 31, 2025 (Latest)
+### October 31, 2025 (Latest Session)
+- **Unified Appearance Selector**: Combined theme and background selectors into a single unified dropdown button with separated sections for better UX
+- **Enhanced Background Visibility**: Adjusted card transparency globally (85% opacity for cards, 90% for sidebar, 95% for popovers) with backdrop blur effects to allow starry backgrounds to show through UI boxes while maintaining readability
+- **Profile Photo Upload**: Added profile photo upload functionality with camera icon button overlay on avatar in profile section, including file type/size validation (5MB limit, image files only) and seamless integration with existing upload API
+- **Instagram-Style Profile Navigation**: Updated profile navigation button to display user's avatar image instead of generic user icon on both desktop sidebar and mobile bottom navigation, with active state ring indicator
+- **Navigation Badge Cleanup**: Removed message counter badge from Messages button for cleaner navigation UI
+
+### October 31, 2025 (Earlier)
 - **Dual Background System**: Implemented background theme switcher allowing users to choose between two animated starry backgrounds:
   - Canvas 2D Stars: Original smooth depth-perception starfield using Canvas API
   - WebGL Stars: New fractal-based starfield with interactive camera controls (provided by user)
