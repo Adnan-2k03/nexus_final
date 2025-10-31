@@ -6,7 +6,15 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### October 31, 2025
+### October 31, 2025 (Latest)
+- **Dual Background System**: Implemented background theme switcher allowing users to choose between two animated starry backgrounds:
+  - Canvas 2D Stars: Original smooth depth-perception starfield using Canvas API
+  - WebGL Stars: New fractal-based starfield with interactive camera controls (provided by user)
+- **Background Selector UI**: Added sparkle icon button in navigation (desktop sidebar and mobile header) with dropdown menu to switch between background themes
+- **Background Persistence**: Themes are saved to localStorage and persist across sessions
+- **Background Visibility Fix**: Removed opaque backgrounds from authenticated view to ensure starry backgrounds remain visible after login
+
+### October 31, 2025 (Earlier)
 - **Starry Background Implementation**: Replaced failing WebGL shader with reliable Canvas 2D-based animated starfield. Stars now render consistently across all browsers with smooth depth perception animation. Background remains visible behind all UI components.
 - **UI Opacity Enhancement**: Ensured all UI components have 100% opacity with solid backgrounds, providing clear visibility on top of the animated starry background.
 - **Voice Channel Consolidation**: Removed redundant VoiceProvider context wrapper, simplified Chat component to show read-only voice participant indicators. Voice controls now isolated to Voice tab only for Discord-like experience where users can see who's in voice without joining.
