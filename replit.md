@@ -7,9 +7,10 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 ## Recent Changes
 
 ### October 31, 2025
+- **Starry Background Implementation**: Replaced failing WebGL shader with reliable Canvas 2D-based animated starfield. Stars now render consistently across all browsers with smooth depth perception animation. Background remains visible behind all UI components.
+- **UI Opacity Enhancement**: Ensured all UI components have 100% opacity with solid backgrounds, providing clear visibility on top of the animated starry background.
 - **Voice Channel Consolidation**: Removed redundant VoiceProvider context wrapper, simplified Chat component to show read-only voice participant indicators. Voice controls now isolated to Voice tab only for Discord-like experience where users can see who's in voice without joining.
 - **Navigation Badge Fix**: Removed hardcoded dummy message count (pendingMessages={3}), allowing dynamic badge updates when real data is available.
-- **Starry Background Fix**: Fixed background visibility with proper transparency (opacity 0.3) and z-index positioning to work across all themes.
 - **Empty State Enhancement**: Updated empty states across Discover, Matches, and Messages tabs with consistent Card component styling and dashed borders matching Feed tab design.
 
 ### October 30, 2025
