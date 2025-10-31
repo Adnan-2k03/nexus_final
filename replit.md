@@ -6,7 +6,27 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### October 31, 2025 (Latest Session)
+### October 31, 2025 (Latest Session - PWA & Push Notifications)
+- **Progressive Web App (PWA) Implementation**: Full PWA setup with manifest.json, service worker, and offline support
+  - Service worker registered at application startup with runtime caching for JS/CSS/images/fonts
+  - Offline fallback page for network errors
+  - App installable on mobile and desktop devices
+- **Push Notification System**: Complete browser push notification infrastructure using web-push library
+  - VAPID key generation and management for secure push notifications
+  - Push subscription storage in database with automatic cleanup of expired subscriptions
+  - Push notifications integrated into all 6 notification scenarios:
+    * Match applications
+    * Match acceptances
+    * Match declines
+    * Connection requests
+    * Connection acceptances
+    * Connection declines
+  - Permission prompt component on home page
+  - Toggle control in Settings for enabling/disabling push notifications
+  - Notification click handling to open app and navigate to relevant content
+- **Service Worker Features**: Runtime caching strategy with separate caches for static assets and dynamic content, automatic cache cleanup on updates
+
+### October 31, 2025 (Earlier Session)
 - **Unified Appearance Selector**: Combined theme and background selectors into a single unified dropdown button with separated sections for better UX
 - **Enhanced Background Visibility**: Adjusted card transparency globally (85% opacity for cards, 90% for sidebar, 95% for popovers) with backdrop blur effects to allow starry backgrounds to show through UI boxes while maintaining readability
 - **Profile Photo Upload**: Added profile photo upload functionality with camera icon button overlay on avatar in profile section, including file type/size validation (5MB limit, image files only) and seamless integration with existing upload API
