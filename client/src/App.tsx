@@ -339,7 +339,7 @@ function Router() {
         <>
           <Route path="/">
             {() => (
-              <div className="min-h-screen bg-background relative">
+              <div className="min-h-screen bg-background/100 relative">
                 {user && user.gamertag && (
                   <GameNavigation
                     currentPage={currentPage}
@@ -351,7 +351,7 @@ function Router() {
                     onLogout={handleLogout}
                   />
                 )}
-                <div className="relative z-10">
+                <div className="relative z-10 bg-background">
                   {renderMainContent()}
                 </div>
               </div>
