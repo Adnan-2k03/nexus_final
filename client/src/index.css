@@ -481,4 +481,20 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
     inset: -1px;
   }
+
+  /* Card transparency adjustments to show starry background */
+  [class*="bg-card"] {
+    background-color: hsl(var(--card) / 0.85) !important;
+    backdrop-filter: blur(8px);
+  }
+
+  [class*="bg-sidebar"] {
+    background-color: hsl(var(--sidebar) / 0.90) !important;
+    backdrop-filter: blur(10px);
+  }
+
+  [class*="bg-popover"] {
+    background-color: hsl(var(--popover) / 0.95) !important;
+    backdrop-filter: blur(12px);
+  }
 }

@@ -17,8 +17,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { ThemeSelector } from "./ThemeSelector";
-import { BackgroundSelector } from "./BackgroundSelector";
+import { UnifiedThemeSelector } from "./UnifiedThemeSelector";
 import { NotificationBell } from "./NotificationBell";
 
 interface GameNavigationProps {
@@ -45,13 +44,14 @@ export function GameNavigation({
     { id: "home", label: "Feed", icon: Home },
     { id: "search", label: "Discover", icon: Search },
     { id: "connections", label: "Matches", icon: Users },
-    { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages },
+    { id: "messages", label: "Messages", icon: MessageCircle },
     { id: "profile", label: "Profile", icon: User },
   ];
 
   const NavItem = ({ item, isMobile = false }: { item: typeof navigationItems[0], isMobile?: boolean }) => {
     const isActive = currentPage === item.id;
     const Icon = item.icon;
+    const isProfileButton = item.id === "profile";
     
     return (
       <Button
@@ -68,9 +68,24 @@ export function GameNavigation({
         )}
         data-testid={`nav-${item.id}`}
       >
-        <Icon className={cn("h-5 w-5", isMobile && "mr-3")} />
-        {isMobile && <span>{item.label}</span>}
-        {!isMobile && <span className="text-xs mt-1">{item.label}</span>}
+        {isProfileButton && user ? (
+          <>
+            <Avatar className={cn("h-7 w-7", isActive && "ring-2 ring-primary-foreground", isMobile && "mr-3")}>
+              <AvatarImage src={user.profileImageUrl} alt={user.gamertag} />
+              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                {user.gamertag.slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            {isMobile && <span>{item.label}</span>}
+            {!isMobile && <span className="text-xs mt-1">{item.label}</span>}
+          </>
+        ) : (
+          <>
+            <Icon className={cn("h-5 w-5", isMobile && "mr-3")} />
+            {isMobile && <span>{item.label}</span>}
+            {!isMobile && <span className="text-xs mt-1">{item.label}</span>}
+          </>
+        )}
         {item.badge && item.badge > 0 && (
           <Badge 
             variant="destructive" 
@@ -108,11 +123,7 @@ export function GameNavigation({
           </div>
           
           <div className="flex items-center justify-center">
-            <ThemeSelector />
-          </div>
-          
-          <div className="flex items-center justify-center">
-            <BackgroundSelector />
+            <UnifiedThemeSelector />
           </div>
           
           <DropdownMenu>
@@ -167,9 +178,7 @@ export function GameNavigation({
           
           <NotificationBell />
           
-          <ThemeSelector />
-          
-          <BackgroundSelector />
+          <UnifiedThemeSelector />
           
           <Button
             variant="ghost"
@@ -193,8 +202,8 @@ export function GameNavigation({
               
               <div className="border-t border-border pt-4 mt-4 space-y-2">
                 <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm font-medium">Theme</span>
-                  <ThemeSelector />
+                  <span className="text-sm font-medium">Appearance</span>
+                  <UnifiedThemeSelector />
                 </div>
                 
                 <Button
@@ -235,6 +244,7 @@ export function GameNavigation({
         {navigationItems.slice(0, 5).map((item) => {
           const isActive = currentPage === item.id;
           const Icon = item.icon;
+          const isProfileButton = item.id === "profile";
           
           return (
             <Button
@@ -248,7 +258,16 @@ export function GameNavigation({
               )}
               data-testid={`nav-mobile-${item.id}`}
             >
-              <Icon className="h-5 w-5" />
+              {isProfileButton && user ? (
+                <Avatar className={cn("h-6 w-6", isActive && "ring-2 ring-primary")}>
+                  <AvatarImage src={user.profileImageUrl} alt={user.gamertag} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+                    {user.gamertag.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              ) : (
+                <Icon className="h-5 w-5" />
+              )}
               <span className="text-xs mt-1">{item.label}</span>
               {item.badge && item.badge > 0 && (
                 <Badge 

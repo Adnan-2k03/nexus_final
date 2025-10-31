@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useRef } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -13,11 +13,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus } from "lucide-react";
+import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus, Camera, Loader2 } from "lucide-react";
 import type { GameProfile } from "@shared/schema";
 import { GameProfileForm } from "./GameProfileForm";
 import { CustomPortfolio } from "./CustomPortfolio";
 import { Mutuals } from "./Mutuals";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface UserProfileProps {
   id: string;
@@ -63,11 +65,71 @@ export function UserProfile({
   const [gameProfileFormOpen, setGameProfileFormOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<GameProfile | undefined>(undefined);
   const [showCustomSections, setShowCustomSections] = useState<{[key: string]: boolean}>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const { data: gameProfiles = [], isLoading: isLoadingProfiles } = useQuery<GameProfile[]>({
     queryKey: ['/api/users', id, 'game-profiles'],
     enabled: !!id,
   });
+
+  const uploadPhotoMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error('Failed to upload photo');
+      }
+      return response.json();
+    },
+    onSuccess: async (data: { url: string }) => {
+      // Update user profile with new photo URL
+      await apiRequest('/api/user/profile', 'PATCH', { profileImageUrl: data.url });
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/users', id] });
+      toast({
+        title: "Success",
+        description: "Profile photo updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to upload photo",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "File size must be less than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "Error",
+          description: "Only image files (JPEG, PNG, GIF, WebP) are allowed",
+          variant: "destructive",
+        });
+        return;
+      }
+      uploadPhotoMutation.mutate(file);
+    }
+  };
 
   const handleAddGame = () => {
     setEditingProfile(undefined);
@@ -91,12 +153,40 @@ export function UserProfile({
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-            <Avatar className="h-24 w-24 border-4 border-primary/20">
-              <AvatarImage src={profileImageUrl} alt={gamertag} />
-              <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <div className="relative">
+              <Avatar className="h-24 w-24 border-4 border-primary/20">
+                <AvatarImage src={profileImageUrl} alt={gamertag} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              {isOwn && (
+                <>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="absolute bottom-0 right-0 h-8 w-8 rounded-full shadow-lg"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadPhotoMutation.isPending}
+                    data-testid="button-upload-photo"
+                  >
+                    {uploadPhotoMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Camera className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                    data-testid="input-photo-file"
+                  />
+                </>
+              )}
+            </div>
             
             <div className="flex-1 text-center md:text-left space-y-3">
               <div>
