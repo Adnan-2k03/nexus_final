@@ -72,6 +72,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [connectingUserId, setConnectingUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Request user's location for distance-based filtering
@@ -149,18 +150,21 @@ export function Discover({ currentUserId }: DiscoverProps) {
   // Create connection request mutation (direct user-to-user connection)
   const createConnectionRequestMutation = useMutation({
     mutationFn: async (targetUserId: string) => {
+      setConnectingUserId(targetUserId);
       return await apiRequest('POST', '/api/connection-requests', {
         receiverId: targetUserId,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      setConnectingUserId(null);
       toast({
         title: "Connection Request Sent",
         description: "Your connection request has been sent successfully.",
       });
     },
     onError: (error: any) => {
+      setConnectingUserId(null);
       toast({
         title: "Unable to Connect",
         description: error.message || "Failed to send connection request",
@@ -462,10 +466,10 @@ export function Discover({ currentUserId }: DiscoverProps) {
                       e.stopPropagation();
                       handleConnectUser(user.id);
                     }}
-                    disabled={createConnectionRequestMutation.isPending}
+                    disabled={connectingUserId === user.id}
                     data-testid={`button-connect-${user.id}`}
                   >
-                    {createConnectionRequestMutation.isPending ? (
+                    {connectingUserId === user.id ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Users className="h-4 w-4" />
