@@ -251,6 +251,12 @@ export function MatchFeed({
     return match.duration === targetDuration;
   });
 
+  // Separate matches into "Your Posts" and "Other Posts"
+  const lfgYourPosts = lfgMatches.filter(match => match.userId === currentUserId);
+  const lfgOtherPosts = lfgMatches.filter(match => match.userId !== currentUserId);
+  const lfoYourPosts = lfoMatches.filter(match => match.userId === currentUserId);
+  const lfoOtherPosts = lfoMatches.filter(match => match.userId !== currentUserId);
+
   const handleRefresh = () => {
     refetch();
   };
@@ -392,27 +398,73 @@ export function MatchFeed({
               </CardContent>
             </Card>
           ) : (
-            lfgMatches.map((match) => (
-              <MatchRequestCard
-                key={match.id}
-                id={match.id}
-                userId={match.userId}
-                gamertag={match.gamertag}
-                profileImageUrl={match.profileImageUrl}
-                gameName={match.gameName}
-                gameMode={match.gameMode}
-                description={match.description}
-                region={match.region}
-                tournamentName={match.tournamentName}
-                status={match.status}
-                timeAgo={match.timeAgo}
-                isOwn={match.userId === currentUserId}
-                currentUserId={currentUserId}
-                onAccept={() => onAcceptMatch(match.id)}
-                onDecline={() => onDeclineMatch(match.id)}
-                onDelete={() => onDeleteMatch(match.id)}
-              />
-            ))
+            <>
+              {/* Your Posts Section */}
+              {lfgYourPosts.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pt-2">
+                    <h3 className="text-lg font-semibold text-foreground">Your Posts</h3>
+                    <Badge variant="secondary" className="text-xs">{lfgYourPosts.length}</Badge>
+                  </div>
+                  <div className="space-y-4">
+                    {lfgYourPosts.map((match) => (
+                      <MatchRequestCard
+                        key={match.id}
+                        id={match.id}
+                        userId={match.userId}
+                        gamertag={match.gamertag}
+                        profileImageUrl={match.profileImageUrl}
+                        gameName={match.gameName}
+                        gameMode={match.gameMode}
+                        description={match.description}
+                        region={match.region}
+                        tournamentName={match.tournamentName}
+                        status={match.status}
+                        timeAgo={match.timeAgo}
+                        isOwn={true}
+                        currentUserId={currentUserId}
+                        onAccept={() => onAcceptMatch(match.id)}
+                        onDecline={() => onDeclineMatch(match.id)}
+                        onDelete={() => onDeleteMatch(match.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Other Posts Section */}
+              {lfgOtherPosts.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pt-2">
+                    <h3 className="text-lg font-semibold text-foreground">Available Matches</h3>
+                    <Badge variant="secondary" className="text-xs">{lfgOtherPosts.length}</Badge>
+                  </div>
+                  <div className="space-y-4">
+                    {lfgOtherPosts.map((match) => (
+                      <MatchRequestCard
+                        key={match.id}
+                        id={match.id}
+                        userId={match.userId}
+                        gamertag={match.gamertag}
+                        profileImageUrl={match.profileImageUrl}
+                        gameName={match.gameName}
+                        gameMode={match.gameMode}
+                        description={match.description}
+                        region={match.region}
+                        tournamentName={match.tournamentName}
+                        status={match.status}
+                        timeAgo={match.timeAgo}
+                        isOwn={false}
+                        currentUserId={currentUserId}
+                        onAccept={() => onAcceptMatch(match.id)}
+                        onDecline={() => onDeclineMatch(match.id)}
+                        onDelete={() => onDeleteMatch(match.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
 
@@ -438,27 +490,73 @@ export function MatchFeed({
               </CardContent>
             </Card>
           ) : (
-            lfoMatches.map((match) => (
-              <MatchRequestCard
-                key={match.id}
-                id={match.id}
-                userId={match.userId}
-                gamertag={match.gamertag}
-                profileImageUrl={match.profileImageUrl}
-                gameName={match.gameName}
-                gameMode={match.gameMode}
-                description={match.description}
-                region={match.region}
-                tournamentName={match.tournamentName}
-                status={match.status}
-                timeAgo={match.timeAgo}
-                isOwn={match.userId === currentUserId}
-                currentUserId={currentUserId}
-                onAccept={() => onAcceptMatch(match.id)}
-                onDecline={() => onDeclineMatch(match.id)}
-                onDelete={() => onDeleteMatch(match.id)}
-              />
-            ))
+            <>
+              {/* Your Posts Section */}
+              {lfoYourPosts.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pt-2">
+                    <h3 className="text-lg font-semibold text-foreground">Your Posts</h3>
+                    <Badge variant="secondary" className="text-xs">{lfoYourPosts.length}</Badge>
+                  </div>
+                  <div className="space-y-4">
+                    {lfoYourPosts.map((match) => (
+                      <MatchRequestCard
+                        key={match.id}
+                        id={match.id}
+                        userId={match.userId}
+                        gamertag={match.gamertag}
+                        profileImageUrl={match.profileImageUrl}
+                        gameName={match.gameName}
+                        gameMode={match.gameMode}
+                        description={match.description}
+                        region={match.region}
+                        tournamentName={match.tournamentName}
+                        status={match.status}
+                        timeAgo={match.timeAgo}
+                        isOwn={true}
+                        currentUserId={currentUserId}
+                        onAccept={() => onAcceptMatch(match.id)}
+                        onDecline={() => onDeclineMatch(match.id)}
+                        onDelete={() => onDeleteMatch(match.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Other Posts Section */}
+              {lfoOtherPosts.length > 0 && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 pt-2">
+                    <h3 className="text-lg font-semibold text-foreground">Available Matches</h3>
+                    <Badge variant="secondary" className="text-xs">{lfoOtherPosts.length}</Badge>
+                  </div>
+                  <div className="space-y-4">
+                    {lfoOtherPosts.map((match) => (
+                      <MatchRequestCard
+                        key={match.id}
+                        id={match.id}
+                        userId={match.userId}
+                        gamertag={match.gamertag}
+                        profileImageUrl={match.profileImageUrl}
+                        gameName={match.gameName}
+                        gameMode={match.gameMode}
+                        description={match.description}
+                        region={match.region}
+                        tournamentName={match.tournamentName}
+                        status={match.status}
+                        timeAgo={match.timeAgo}
+                        isOwn={false}
+                        currentUserId={currentUserId}
+                        onAccept={() => onAcceptMatch(match.id)}
+                        onDecline={() => onDeclineMatch(match.id)}
+                        onDelete={() => onDeleteMatch(match.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </TabsContent>
       </Tabs>
