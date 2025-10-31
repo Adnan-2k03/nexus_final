@@ -516,16 +516,18 @@ export function Connections({ currentUserId }: ConnectionsProps) {
           </Popover>
         </div>
 
-        <div className="text-center py-12">
-          <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No connections yet</h3>
-          <p className="text-muted-foreground max-w-md mx-auto mb-4">
-            Apply to a match on the Feed tab to get started!
-          </p>
-          <p className="text-sm text-muted-foreground/70 max-w-md mx-auto">
-            When you apply to matches or others apply to yours, your gaming connections will appear here.
-          </p>
-        </div>
+        <Card className="border-dashed">
+          <CardContent className="text-center py-12">
+            <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No connections yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-4">
+              Apply to a match on the Feed tab to get started!
+            </p>
+            <p className="text-sm text-muted-foreground/70 max-w-md mx-auto">
+              When you apply to matches or others apply to yours, your gaming connections will appear here.
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }

@@ -234,13 +234,15 @@ export function Messages({ currentUserId }: MessagesProps) {
         <div className="space-y-6">
           {/* Active Conversations */}
           {filteredConnections.length === 0 && pendingReceivedRequests.length === 0 && pendingSentRequests.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                Connect with other players through the Discover tab to start chatting here.
-              </p>
-            </div>
+            <Card className="border-dashed">
+              <CardContent className="text-center py-12">
+                <MessageCircle className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No conversations yet</h3>
+                <p className="text-muted-foreground max-w-md mx-auto">
+                  Connect with other players through the Discover tab to start chatting here.
+                </p>
+              </CardContent>
+            </Card>
           ) : filteredConnections.length > 0 ? (
             <div className="space-y-3">
               {filteredConnections.map((request) => {

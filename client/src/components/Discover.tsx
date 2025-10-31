@@ -390,19 +390,23 @@ export function Discover({ currentUserId }: DiscoverProps) {
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
       ) : filteredUsers.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <p className="text-lg font-medium text-foreground">No gamers found</p>
-          <p className="text-sm text-muted-foreground mt-2 mb-3">Try adjusting your filters or search criteria</p>
-          <Button 
-            variant="outline"
-            onClick={handleClearFilters}
-            className="gap-2"
-            data-testid="button-clear-filters-main"
-          >
-            Clear All Filters
-          </Button>
-        </div>
+        <Card className="border-dashed">
+          <CardContent className="text-center py-12">
+            <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-foreground mb-2">No gamers found</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto mb-4">
+              Try adjusting your filters or search criteria to find more players
+            </p>
+            <Button 
+              variant="outline"
+              onClick={handleClearFilters}
+              className="gap-2"
+              data-testid="button-clear-filters-main"
+            >
+              Clear All Filters
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredUsers.map((user) => (
