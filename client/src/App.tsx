@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { BackgroundProvider, useBackground } from "@/components/BackgroundProvider";
 import { useState, useEffect } from "react";
 
 // Hooks
@@ -22,6 +23,7 @@ import { Discover } from "@/components/Discover";
 import { Settings } from "@/components/Settings";
 import NotFound from "@/pages/not-found";
 import { StarBackground } from "@/components/StarBackground";
+import { WebGLStarBackground } from "@/components/WebGLStarBackground";
 
 // Types
 import type { User } from "@shared/schema";
@@ -339,7 +341,7 @@ function Router() {
         <>
           <Route path="/">
             {() => (
-              <div className="min-h-screen bg-background/100 relative">
+              <div className="min-h-screen relative">
                 {user && user.gamertag && (
                   <GameNavigation
                     currentPage={currentPage}
@@ -351,7 +353,7 @@ function Router() {
                     onLogout={handleLogout}
                   />
                 )}
-                <div className="relative z-10 bg-background">
+                <div className="relative z-10">
                   {renderMainContent()}
                 </div>
               </div>
@@ -364,18 +366,30 @@ function Router() {
   );
 }
 
+function BackgroundRenderer() {
+  const { background } = useBackground();
+  
+  if (background === "webgl") {
+    return <WebGLStarBackground />;
+  }
+  
+  return <StarBackground />;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="gamematch-ui-theme">
-        <TooltipProvider>
-          {/* Background layer */}
-          <StarBackground />
+        <BackgroundProvider>
+          <TooltipProvider>
+            {/* Background layer */}
+            <BackgroundRenderer />
 
-          {/* Foreground content */}
-          <Router />
-          <Toaster />
-        </TooltipProvider>
+            {/* Foreground content */}
+            <Router />
+            <Toaster />
+          </TooltipProvider>
+        </BackgroundProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

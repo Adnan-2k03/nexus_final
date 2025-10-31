@@ -18,6 +18,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeSelector } from "./ThemeSelector";
+import { BackgroundSelector } from "./BackgroundSelector";
 import { NotificationBell } from "./NotificationBell";
 
 interface GameNavigationProps {
@@ -110,6 +111,10 @@ export function GameNavigation({
             <ThemeSelector />
           </div>
           
+          <div className="flex items-center justify-center">
+            <BackgroundSelector />
+          </div>
+          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -163,6 +168,8 @@ export function GameNavigation({
           <NotificationBell />
           
           <ThemeSelector />
+          
+          <BackgroundSelector />
           
           <Button
             variant="ghost"
