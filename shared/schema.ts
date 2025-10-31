@@ -131,7 +131,7 @@ export const notifications = pgTable("notifications", {
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   relatedUserId: varchar("related_user_id").references(() => users.id), // The user who triggered this notification
-  relatedMatchId: varchar("related_match_id").references(() => matchRequests.id),
+  relatedMatchId: varchar("related_match_id").references(() => matchRequests.id, { onDelete: "cascade" }),
   isRead: varchar("is_read").notNull().default("false"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
