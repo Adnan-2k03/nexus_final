@@ -213,6 +213,18 @@ export const voiceParticipants = pgTable("voice_participants", {
   index("idx_unique_voice_participant").on(table.voiceChannelId, table.userId), // Composite unique constraint
 ]);
 
+// Push Subscriptions table - stores browser push notification subscriptions
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_user_push_subscriptions").on(table.userId),
+]);
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
@@ -237,6 +249,8 @@ export type InsertVoiceChannel = typeof voiceChannels.$inferInsert;
 export type VoiceChannel = typeof voiceChannels.$inferSelect;
 export type InsertVoiceParticipant = typeof voiceParticipants.$inferInsert;
 export type VoiceParticipant = typeof voiceParticipants.$inferSelect;
+export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 
 // Enhanced match request type that includes user profile data
 export type MatchRequestWithUser = MatchRequest & {
@@ -302,6 +316,7 @@ export const insertHobbySchema = createInsertSchema(hobbies).omit({ id: true, us
 export const insertPortfolioPageSchema = createInsertSchema(portfolioPages).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertVoiceChannelSchema = createInsertSchema(voiceChannels).omit({ id: true, createdAt: true });
 export const insertVoiceParticipantSchema = createInsertSchema(voiceParticipants).omit({ id: true, joinedAt: true });
+export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true });
 
 // Privacy settings validation
 export const privacyVisibilityEnum = z.enum(["everyone", "connections", "nobody"]);
