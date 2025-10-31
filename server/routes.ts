@@ -465,6 +465,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         receiverId,
       });
       
+      // Notify the receiver about the new connection request
+      const senderUser = await storage.getUser(senderId);
+      const notification = await storage.createNotification({
+        userId: receiverId,
+        type: "connection_request",
+        title: "New Connection Request",
+        message: `${senderUser?.gamertag || "Someone"} wants to connect with you`,
+        relatedUserId: senderId,
+        isRead: "false",
+      });
+      
+      // Broadcast notification in real-time
+      (app as any).broadcast?.toUsers([receiverId], {
+        type: 'new_notification',
+        data: notification
+      });
+      
       (app as any).broadcast?.toUsers([senderId, receiverId], {
         type: 'connection_request_created',
         data: request,

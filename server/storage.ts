@@ -10,6 +10,7 @@ import {
   hobbies,
   voiceChannels,
   voiceParticipants,
+  pushSubscriptions,
   type User,
   type UpsertUser,
   type MatchRequest,
@@ -37,6 +38,8 @@ import {
   type VoiceParticipant,
   type VoiceParticipantWithUser,
   type InsertVoiceParticipant,
+  type PushSubscription,
+  type InsertPushSubscription,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
@@ -103,6 +106,11 @@ export interface IStorage {
   markNotificationAsRead(id: string, userId: string): Promise<Notification>;
   deleteNotification(id: string, userId: string): Promise<void>;
   getUnreadNotificationCount(userId: string): Promise<number>;
+  
+  // Push subscription operations
+  createPushSubscription(subscription: InsertPushSubscription): Promise<PushSubscription>;
+  getUserPushSubscriptions(userId: string): Promise<PushSubscription[]>;
+  deletePushSubscription(endpoint: string, userId: string): Promise<void>;
   
   // Game profile operations
   createGameProfile(profile: InsertGameProfile): Promise<GameProfile>;
@@ -744,6 +752,43 @@ export class DatabaseStorage implements IStorage {
       ));
     
     return result[0]?.count || 0;
+  }
+
+  // Push subscription operations
+  async createPushSubscription(subscriptionData: InsertPushSubscription): Promise<PushSubscription> {
+    try {
+      const [subscription] = await db
+        .insert(pushSubscriptions)
+        .values(subscriptionData)
+        .onConflictDoUpdate({
+          target: pushSubscriptions.endpoint,
+          set: {
+            p256dh: subscriptionData.p256dh,
+            auth: subscriptionData.auth,
+          }
+        })
+        .returning();
+      return subscription;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getUserPushSubscriptions(userId: string): Promise<PushSubscription[]> {
+    const subscriptions = await db
+      .select()
+      .from(pushSubscriptions)
+      .where(eq(pushSubscriptions.userId, userId));
+    return subscriptions;
+  }
+
+  async deletePushSubscription(endpoint: string, userId: string): Promise<void> {
+    await db
+      .delete(pushSubscriptions)
+      .where(and(
+        eq(pushSubscriptions.endpoint, endpoint),
+        eq(pushSubscriptions.userId, userId)
+      ));
   }
 
   // Game profile operations
