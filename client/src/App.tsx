@@ -24,6 +24,8 @@ import { Settings } from "@/components/Settings";
 import NotFound from "@/pages/not-found";
 import { StarBackground } from "@/components/StarBackground";
 import { WebGLStarBackground } from "@/components/WebGLStarBackground";
+import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { registerServiceWorker } from "@/registerSW";
 
 // Types
 import type { User } from "@shared/schema";
@@ -234,6 +236,7 @@ function Router() {
       case "home":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
+            <PushNotificationPrompt />
             <MatchFeed
               onCreateMatch={handleCreateMatch}
               onAcceptMatch={handleAcceptMatch}
@@ -377,6 +380,11 @@ function BackgroundRenderer() {
 }
 
 function App() {
+  // Register service worker for PWA and push notifications
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="gamematch-ui-theme">
