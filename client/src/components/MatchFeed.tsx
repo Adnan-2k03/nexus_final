@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { MatchRequestWithUser, MatchConnection } from "@shared/schema";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { GameFilters } from "./GameFilters";
-import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye, Users, Target } from "lucide-react";
+import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye, Users, Target, Clock } from "lucide-react";
 
 // Utility function to format time ago
 function formatTimeAgo(date: string | Date | null): string {
@@ -326,8 +326,11 @@ export function MatchFeed({
             size="sm"
             onClick={() => setShowLongTerm(!showLongTerm)}
             data-testid="button-duration-long-term"
+            className={showLongTerm ? "shadow-lg shadow-primary/50 ring-2 ring-primary/30" : ""}
           >
-            {showLongTerm ? "Long-term" : "Short-term"}
+            <Clock className="h-4 w-4 mr-2" />
+            Long Term
+            {showLongTerm && <span className="ml-2 text-xs">✓</span>}
           </Button>
           <Button
             variant="outline"

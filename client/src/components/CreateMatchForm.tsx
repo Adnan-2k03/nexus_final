@@ -4,10 +4,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Gamepad2, Plus, Users, Target } from "lucide-react";
+import { Gamepad2, Plus, Users, Target, Clock, Zap } from "lucide-react";
 
 const createMatchSchema = z.object({
   gameName: z.string().min(1, "Game name is required"),
@@ -71,27 +72,20 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Match Type</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-match-type">
-                        <SelectValue placeholder="Select match type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="lfg">
-                        <div className="flex items-center gap-2">
+                  <FormControl>
+                    <Tabs value={field.value} onValueChange={field.onChange} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="lfg" className="gap-2" data-testid="tab-match-type-lfg">
                           <Users className="h-4 w-4" />
-                          <span>LFG - Looking for Group (Find teammates)</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value="lfo">
-                        <div className="flex items-center gap-2">
+                          LFG (Looking for Group)
+                        </TabsTrigger>
+                        <TabsTrigger value="lfo" className="gap-2" data-testid="tab-match-type-lfo">
                           <Target className="h-4 w-4" />
-                          <span>LFO - Looking for Opponent (Find challengers)</span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                          LFO (Looking for Opponent)
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -103,21 +97,20 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Duration</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger data-testid="select-duration">
-                        <SelectValue placeholder="Select duration" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="short-term">
-                        Short-term (Quick matches, casual play)
-                      </SelectItem>
-                      <SelectItem value="long-term">
-                        Long-term (Consistent team, competitive)
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <Tabs value={field.value} onValueChange={field.onChange} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="short-term" className="gap-2" data-testid="tab-duration-short">
+                          <Zap className="h-4 w-4" />
+                          Short-term
+                        </TabsTrigger>
+                        <TabsTrigger value="long-term" className="gap-2" data-testid="tab-duration-long">
+                          <Clock className="h-4 w-4" />
+                          Long-term
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
