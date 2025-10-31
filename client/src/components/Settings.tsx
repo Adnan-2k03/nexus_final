@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PrivacySettings } from "./PrivacySettings";
+import { PushNotificationToggle } from "./PushNotificationPrompt";
 import { Users as UsersIcon } from "lucide-react";
 import type { User } from "@shared/schema";
 
@@ -59,8 +60,11 @@ export function Settings({ user }: SettingsProps) {
         <Card>
           <CardHeader>
             <CardTitle>Notifications</CardTitle>
-            <CardDescription>Notification preferences coming soon</CardDescription>
+            <CardDescription>Manage your notification preferences</CardDescription>
           </CardHeader>
+          <CardContent>
+            <PushNotificationToggle />
+          </CardContent>
         </Card>
       </div>
     </div>

@@ -1116,6 +1116,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Push notification routes
+  const { vapidPublicKey, sendPushNotification } = await import('./pushNotifications');
+  
+  app.get('/api/push/vapid-public-key', (req, res) => {
+    res.json({ publicKey: vapidPublicKey });
+  });
+
+  app.post('/api/push/subscribe', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { endpoint, keys } = req.body;
+
+      if (!endpoint || !keys?.p256dh || !keys?.auth) {
+        return res.status(400).json({ message: 'Invalid subscription data' });
+      }
+
+      const subscription = await storage.createPushSubscription({
+        userId,
+        endpoint,
+        p256dh: keys.p256dh,
+        auth: keys.auth,
+      });
+
+      res.status(201).json({ success: true, subscription });
+    } catch (error) {
+      console.error('Error saving push subscription:', error);
+      res.status(500).json({ message: 'Failed to save push subscription' });
+    }
+  });
+
+  app.post('/api/push/unsubscribe', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { endpoint } = req.body;
+
+      if (!endpoint) {
+        return res.status(400).json({ message: 'Endpoint is required' });
+      }
+
+      await storage.deletePushSubscription(endpoint, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error removing push subscription:', error);
+      res.status(500).json({ message: 'Failed to remove push subscription' });
+    }
+  });
+
   // Voice channel routes
   app.get('/api/voice/channel/:connectionId', authMiddleware, async (req: any, res) => {
     try {
