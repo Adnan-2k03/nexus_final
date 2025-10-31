@@ -88,7 +88,7 @@ export function UserProfile({
     },
     onSuccess: async (data: { url: string }) => {
       // Update user profile with new photo URL
-      await apiRequest('/api/user/profile', 'PATCH', { profileImageUrl: data.url });
+      await apiRequest('PATCH', '/api/user/profile', { profileImageUrl: data.url });
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       queryClient.invalidateQueries({ queryKey: ['/api/users', id] });
       toast({
