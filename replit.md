@@ -6,6 +6,12 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
+### October 31, 2025
+- **Voice Channel Consolidation**: Removed redundant VoiceProvider context wrapper, simplified Chat component to show read-only voice participant indicators. Voice controls now isolated to Voice tab only for Discord-like experience where users can see who's in voice without joining.
+- **Navigation Badge Fix**: Removed hardcoded dummy message count (pendingMessages={3}), allowing dynamic badge updates when real data is available.
+- **Starry Background Fix**: Fixed background visibility with proper transparency (opacity 0.3) and z-index positioning to work across all themes.
+- **Empty State Enhancement**: Updated empty states across Discover, Matches, and Messages tabs with consistent Card component styling and dashed borders matching Feed tab design.
+
 ### October 30, 2025
 - **Connections/Messages Sorting**: Modified Connections and Messages tabs to prioritize accepted connections at the top, with pending requests appearing below in collapsible sections for better UX.
 - **LFO Bug Fix**: Fixed issue where LFO (Looking for Opponents) match requests were appearing in the LFG tab by requiring `matchType` and `duration` fields in the schema validation, preventing database defaults from overriding user selections.
