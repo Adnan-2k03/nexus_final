@@ -12,6 +12,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs";
+import { sendPushNotification } from "./pushNotifications";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,6 +24,25 @@ const DEV_MODE = process.env.AUTH_DISABLED === "true";
 const authMiddleware = DEV_MODE ? devAuthMiddleware : isAuthenticated;
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve service worker and manifest (must be before authentication)
+  app.get('/sw.js', (req, res) => {
+    const swPath = path.join(__dirname, '../public/sw.js');
+    res.type('application/javascript');
+    res.sendFile(swPath);
+  });
+
+  app.get('/manifest.json', (req, res) => {
+    const manifestPath = path.join(__dirname, '../public/manifest.json');
+    res.type('application/json');
+    res.sendFile(manifestPath);
+  });
+
+  app.get('/offline.html', (req, res) => {
+    const offlinePath = path.join(__dirname, '../public/offline.html');
+    res.type('text/html');
+    res.sendFile(offlinePath);
+  });
+
   // Setup authentication (skip in dev mode)
   if (DEV_MODE) {
     console.log("\n🔓 [DEV MODE] Authentication is DISABLED for development");
@@ -339,6 +359,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: notification
       });
       
+      // Send push notification
+      sendPushNotification(accepterId, {
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        relatedUserId: requesterId,
+        relatedMatchId: requestId,
+      }).catch(err => console.error('Failed to send push notification:', err));
+      
       // Broadcast match connection to both users
       (app as any).broadcast?.toUsers([requesterId, accepterId], {
         type: 'match_connection_created',
@@ -391,6 +420,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'new_notification',
           data: notification
         });
+        
+        // Send push notification
+        sendPushNotification(connectionToUpdate.requesterId, {
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          relatedUserId: connectionToUpdate.accepterId,
+          relatedMatchId: connectionToUpdate.requestId,
+        }).catch(err => console.error('Failed to send push notification:', err));
       } else if (status === 'declined') {
         const accepterUser = await storage.getUser(connectionToUpdate.accepterId);
         const notification = await storage.createNotification({
@@ -408,6 +446,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'new_notification',
           data: notification
         });
+        
+        // Send push notification
+        sendPushNotification(connectionToUpdate.requesterId, {
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          relatedUserId: connectionToUpdate.accepterId,
+          relatedMatchId: connectionToUpdate.requestId,
+        }).catch(err => console.error('Failed to send push notification:', err));
       }
       
       // Broadcast connection status update to participants
@@ -482,6 +529,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         data: notification
       });
       
+      // Send push notification
+      sendPushNotification(receiverId, {
+        title: notification.title,
+        message: notification.message,
+        type: notification.type,
+        relatedUserId: senderId,
+      }).catch(err => console.error('Failed to send push notification:', err));
+      
       (app as any).broadcast?.toUsers([senderId, receiverId], {
         type: 'connection_request_created',
         data: request,
@@ -533,6 +588,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: notification
         });
         
+        // Send push notification
+        sendPushNotification(requestToUpdate.senderId, {
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          relatedUserId: requestToUpdate.receiverId,
+        }).catch(err => console.error('Failed to send push notification:', err));
+        
         (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {
           type: 'connection_request_deleted',
           data: { id },
@@ -561,6 +624,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           type: 'new_notification',
           data: notification
         });
+        
+        // Send push notification
+        sendPushNotification(requestToUpdate.senderId, {
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          relatedUserId: requestToUpdate.receiverId,
+        }).catch(err => console.error('Failed to send push notification:', err));
       }
       
       (app as any).broadcast?.toUsers([requestToUpdate.senderId, requestToUpdate.receiverId], {

@@ -2,9 +2,10 @@
 // Handles offline caching and push notifications
 
 const CACHE_NAME = 'gamematch-v1';
+const RUNTIME_CACHE = 'gamematch-runtime-v1';
+
 const urlsToCache = [
   '/',
-  '/index.html',
   '/offline.html'
 ];
 
@@ -24,11 +25,12 @@ self.addEventListener('install', (event) => {
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
   console.log('[Service Worker] Activating...');
+  const cacheWhitelist = [CACHE_NAME, RUNTIME_CACHE];
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (!cacheWhitelist.includes(cacheName)) {
             console.log('[Service Worker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -38,100 +40,130 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - serve from cache, fallback to network with runtime caching
 self.addEventListener('fetch', (event) => {
   // Skip non-GET requests and chrome-extension requests
   if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
     return;
   }
 
+  const { request } = event;
+  const requestURL = new URL(request.url);
+
+  // Skip API calls from caching
+  if (requestURL.pathname.startsWith('/api')) {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Cache hit - return response
-        if (response) {
-          return response;
+    caches.match(request)
+      .then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
 
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then((response) => {
-          // Check if valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
+        return fetch(request.clone()).then((response) => {
+          // Don't cache if not a valid response
+          if (!response || response.status !== 200 || response.type === 'error') {
             return response;
           }
 
-          // Clone the response
-          const responseToCache = response.clone();
+          // Cache static assets (JS, CSS, images, fonts)
+          const shouldCache = /\.(js|css|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/i.test(requestURL.pathname)
+            || requestURL.pathname === '/'
+            || requestURL.pathname === '/index.html';
 
-          // Cache the response for future use
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
+          if (shouldCache) {
+            const responseToCache = response.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => {
+              cache.put(request, responseToCache);
             });
+          }
 
           return response;
         }).catch(() => {
           // Return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
+          if (request.mode === 'navigate') {
             return caches.match('/offline.html');
           }
+          
+          // For other requests, try to return from cache
+          return caches.match(request);
         });
       })
   );
 });
 
-// Push event - handle push notifications
+// Push notification event
 self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push received:', event);
-  
-  let notificationData = {
-    title: 'GameMatch',
-    body: 'You have a new notification',
-    icon: '/pwa-icon-192.png',
-    badge: '/pwa-icon-192.png',
-    tag: 'gamematch-notification',
-    requireInteraction: false,
-    data: {}
-  };
+  console.log('[Service Worker] Push notification received:', event);
 
+  let data = { title: 'GameMatch', message: 'New notification' };
+  
   if (event.data) {
     try {
-      const payload = event.data.json();
-      notificationData = {
-        ...notificationData,
-        title: payload.title || notificationData.title,
-        body: payload.message || payload.body || notificationData.body,
-        data: payload
-      };
+      data = event.data.json();
     } catch (e) {
-      console.error('[Service Worker] Error parsing push data:', e);
+      data.message = event.data.text();
     }
   }
 
+  const options = {
+    body: data.message,
+    icon: '/icon-192.png',
+    badge: '/icon-96.png',
+    vibrate: [200, 100, 200],
+    data: {
+      url: data.url || '/',
+      type: data.type,
+      relatedUserId: data.relatedUserId,
+      relatedMatchId: data.relatedMatchId,
+    },
+    actions: [
+      {
+        action: 'view',
+        title: 'View'
+      },
+      {
+        action: 'close',
+        title: 'Close'
+      }
+    ],
+    tag: data.type || 'notification',
+    requireInteraction: true,
+  };
+
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    self.registration.showNotification(data.title, options)
   );
 });
 
-// Notification click event - open app when notification is clicked
+// Notification click event
 self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification clicked:', event);
+  
   event.notification.close();
+
+  if (event.action === 'close') {
+    return;
+  }
+
+  // Default action or 'view' action - open the app
+  const urlToOpen = event.notification.data?.url || '/';
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // Check if there's already a window open
-        for (const client of clientList) {
-          if (client.url === '/' && 'focus' in client) {
+        // If a window is already open, focus it
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+          if (client.url === urlToOpen && 'focus' in client) {
             return client.focus();
           }
         }
-        // If no window is open, open a new one
+        // Otherwise, open a new window
         if (clients.openWindow) {
-          return clients.openWindow('/');
+          return clients.openWindow(urlToOpen);
         }
       })
   );
