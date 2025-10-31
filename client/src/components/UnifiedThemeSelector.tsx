@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Settings, Check } from "lucide-react";
+import { Palette, Check } from "lucide-react";
 import { useTheme } from "./ThemeProvider";
 import { useBackground } from "./BackgroundProvider";
 
@@ -68,7 +68,7 @@ export function UnifiedThemeSelector() {
           className="h-9 w-9"
           data-testid="button-unified-theme-selector"
         >
-          <Settings className="h-4 w-4" />
+          <Palette className="h-4 w-4" />
           <span className="sr-only">Appearance settings</span>
         </Button>
       </DropdownMenuTrigger>
