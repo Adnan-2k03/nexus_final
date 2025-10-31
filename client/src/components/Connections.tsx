@@ -271,7 +271,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                   </h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {isRequester ? "Applied to your match" : "You applied to their match"}
+                  {isRequester ? "You applied to their match" : "They applied to your post"}
                 </p>
               </div>
             </ProfileDialog>
