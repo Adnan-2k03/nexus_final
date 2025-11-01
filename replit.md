@@ -6,7 +6,19 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### October 31, 2025 (Latest Session - PWA & Push Notifications)
+### November 1, 2025 (Latest Session - UI/UX Consistency Improvements)
+- **Search Bar Consistency**: Applied solid dark card background styling (bg-card with borders) to all search bars across Messages, Connections, and Matches tabs to match the design of the LFG/LFO tabs section
+- **Descriptive Sub-Headings**: Added contextual sub-headings below main tab titles across all primary pages:
+  - Match Feed: "Discover and apply to match requests"
+  - Matches: "Manage your match connections and applications"
+  - Messages: "Chat with your connections and teammates"
+  - Discover: "Find and connect with gamers worldwide" (already present)
+- **Solid Dark Background Option**: Introduced a third background theme option - "Solid Dark" - providing a clean, simple alternative to the two animated starfield backgrounds
+  - Added Background Effect selector in Settings with three options: Animated Stars (canvas2d), 3D Stars (webgl), and Solid Dark (solid)
+  - Background selection persists across sessions via localStorage
+  - Reduces visual distraction for users who prefer minimal effects
+
+### October 31, 2025 (Previous Session - PWA & Push Notifications)
 - **Progressive Web App (PWA) Implementation**: Full PWA setup with manifest.json, service worker, and offline support
   - Service worker registered at application startup with runtime caching for JS/CSS/images/fonts
   - Offline fallback page for network errors
