@@ -51,6 +51,7 @@ function mapUserForComponents(user: User) {
 function Router() {
   // Real authentication using useAuth hook
   const { user, isLoading, isAuthenticated } = useAuth();
+  const { getContainerClass } = useLayout();
 
   // ALL hooks must be called before any early returns
   const [currentPage, setCurrentPage] = useState<
@@ -250,7 +251,7 @@ function Router() {
       case "profile":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <div className="max-w-2xl mx-auto">
+            <div className={`${getContainerClass()} mx-auto`}>
               <h1 className="text-2xl font-bold text-foreground mb-6">
                 My Profile
               </h1>
