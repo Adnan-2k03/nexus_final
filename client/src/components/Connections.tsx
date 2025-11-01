@@ -480,56 +480,58 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="bg-card border border-border rounded-lg p-3 mb-6">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-              <Input
-                type="text"
-                placeholder="Search by name or gamertag..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 overflow-x-auto whitespace-nowrap"
-                style={{
-                  textOverflow: 'clip',
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none'
-                }}
-                data-testid="input-search-connections"
-              />
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search by name or gamertag..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 overflow-x-auto whitespace-nowrap"
+                  style={{
+                    textOverflow: 'clip',
+                    scrollbarWidth: 'none',
+                    msOverflowStyle: 'none'
+                  }}
+                  data-testid="input-search-connections"
+                />
+              </div>
+              <Popover open={showFilters} onOpenChange={setShowFilters}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
+                    <Filter className="h-4 w-4 mr-1" />
+                    Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64" data-testid="popover-request-filters">
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold mb-3">Filter Requests</h4>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Request Type</label>
+                      <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                        <SelectTrigger data-testid="select-request-type">
+                          <SelectValue placeholder="All Requests" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Applications</SelectItem>
+                          <SelectItem value="1v1">1v1 Match Applications</SelectItem>
+                          <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                          <SelectItem value="3v3">3v3 Match Applications</SelectItem>
+                          <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
-            <Popover open={showFilters} onOpenChange={setShowFilters}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
-                  <Filter className="h-4 w-4 mr-1" />
-                  Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64" data-testid="popover-request-filters">
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="font-semibold mb-3">Filter Requests</h4>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Request Type</label>
-                    <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
-                      <SelectTrigger data-testid="select-request-type">
-                        <SelectValue placeholder="All Requests" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Applications</SelectItem>
-                        <SelectItem value="1v1">1v1 Match Applications</SelectItem>
-                        <SelectItem value="2v2">2v2 Match Applications</SelectItem>
-                        <SelectItem value="3v3">3v3 Match Applications</SelectItem>
-                        <SelectItem value="squad">Team/Squad Finder</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         <Card className="border-dashed">
           <CardContent className="text-center py-12">
@@ -574,56 +576,58 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="bg-card border border-border rounded-lg p-3 mb-6">
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-            <Input
-              type="text"
-              placeholder="Search by name or gamertag..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 overflow-x-auto whitespace-nowrap border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-              style={{
-                textOverflow: 'clip',
-                scrollbarWidth: 'none',
-                msOverflowStyle: 'none'
-              }}
-              data-testid="input-search-connections"
-            />
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+              <Input
+                type="text"
+                placeholder="Search by name or gamertag..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 overflow-x-auto whitespace-nowrap"
+                style={{
+                  textOverflow: 'clip',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
+                data-testid="input-search-connections"
+              />
+            </div>
+            <Popover open={showFilters} onOpenChange={setShowFilters}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
+                  <Filter className="h-4 w-4 mr-1" />
+                  Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" data-testid="popover-request-filters">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-3">Filter Requests</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Request Type</label>
+                    <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                      <SelectTrigger data-testid="select-request-type">
+                        <SelectValue placeholder="All Requests" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Applications</SelectItem>
+                        <SelectItem value="1v1">1v1 Match Applications</SelectItem>
+                        <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                        <SelectItem value="3v3">3v3 Match Applications</SelectItem>
+                        <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
-          <Popover open={showFilters} onOpenChange={setShowFilters}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
-                <Filter className="h-4 w-4 mr-1" />
-                Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64" data-testid="popover-request-filters">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-3">Filter Requests</h4>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Request Type</label>
-                  <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
-                    <SelectTrigger data-testid="select-request-type">
-                      <SelectValue placeholder="All Requests" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Applications</SelectItem>
-                      <SelectItem value="1v1">1v1 Match Applications</SelectItem>
-                      <SelectItem value="1v1">2v2 Match Applications</SelectItem>
-                      <SelectItem value="3v3">3v3 Match Applications</SelectItem>
-                      <SelectItem value="squad">Team/Squad Finder</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <div className="space-y-8">
 

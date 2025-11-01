@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Search, Filter, X } from "lucide-react";
 import { useState } from "react";
 
@@ -62,49 +63,53 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
   return (
     <div className="space-y-4">
       {/* Search Bar with Filter Toggle */}
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
-          <Input
-            placeholder="Search games, descriptions, or gamer tags..."
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10 pr-4 overflow-x-auto whitespace-nowrap"
-            style={{
-              textOverflow: 'clip',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}
-            data-testid="input-search"
-          />
-        </div>
-        <Button
-          variant="outline"
-          size="default"
-          onClick={() => setShowFilters(!showFilters)}
-          className="gap-2 shrink-0"
-          data-testid="button-toggle-filters"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-          {hasActiveFilters && (
-            <Badge variant="secondary" className="ml-1 px-1 py-0 text-xs">
-              {Object.keys(activeFilters).filter(key => activeFilters[key as keyof typeof activeFilters]).length}
-            </Badge>
-          )}
-        </Button>
-        {hasActiveFilters && (
-          <Button
-            variant="ghost"
-            size="default"
-            onClick={clearAllFilters}
-            className="text-muted-foreground hover:text-foreground shrink-0"
-            data-testid="button-clear-all-filters"
-          >
-            Clear all
-          </Button>
-        )}
-      </div>
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+              <Input
+                placeholder="Search games, descriptions, or gamer tags..."
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-10 pr-4 overflow-x-auto whitespace-nowrap"
+                style={{
+                  textOverflow: 'clip',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
+                data-testid="input-search"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="default"
+              onClick={() => setShowFilters(!showFilters)}
+              className="gap-2 shrink-0"
+              data-testid="button-toggle-filters"
+            >
+              <Filter className="h-4 w-4" />
+              Filters
+              {hasActiveFilters && (
+                <Badge variant="secondary" className="ml-1 px-1 py-0 text-xs">
+                  {Object.keys(activeFilters).filter(key => activeFilters[key as keyof typeof activeFilters]).length}
+                </Badge>
+              )}
+            </Button>
+            {hasActiveFilters && (
+              <Button
+                variant="ghost"
+                size="default"
+                onClick={clearAllFilters}
+                className="text-muted-foreground hover:text-foreground shrink-0"
+                data-testid="button-clear-all-filters"
+              >
+                Clear all
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Active Filters */}
       {hasActiveFilters && (
