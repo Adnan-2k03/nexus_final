@@ -455,13 +455,13 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   if (connections.length === 0) {
     return (
       <div className={`${getContainerClass()} mx-auto`}>
-        <div className="flex items-center justify-between mb-3">
+        <div className="mb-6 flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
               <Users className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold text-foreground">Matches</h1>
-            </div>
-            <p className="text-sm text-muted-foreground mt-1 ml-9">Manage your match connections and applications</p>
+              Matches
+            </h1>
+            <p className="text-muted-foreground">Manage your match connections and applications</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
@@ -481,7 +481,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
         {/* Search and Filter Bar */}
         <Card className="mb-6">
-          <CardContent className="pt-6">
+          <CardContent className="p-4">
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
@@ -551,13 +551,13 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
   return (
     <div className={`${getContainerClass()} mx-auto`}>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
             <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Matches</h1>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1 ml-9">Manage your match connections and applications</p>
+            Matches
+          </h1>
+          <p className="text-muted-foreground">Manage your match connections and applications</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-sm">
@@ -577,7 +577,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
       {/* Search and Filter Bar */}
       <Card className="mb-6">
-        <CardContent className="pt-6">
+        <CardContent className="p-4">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />

@@ -262,7 +262,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
 
       {/* Search and Filters */}
       <Card className="mb-6">
-        <CardContent className="pt-6">
+        <CardContent className="p-4">
           <div className="flex gap-2">
             {/* Search */}
             <div className="flex-1 relative">

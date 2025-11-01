@@ -298,11 +298,11 @@ export function MatchFeed({
   return (
     <div className={`${getContainerClass()} mx-auto space-y-4 md:space-y-6`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-0 sm:justify-between mb-3">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-0 sm:justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
             <Target className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Match Feed</h1>
+            Match Feed
             <div className="flex items-center gap-1">
               {isConnected ? (
                 <Wifi className="h-4 w-4 text-green-500" />
@@ -313,8 +313,8 @@ export function MatchFeed({
                 {isConnected ? "Live" : "Offline"}
               </span>
             </div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1 ml-9">Discover and apply to match requests</p>
+          </h1>
+          <p className="text-muted-foreground">Discover and apply to match requests</p>
         </div>
         
         <div className="flex gap-1.5 sm:gap-2 flex-wrap">

@@ -64,7 +64,7 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
     <div className="space-y-4">
       {/* Search Bar with Filter Toggle */}
       <Card className="mb-6">
-        <CardContent className="pt-6">
+        <CardContent className="p-4">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />

@@ -194,13 +194,13 @@ export function Messages({ currentUserId }: MessagesProps) {
 
   return (
     <div className={`${getContainerClass()} mx-auto`}>
-      <div className="flex items-center justify-between mb-3">
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
             <MessageCircle className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-          </div>
-          <p className="text-sm text-muted-foreground mt-1 ml-9">Chat with your connections and teammates</p>
+            Messages
+          </h1>
+          <p className="text-muted-foreground">Chat with your connections and teammates</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-sm">
@@ -220,7 +220,7 @@ export function Messages({ currentUserId }: MessagesProps) {
 
       {/* Search */}
       <Card className="mb-6">
-        <CardContent className="pt-6">
+        <CardContent className="p-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Input
