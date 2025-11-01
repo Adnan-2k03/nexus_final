@@ -294,11 +294,11 @@ export function MatchFeed({
   );
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground">Match Feed</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Match Feed</h1>
           <div className="flex items-center gap-1">
             {isConnected ? (
               <Wifi className="h-4 w-4 text-green-500" />
@@ -311,26 +311,27 @@ export function MatchFeed({
           </div>
         </div>
         
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
           <Button
             variant={showHidden ? "default" : "outline"}
             size="sm"
             onClick={() => setShowHidden(!showHidden)}
             data-testid="button-toggle-hidden"
+            className="h-8 px-2 sm:px-3"
           >
-            {showHidden ? <Eye className="h-4 w-4 mr-1" /> : <EyeOff className="h-4 w-4 mr-1" />}
-            {showHidden ? "Show All" : "Hidden"}
+            {showHidden ? <Eye className="h-4 w-4 sm:mr-1" /> : <EyeOff className="h-4 w-4 sm:mr-1" />}
+            <span className="hidden sm:inline">{showHidden ? "Show All" : "Hidden"}</span>
           </Button>
           <Button
             variant={showLongTerm ? "default" : "outline"}
             size="sm"
             onClick={() => setShowLongTerm(!showLongTerm)}
             data-testid="button-duration-long-term"
-            className={showLongTerm ? "shadow-lg shadow-primary/50 ring-2 ring-primary/30" : ""}
+            className={`h-8 px-2 sm:px-3 ${showLongTerm ? "shadow-lg shadow-primary/50 ring-2 ring-primary/30" : ""}`}
           >
-            <Clock className="h-4 w-4 mr-2" />
-            Long Term
-            {showLongTerm && <span className="ml-2 text-xs">✓</span>}
+            <Clock className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Long Term</span>
+            {showLongTerm && <span className="ml-1 sm:ml-2 text-xs">✓</span>}
           </Button>
           <Button
             variant="outline"
@@ -338,17 +339,18 @@ export function MatchFeed({
             onClick={handleRefresh}
             disabled={isFetchingMatches}
             data-testid="button-refresh-feed"
+            className="h-8 px-2 sm:px-3"
           >
             <RefreshCw className={`h-4 w-4 ${isFetchingMatches ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             onClick={onCreateMatch}
             size="sm"
-            className="gap-2"
+            className="gap-1 sm:gap-2 h-8 px-2 sm:px-3"
             data-testid="button-create-match"
           >
             <Plus className="h-4 w-4" />
-            Create
+            <span className="hidden sm:inline">Create</span>
           </Button>
         </div>
       </div>
