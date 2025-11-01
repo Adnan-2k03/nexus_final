@@ -236,8 +236,8 @@ export function Discover({ currentUserId }: DiscoverProps) {
     <div className={`${getContainerClass()} mx-auto`}>
       <div className="mb-6 flex items-start justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
-            <Users className="h-8 w-8 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
+            <Users className="h-6 w-6 text-primary" />
             Discover Gamers
           </h1>
           <p className="text-muted-foreground">Find and connect with gamers worldwide</p>

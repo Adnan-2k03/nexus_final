@@ -388,37 +388,39 @@ export function GameProfileForm({
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
-                    <FormField
-                      control={form.control}
-                      name="gameName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Game Name *</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                            disabled={isEditing}
-                          >
-                            <FormControl>
-                              <SelectTrigger data-testid="select-game-name">
-                                <SelectValue placeholder="Select a game" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {popularGames.map((game) => (
-                                <SelectItem key={game} value={game}>
-                                  {game}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            {isEditing ? "Game cannot be changed after creation" : "Choose the game for this profile"}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <Card className="p-4 bg-muted/50">
+                      <FormField
+                        control={form.control}
+                        name="gameName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Game Name *</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                              disabled={isEditing}
+                            >
+                              <FormControl>
+                                <SelectTrigger data-testid="select-game-name">
+                                  <SelectValue placeholder="Select a game" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {popularGames.map((game) => (
+                                  <SelectItem key={game} value={game}>
+                                    {game}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              {isEditing ? "Game cannot be changed after creation" : "Choose the game for this profile"}
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </Card>
                     </AccordionContent>
                   </AccordionItem>
 
@@ -430,7 +432,9 @@ export function GameProfileForm({
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="space-y-4 pt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="p-4 bg-muted/50">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
                         name="currentRank"
@@ -490,59 +494,61 @@ export function GameProfileForm({
                       )}
                     />
 
-                    <Separator className="my-4" />
+                        <Separator className="my-4" />
 
-                    <div className="space-y-4">
-                      <FormLabel>Stats Screenshot *</FormLabel>
-                      <FormDescription>Upload your in-game stats screenshot</FormDescription>
-                      
-                      <FormField
-                        control={form.control}
-                        name="statsPhotoUrl"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Screenshot</FormLabel>
-                            <FormControl>
-                              <div className="space-y-2">
-                                <Input 
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => handlePhotoUpload(e, "statsPhotoUrl")}
-                                  disabled={uploadingPhoto}
-                                  data-testid="input-stats-photo-file"
-                                />
-                                {field.value && (
-                                  <div className="text-sm text-muted-foreground">
-                                    Current photo: {field.value}
+                        <div className="space-y-4">
+                          <FormLabel>Stats Screenshot *</FormLabel>
+                          <FormDescription>Upload your in-game stats screenshot</FormDescription>
+                          
+                          <FormField
+                            control={form.control}
+                            name="statsPhotoUrl"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Screenshot</FormLabel>
+                                <FormControl>
+                                  <div className="space-y-2">
+                                    <Input 
+                                      type="file"
+                                      accept="image/*"
+                                      onChange={(e) => handlePhotoUpload(e, "statsPhotoUrl")}
+                                      disabled={uploadingPhoto}
+                                      data-testid="input-stats-photo-file"
+                                    />
+                                    {field.value && (
+                                      <div className="text-sm text-muted-foreground">
+                                        Current photo: {field.value}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={form.control}
-                        name="statsPhotoDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="block">Stats Date *</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="date" 
-                                {...field} 
-                                className="w-full block"
-                                data-testid="input-stats-photo-date"
-                              />
-                            </FormControl>
-                            <FormDescription>When were these stats recorded?</FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                          <FormField
+                            control={form.control}
+                            name="statsPhotoDate"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="block">Stats Date *</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="date" 
+                                    {...field} 
+                                    className="w-full block"
+                                    data-testid="input-stats-photo-date"
+                                  />
+                                </FormControl>
+                                <FormDescription>When were these stats recorded?</FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </Card>
                     </AccordionContent>
                   </AccordionItem>
 

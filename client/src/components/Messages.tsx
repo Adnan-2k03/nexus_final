@@ -194,40 +194,43 @@ export function Messages({ currentUserId }: MessagesProps) {
 
   return (
     <div className={`${getContainerClass()} mx-auto`}>
-      <div className="space-y-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <MessageCircle className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Messages</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-sm">
-              {filteredConnections.length} conversation{filteredConnections.length !== 1 ? 's' : ''}
-            </Badge>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={isLoadingRequests}
-              data-testid="button-refresh-messages"
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoadingRequests ? 'animate-spin' : ''}`} />
-            </Button>
-          </div>
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <MessageCircle className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground">Messages</h1>
         </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-sm">
+            {filteredConnections.length} conversation{filteredConnections.length !== 1 ? 's' : ''}
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoadingRequests}
+            data-testid="button-refresh-messages"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoadingRequests ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search conversations..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-            data-testid="input-search-messages"
-          />
-        </div>
+      {/* Search */}
+      <div className="relative mb-6">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          type="text"
+          placeholder="Search conversations..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10 overflow-x-auto whitespace-nowrap"
+          style={{
+            textOverflow: 'clip',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none'
+          }}
+          data-testid="input-search-messages"
+        />
       </div>
 
       {isLoadingRequests ? (
