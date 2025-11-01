@@ -64,12 +64,17 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
       {/* Search Bar with Filter Toggle */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
           <Input
             placeholder="Search games, descriptions, or gamer tags..."
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            className="pl-10 pr-4"
+            className="pl-10 pr-4 overflow-x-auto whitespace-nowrap"
+            style={{
+              textOverflow: 'clip',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
             data-testid="input-search"
           />
         </div>

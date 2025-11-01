@@ -10,6 +10,7 @@ import type { MatchRequestWithUser, MatchConnection } from "@shared/schema";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { GameFilters } from "./GameFilters";
 import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye, Users, Target, Clock } from "lucide-react";
+import { useLayout } from "@/contexts/LayoutContext";
 
 // Utility function to format time ago
 function formatTimeAgo(date: string | Date | null): string {
@@ -53,6 +54,7 @@ export function MatchFeed({
 }: MatchFeedProps) {
   const queryClient = useQueryClient();
   const { isConnected, lastMessage } = useWebSocket();
+  const { getContainerClass } = useLayout();
   const [filters, setFilters] = useState<{ search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string }>({});
   const [showHidden, setShowHidden] = useState(false);
   const [showLongTerm, setShowLongTerm] = useState(false);
@@ -294,7 +296,7 @@ export function MatchFeed({
   );
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
+    <div className={`${getContainerClass()} mx-auto space-y-4 md:space-y-6`}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-0 sm:justify-between">
         <div className="flex items-center gap-3">
@@ -371,13 +373,13 @@ export function MatchFeed({
       {/* Match Feed with Tabs */}
       <Tabs defaultValue="lfg" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="lfg" className="gap-2" data-testid="tab-lfg">
-            <Users className="h-4 w-4" />
-            LFG (Looking for Group)
+          <TabsTrigger value="lfg" className="gap-1 sm:gap-2" data-testid="tab-lfg">
+            <Users className="h-4 w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm">LFG <span className="hidden sm:inline">(Looking for Group)</span></span>
           </TabsTrigger>
-          <TabsTrigger value="lfo" className="gap-2" data-testid="tab-lfo">
-            <Target className="h-4 w-4" />
-            LFO (Looking for Opponent)
+          <TabsTrigger value="lfo" className="gap-1 sm:gap-2" data-testid="tab-lfo">
+            <Target className="h-4 w-4 flex-shrink-0" />
+            <span className="text-xs sm:text-sm">LFO <span className="hidden sm:inline">(Looking for Opponent)</span></span>
           </TabsTrigger>
         </TabsList>
 

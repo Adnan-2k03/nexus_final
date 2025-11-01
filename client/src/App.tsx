@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { BackgroundProvider, useBackground } from "@/components/BackgroundProvider";
+import { LayoutProvider } from "@/contexts/LayoutContext";
 import { useState, useEffect } from "react";
 
 // Hooks
@@ -389,14 +390,16 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="gamematch-ui-theme">
         <BackgroundProvider>
-          <TooltipProvider>
-            {/* Background layer */}
-            <BackgroundRenderer />
+          <LayoutProvider>
+            <TooltipProvider>
+              {/* Background layer */}
+              <BackgroundRenderer />
 
-            {/* Foreground content */}
-            <Router />
-            <Toaster />
-          </TooltipProvider>
+              {/* Foreground content */}
+              <Router />
+              <Toaster />
+            </TooltipProvider>
+          </LayoutProvider>
         </BackgroundProvider>
       </ThemeProvider>
     </QueryClientProvider>

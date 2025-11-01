@@ -19,6 +19,7 @@ import type { MatchConnectionWithUser, ConnectionRequestWithUser, User } from "@
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 import { useToast } from "@/hooks/use-toast";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface ConnectionsProps {
   currentUserId?: string;
@@ -50,6 +51,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const { toast } = useToast();
+  const { getContainerClass } = useLayout();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -219,7 +221,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className={`${getContainerClass()} mx-auto`}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
@@ -449,7 +451,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
 
   if (connections.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className={`${getContainerClass()} mx-auto`}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Users className="h-6 w-6 text-primary" />
@@ -533,7 +535,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className={`${getContainerClass()} mx-auto`}>
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Users className="h-6 w-6 text-primary" />

@@ -18,6 +18,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import type { ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface MessagesProps {
   currentUserId?: string;
@@ -44,6 +45,7 @@ export function Messages({ currentUserId }: MessagesProps) {
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const { toast } = useToast();
   const { isUserOnline, isUserInVoice } = useOnlineStatus();
+  const { getContainerClass } = useLayout();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -191,7 +193,7 @@ export function Messages({ currentUserId }: MessagesProps) {
   );
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className={`${getContainerClass()} mx-auto`}>
       <div className="space-y-4 mb-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

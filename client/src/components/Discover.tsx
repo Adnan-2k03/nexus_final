@@ -13,6 +13,7 @@ import { UserProfile } from "./UserProfile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface DiscoverProps {
   currentUserId?: string;
@@ -74,6 +75,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [connectingUserId, setConnectingUserId] = useState<string | null>(null);
   const { toast } = useToast();
+  const { getContainerClass } = useLayout();
 
   // Request user's location for distance-based filtering
   useEffect(() => {
@@ -231,7 +233,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className={`${getContainerClass()} mx-auto`}>
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2 flex items-center gap-2">
@@ -264,13 +266,18 @@ export function Discover({ currentUserId }: DiscoverProps) {
           <div className="flex gap-2">
             {/* Search */}
             <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
               <Input
                 type="text"
                 placeholder="Search by name or gamertag..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-10 overflow-x-auto whitespace-nowrap"
+                style={{
+                  textOverflow: 'clip',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
                 data-testid="input-search-users"
               />
             </div>

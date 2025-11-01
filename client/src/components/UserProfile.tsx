@@ -20,6 +20,7 @@ import { CustomPortfolio } from "./CustomPortfolio";
 import { Mutuals } from "./Mutuals";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface UserProfileProps {
   id: string;
@@ -67,6 +68,7 @@ export function UserProfile({
   const [showCustomSections, setShowCustomSections] = useState<{[key: string]: boolean}>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const { getContainerClass } = useLayout();
 
   const { data: gameProfiles = [], isLoading: isLoadingProfiles } = useQuery<GameProfile[]>({
     queryKey: ['/api/users', id, 'game-profiles'],
@@ -149,7 +151,7 @@ export function UserProfile({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto space-y-6">
+    <div className={`w-full ${getContainerClass()} mx-auto space-y-6`}>
       <Card>
         <CardHeader className="pb-4">
           <div className="flex flex-col md:flex-row items-center md:items-start gap-6">

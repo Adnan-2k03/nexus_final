@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Gamepad2, Plus, Users, Target, Clock, Zap } from "lucide-react";
+import { useLayout } from "@/contexts/LayoutContext";
 
 const createMatchSchema = z.object({
   gameName: z.string().min(1, "Game name is required"),
@@ -29,6 +30,8 @@ interface CreateMatchFormProps {
 }
 
 export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFormProps) {
+  const { getContainerClass } = useLayout();
+  
   const form = useForm<CreateMatchFormData>({
     resolver: zodResolver(createMatchSchema),
     defaultValues: {
@@ -56,7 +59,7 @@ export function CreateMatchForm({ onSubmit, onCancel, isLoading }: CreateMatchFo
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className={`w-full ${getContainerClass()} mx-auto`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-xl">
           <Gamepad2 className="h-5 w-5 text-primary" />

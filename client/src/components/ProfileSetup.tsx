@@ -13,6 +13,7 @@ import { X, Plus, MapPin, User as UserIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface ProfileSetupProps {
   user?: User | null;
@@ -40,6 +41,7 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
   const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { getContainerClass } = useLayout();
 
   // Request geolocation when component mounts
   useEffect(() => {
@@ -134,7 +136,7 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className={`${getContainerClass()} mx-auto`}>
       <Card>
         <CardHeader>
           <CardTitle className="text-center">
