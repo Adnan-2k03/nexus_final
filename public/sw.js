@@ -1,8 +1,8 @@
 // Service Worker for GameMatch PWA
 // Handles offline caching and push notifications
 
-const CACHE_NAME = 'gamematch-v1';
-const RUNTIME_CACHE = 'gamematch-runtime-v1';
+const CACHE_NAME = 'gamematch-v2';
+const RUNTIME_CACHE = 'gamematch-runtime-v2';
 
 const urlsToCache = [
   '/',
@@ -56,41 +56,35 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
+    fetch(request.clone()).then((response) => {
+      // Network-first strategy for better development experience
+      if (response && response.status === 200) {
+        // Cache static assets (JS, CSS, images, fonts)
+        const shouldCache = /\.(js|css|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/i.test(requestURL.pathname)
+          || requestURL.pathname === '/'
+          || requestURL.pathname === '/index.html';
+
+        if (shouldCache) {
+          const responseToCache = response.clone();
+          caches.open(RUNTIME_CACHE).then((cache) => {
+            cache.put(request, responseToCache);
+          });
+        }
+      }
+      return response;
+    }).catch(() => {
+      // Fallback to cache if network fails
+      return caches.match(request).then((cachedResponse) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-
-        return fetch(request.clone()).then((response) => {
-          // Don't cache if not a valid response
-          if (!response || response.status !== 200 || response.type === 'error') {
-            return response;
-          }
-
-          // Cache static assets (JS, CSS, images, fonts)
-          const shouldCache = /\.(js|css|png|jpg|jpeg|svg|gif|webp|woff|woff2|ttf|eot)$/i.test(requestURL.pathname)
-            || requestURL.pathname === '/'
-            || requestURL.pathname === '/index.html';
-
-          if (shouldCache) {
-            const responseToCache = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseToCache);
-            });
-          }
-
-          return response;
-        }).catch(() => {
-          // Return offline page for navigation requests
-          if (request.mode === 'navigate') {
-            return caches.match('/offline.html');
-          }
-          
-          // For other requests, try to return from cache
-          return caches.match(request);
-        });
-      })
+        // Return offline page for navigation requests
+        if (request.mode === 'navigate') {
+          return caches.match('/offline.html');
+        }
+        throw new Error('No cached content available');
+      });
+    })
   );
 });
 
