@@ -6,7 +6,18 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### November 1, 2025 (Latest Session - UI/UX Consistency Improvements)
+### November 1, 2025 (Current Session - Custom Profile Fields & UI Polish)
+- **Custom Section Field Types**: Enhanced GameProfileForm custom sections to support three field types:
+  - Text fields: Traditional label/value pairs
+  - Photo fields: Image upload with preview functionality
+  - Link fields: URL input with appropriate validation
+  - Added field type selector dropdown for each custom field
+  - Integrated photo upload endpoint with 5MB limit and file type validation
+- **Search Bar Standardization**: Unified search bar styling across Connections and Messages tabs to match Discover page design (Search icon with pointer-events-none, pl-10 padding, consistent placeholder text)
+- **Background Performance Fix**: Added pointer-events-none to solid dark background div to eliminate lag/click interference
+- **Appearance Settings Enhancement**: Moved "Solid Dark" background option into UnifiedThemeSelector (paint button) for easier access alongside animated backgrounds
+
+### November 1, 2025 (Earlier Session - UI/UX Consistency Improvements)
 - **Search Bar Consistency**: Applied solid dark card background styling (bg-card with borders) to all search bars across Messages, Connections, and Matches tabs to match the design of the LFG/LFO tabs section
 - **Descriptive Sub-Headings**: Added contextual sub-headings below main tab titles across all primary pages:
   - Match Feed: "Discover and apply to match requests"
