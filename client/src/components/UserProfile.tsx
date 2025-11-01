@@ -250,6 +250,8 @@ export function UserProfile({
         </CardHeader>
       </Card>
 
+      <Mutuals userId={id} isOwn={isOwn} />
+
       {isLoadingProfiles ? (
         <Card>
           <CardContent className="p-12 text-center">
