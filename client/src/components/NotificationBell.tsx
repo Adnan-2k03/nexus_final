@@ -14,11 +14,14 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
-import { useEffect } from "react";
-import type { Notification } from "@shared/schema";
+import { useEffect, useState } from "react";
+import type { Notification, User } from "@shared/schema";
+import { ProfileDialog } from "@/components/ui/profile-dialog";
 
 export function NotificationBell() {
   const { toast } = useToast();
+  const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
+  const [openProfileDialog, setOpenProfileDialog] = useState(false);
 
   // Set up WebSocket connection for real-time notifications
   useEffect(() => {
@@ -79,6 +82,23 @@ export function NotificationBell() {
 
   const unreadCount = unreadCountData?.count || 0;
 
+  // Fetch current user data
+  const { data: currentUser } = useQuery<User>({
+    queryKey: ["/api/auth/user"],
+  });
+
+  // Fetch user data for profile dialog
+  const { data: profileUser } = useQuery<User>({
+    queryKey: ["/api/users", profileDialogUserId],
+    queryFn: async () => {
+      if (!profileDialogUserId) throw new Error("No user ID");
+      const response = await fetch(`/api/users/${profileDialogUserId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!profileDialogUserId,
+  });
+
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       return apiRequest("PATCH", `/api/notifications/${notificationId}/read`);
@@ -117,6 +137,12 @@ export function NotificationBell() {
     if (notification.isRead === "false") {
       markAsReadMutation.mutate(notification.id);
     }
+    
+    // If it's a connection accepted notification, open the profile dialog
+    if (notification.type === "connection_accepted" && notification.relatedUserId) {
+      setProfileDialogUserId(notification.relatedUserId);
+      setOpenProfileDialog(true);
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -139,26 +165,27 @@ export function NotificationBell() {
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          data-testid="button-notification-bell"
-        >
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge
-              variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              data-testid="badge-unread-count"
-            >
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </Badge>
-          )}
-        </Button>
-      </DropdownMenuTrigger>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            data-testid="button-notification-bell"
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <Badge
+                variant="destructive"
+                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                data-testid="badge-unread-count"
+              >
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </Badge>
+            )}
+          </Button>
+        </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel>Notifications</DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -226,5 +253,29 @@ export function NotificationBell() {
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
+
+    {/* Profile Dialog for connection accepted notifications */}
+    {openProfileDialog && profileDialogUserId && profileUser && (
+      <ProfileDialog
+        userId={profileDialogUserId}
+        gamertag={profileUser.gamertag || profileUser.firstName || "Unknown"}
+        profileImageUrl={profileUser.profileImageUrl || undefined}
+        currentUserId={currentUser?.id}
+        trigger={
+          <button 
+            style={{ display: 'none' }} 
+            ref={(el) => {
+              if (el && openProfileDialog) {
+                setTimeout(() => {
+                  el.click();
+                  setOpenProfileDialog(false);
+                }, 50);
+              }
+            }}
+          />
+        }
+      />
+    )}
+    </>
   );
 }

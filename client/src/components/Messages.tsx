@@ -442,9 +442,22 @@ export function Messages({ currentUserId }: MessagesProps) {
                                     Request sent • {timeAgo}
                                   </p>
                                 </div>
-                                <Badge variant="secondary" className="text-xs">
-                                  Pending
-                                </Badge>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="secondary" className="text-xs">
+                                    Pending
+                                  </Badge>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="gap-1 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    onClick={() => disconnectMutation.mutate(request.id)}
+                                    disabled={disconnectMutation.isPending}
+                                    data-testid={`button-cancel-request-${request.id}`}
+                                  >
+                                    <X className="h-4 w-4" />
+                                    Cancel
+                                  </Button>
+                                </div>
                               </div>
                             </CardContent>
                           </Card>
