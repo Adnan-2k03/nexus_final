@@ -483,13 +483,18 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         <div className="bg-card border border-border rounded-lg p-3 mb-6">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
               <Input
                 type="text"
-                placeholder="Search by gamertag..."
+                placeholder="Search by name or gamertag..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="pl-10 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 overflow-x-auto whitespace-nowrap"
+                style={{
+                  textOverflow: 'clip',
+                  scrollbarWidth: 'none',
+                  msOverflowStyle: 'none'
+                }}
                 data-testid="input-search-connections"
               />
             </div>
@@ -572,10 +577,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
       <div className="bg-card border border-border rounded-lg p-3 mb-6">
         <div className="flex gap-2">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
             <Input
               type="text"
-              placeholder="Search by gamertag..."
+              placeholder="Search by name or gamertag..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 overflow-x-auto whitespace-nowrap border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"

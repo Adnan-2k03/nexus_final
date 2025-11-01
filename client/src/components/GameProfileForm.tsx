@@ -75,6 +75,7 @@ const gameProfileFormSchema = z.object({
   customSections: z.array(z.object({
     heading: z.string().min(1, "Heading is required"),
     fields: z.array(z.object({
+      type: z.enum(["text", "photo", "link"]).default("text"),
       label: z.string().min(1, "Label is required"),
       value: z.string().min(1, "Value is required"),
     })),
@@ -168,7 +169,13 @@ export function GameProfileForm({
         clipUrls: newClipsData.length > 0 ? newClipsData : [{ title: "", link: "" }],
         statsPhotoUrl: profile?.statsPhotoUrl || "",
         statsPhotoDate: profile?.statsPhotoDate || "",
-        customSections: newCustomSectionsData,
+        customSections: newCustomSectionsData.map(section => ({
+          ...section,
+          fields: section.fields.map((field: any) => ({
+            ...field,
+            type: field.type || "text"
+          }))
+        })),
       });
     }
   }, [open, profile, form]);
@@ -811,7 +818,7 @@ export function GameProfileForm({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => appendCustomSection({ heading: "", fields: [{ label: "", value: "" }] })}
+                        onClick={() => appendCustomSection({ heading: "", fields: [{ type: "text", label: "", value: "" }] })}
                         data-testid="button-add-custom-section"
                       >
                         <Plus className="h-4 w-4 mr-2" />
@@ -855,7 +862,9 @@ export function GameProfileForm({
 
                             <CustomSectionFields 
                               form={form} 
-                              sectionIndex={sectionIndex} 
+                              sectionIndex={sectionIndex}
+                              uploadingPhoto={uploadingPhoto}
+                              setUploadingPhoto={setUploadingPhoto}
                             />
                           </div>
                         </Card>
@@ -911,11 +920,57 @@ export function GameProfileForm({
   );
 }
 
-function CustomSectionFields({ form, sectionIndex }: { form: any; sectionIndex: number }) {
+function CustomSectionFields({ form, sectionIndex, uploadingPhoto, setUploadingPhoto }: { form: any; sectionIndex: number; uploadingPhoto: boolean; setUploadingPhoto: (uploading: boolean) => void }) {
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: `customSections.${sectionIndex}.fields`,
   });
+  const { toast } = useToast();
+
+  const handleFieldPhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>, fieldIndex: number) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Error",
+        description: "File size must be less than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      form.setValue(`customSections.${sectionIndex}.fields.${fieldIndex}.value`, data.url);
+      
+      toast({
+        title: "Success",
+        description: "Photo uploaded successfully!",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload photo. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -925,7 +980,7 @@ function CustomSectionFields({ form, sectionIndex }: { form: any; sectionIndex: 
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => append({ label: "", value: "" })}
+          onClick={() => append({ type: "text", label: "", value: "" })}
           data-testid={`button-add-custom-field-${sectionIndex}`}
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -934,8 +989,29 @@ function CustomSectionFields({ form, sectionIndex }: { form: any; sectionIndex: 
       </div>
       
       <div className="space-y-3">
-        {fields.map((field, fieldIndex) => (
-          <div key={field.id} className="flex gap-2">
+        {fields.map((field: any, fieldIndex) => (
+          <div key={field.id} className="flex gap-2 items-start">
+            <FormField
+              control={form.control}
+              name={`customSections.${sectionIndex}.fields.${fieldIndex}.type`}
+              render={({ field }) => (
+                <FormItem className="w-28">
+                  <Select onValueChange={field.onChange} value={field.value || "text"}>
+                    <FormControl>
+                      <SelectTrigger data-testid={`select-field-type-${sectionIndex}-${fieldIndex}`}>
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="text">Text</SelectItem>
+                      <SelectItem value="photo">Photo</SelectItem>
+                      <SelectItem value="link">Link</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name={`customSections.${sectionIndex}.fields.${fieldIndex}.label`}
@@ -955,18 +1031,45 @@ function CustomSectionFields({ form, sectionIndex }: { form: any; sectionIndex: 
             <FormField
               control={form.control}
               name={`customSections.${sectionIndex}.fields.${fieldIndex}.value`}
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormControl>
-                    <Input 
-                      placeholder="Value (e.g., Twitch)" 
-                      {...field}
-                      data-testid={`input-custom-field-value-${sectionIndex}-${fieldIndex}`}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field: valueField }) => {
+                const fieldType = form.watch(`customSections.${sectionIndex}.fields.${fieldIndex}.type`) || "text";
+                
+                if (fieldType === "photo") {
+                  return (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <div className="flex gap-2">
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleFieldPhotoUpload(e, fieldIndex)}
+                            disabled={uploadingPhoto}
+                            className="flex-1"
+                            data-testid={`input-custom-field-photo-${sectionIndex}-${fieldIndex}`}
+                          />
+                          {valueField.value && (
+                            <img src={valueField.value} alt="Preview" className="h-9 w-9 object-cover rounded" />
+                          )}
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }
+                
+                return (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <Input 
+                        placeholder={fieldType === "link" ? "URL (e.g., https://...)" : "Value (e.g., Twitch)"}
+                        {...valueField}
+                        data-testid={`input-custom-field-value-${sectionIndex}-${fieldIndex}`}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
             <Button
               type="button"

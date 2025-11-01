@@ -53,6 +53,7 @@ const themes = [
 const backgrounds = [
   { value: "canvas2d" as const, label: "Canvas Stars", description: "Smooth depth-based starfield" },
   { value: "webgl" as const, label: "WebGL Stars", description: "Interactive fractal starfield" },
+  { value: "solid" as const, label: "Solid Dark", description: "Simple solid background" },
 ];
 
 export function UnifiedThemeSelector() {

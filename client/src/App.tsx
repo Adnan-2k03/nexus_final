@@ -379,7 +379,7 @@ function BackgroundRenderer() {
   }
   
   if (background === "solid") {
-    return <div className="fixed inset-0 bg-background -z-10" />;
+    return <div className="fixed inset-0 bg-background -z-10 pointer-events-none" />;
   }
   
   return <StarBackground />;
