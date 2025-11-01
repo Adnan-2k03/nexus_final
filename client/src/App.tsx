@@ -378,6 +378,10 @@ function BackgroundRenderer() {
     return <WebGLStarBackground />;
   }
   
+  if (background === "solid") {
+    return <div className="fixed inset-0 bg-background -z-10" />;
+  }
+  
   return <StarBackground />;
 }
 
