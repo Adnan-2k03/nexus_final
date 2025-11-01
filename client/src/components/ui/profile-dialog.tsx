@@ -108,10 +108,19 @@ export function ProfileDialog({
       (req.receiverId === currentUserId && req.senderId === userId))
   );
 
-  const canConnect = currentUserId && 
+  const pendingOutgoingRequest = connectionRequests.find(
+    (req: any) => 
+      req.status === 'pending' &&
+      req.senderId === currentUserId && 
+      req.receiverId === userId
+  );
+
+  const isAlreadyConnected = existingDirectConnection?.status === 'accepted';
+
+  const showConnectButton = currentUserId && 
     currentUserId !== userId && 
     !connectionId && 
-    !existingDirectConnection;
+    !isAlreadyConnected;
 
   const handleConnect = () => {
     if (existingDirectConnection) {
@@ -217,19 +226,32 @@ export function ProfileDialog({
             </AlertDialog>
           </div>
         )}
-        {canConnect && (
+        {showConnectButton && (
           <div className="pt-4 border-t mt-4">
-            <Button 
-              variant="default" 
-              size="sm" 
-              className="w-full gap-2"
-              onClick={handleConnect}
-              disabled={createConnectionRequestMutation.isPending}
-              data-testid="button-connect-profile"
-            >
-              <UserPlus className="h-4 w-4" />
-              {createConnectionRequestMutation.isPending ? "Sending Request..." : "Connect"}
-            </Button>
+            {pendingOutgoingRequest ? (
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                className="w-full gap-2"
+                disabled
+                data-testid="button-request-sent-profile"
+              >
+                <UserPlus className="h-4 w-4" />
+                Sent
+              </Button>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                className="w-full gap-2"
+                onClick={handleConnect}
+                disabled={createConnectionRequestMutation.isPending}
+                data-testid="button-connect-profile"
+              >
+                <UserPlus className="h-4 w-4" />
+                {createConnectionRequestMutation.isPending ? "Sending Request..." : "Connect"}
+              </Button>
+            )}
           </div>
         )}
       </DialogContent>
