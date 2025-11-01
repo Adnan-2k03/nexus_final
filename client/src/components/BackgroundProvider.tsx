@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 
-type BackgroundTheme = "canvas2d" | "webgl";
+type BackgroundTheme = "canvas2d" | "webgl" | "solid";
 
 type BackgroundContextType = {
   background: BackgroundTheme;

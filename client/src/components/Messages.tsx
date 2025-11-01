@@ -194,10 +194,13 @@ export function Messages({ currentUserId }: MessagesProps) {
 
   return (
     <div className={`${getContainerClass()} mx-auto`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="flex items-center gap-3">
+            <MessageCircle className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Messages</h1>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 ml-9">Chat with your connections and teammates</p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="text-sm">
@@ -216,21 +219,23 @@ export function Messages({ currentUserId }: MessagesProps) {
       </div>
 
       {/* Search */}
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          type="text"
-          placeholder="Search conversations..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 overflow-x-auto whitespace-nowrap"
-          style={{
-            textOverflow: 'clip',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none'
-          }}
-          data-testid="input-search-messages"
-        />
+      <div className="bg-card border border-border rounded-lg p-3 mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 overflow-x-auto whitespace-nowrap border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+            style={{
+              textOverflow: 'clip',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
+            data-testid="input-search-messages"
+          />
+        </div>
       </div>
 
       {isLoadingRequests ? (

@@ -222,10 +222,13 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   if (isLoading) {
     return (
       <div className={`${getContainerClass()} mx-auto`}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Matches</h1>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="flex items-center gap-3">
+              <Users className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold text-foreground">Matches</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 ml-9">Manage your match connections and applications</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
@@ -452,10 +455,13 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   if (connections.length === 0) {
     return (
       <div className={`${getContainerClass()} mx-auto`}>
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <Users className="h-6 w-6 text-primary" />
-            <h1 className="text-2xl font-bold text-foreground">Matches</h1>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="flex items-center gap-3">
+              <Users className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold text-foreground">Matches</h1>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1 ml-9">Manage your match connections and applications</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-sm">
@@ -474,7 +480,97 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         </div>
 
         {/* Search and Filter Bar */}
-        <div className="mb-6 flex gap-2">
+        <div className="bg-card border border-border rounded-lg p-3 mb-6">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search by gamertag..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                data-testid="input-search-connections"
+              />
+            </div>
+            <Popover open={showFilters} onOpenChange={setShowFilters}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
+                  <Filter className="h-4 w-4 mr-1" />
+                  Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64" data-testid="popover-request-filters">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-3">Filter Requests</h4>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Request Type</label>
+                    <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
+                      <SelectTrigger data-testid="select-request-type">
+                        <SelectValue placeholder="All Requests" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Applications</SelectItem>
+                        <SelectItem value="1v1">1v1 Match Applications</SelectItem>
+                        <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                        <SelectItem value="3v3">3v3 Match Applications</SelectItem>
+                        <SelectItem value="squad">Team/Squad Finder</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+
+        <Card className="border-dashed">
+          <CardContent className="text-center py-12">
+            <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No connections yet</h3>
+            <p className="text-muted-foreground max-w-md mx-auto mb-4">
+              Apply to a match on the Feed tab to get started!
+            </p>
+            <p className="text-sm text-muted-foreground/70 max-w-md mx-auto">
+              When you apply to matches or others apply to yours, your gaming connections will appear here.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${getContainerClass()} mx-auto`}>
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="flex items-center gap-3">
+            <Users className="h-6 w-6 text-primary" />
+            <h1 className="text-2xl font-bold text-foreground">Matches</h1>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1 ml-9">Manage your match connections and applications</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="secondary" className="text-sm">
+            {connections.length} total
+          </Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isLoading}
+            data-testid="button-refresh-connections"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+      </div>
+
+      {/* Search and Filter Bar */}
+      <div className="bg-card border border-border rounded-lg p-3 mb-6">
+        <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -482,7 +578,12 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               placeholder="Search by gamertag..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="pl-10 overflow-x-auto whitespace-nowrap border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+              style={{
+                textOverflow: 'clip',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
               data-testid="input-search-connections"
             />
           </div>
@@ -507,7 +608,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                     <SelectContent>
                       <SelectItem value="all">All Applications</SelectItem>
                       <SelectItem value="1v1">1v1 Match Applications</SelectItem>
-                      <SelectItem value="2v2">2v2 Match Applications</SelectItem>
+                      <SelectItem value="1v1">2v2 Match Applications</SelectItem>
                       <SelectItem value="3v3">3v3 Match Applications</SelectItem>
                       <SelectItem value="squad">Team/Squad Finder</SelectItem>
                     </SelectContent>
@@ -517,94 +618,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             </PopoverContent>
           </Popover>
         </div>
-
-        <Card className="border-dashed">
-          <CardContent className="text-center py-12">
-            <Users className="h-16 w-16 text-muted-foreground/50 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No connections yet</h3>
-            <p className="text-muted-foreground max-w-md mx-auto mb-4">
-              Apply to a match on the Feed tab to get started!
-            </p>
-            <p className="text-sm text-muted-foreground/70 max-w-md mx-auto">
-              When you apply to matches or others apply to yours, your gaming connections will appear here.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`${getContainerClass()} mx-auto`}>
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Users className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">Matches</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="text-sm">
-            {connections.length} total
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={isLoading}
-            data-testid="button-refresh-connections"
-          >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-      </div>
-
-      {/* Search and Filter Bar */}
-      <div className="mb-6 flex gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search by gamertag..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 overflow-x-auto whitespace-nowrap"
-            style={{
-              textOverflow: 'clip',
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none'
-            }}
-            data-testid="input-search-connections"
-          />
-        </div>
-        <Popover open={showFilters} onOpenChange={setShowFilters}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="default" data-testid="button-toggle-request-filters">
-              <Filter className="h-4 w-4 mr-1" />
-              Filter {requestTypeFilter !== 'all' && `(${requestTypeFilter})`}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-64" data-testid="popover-request-filters">
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-semibold mb-3">Filter Requests</h4>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Request Type</label>
-                <Select value={requestTypeFilter} onValueChange={setRequestTypeFilter}>
-                  <SelectTrigger data-testid="select-request-type">
-                    <SelectValue placeholder="All Requests" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Applications</SelectItem>
-                    <SelectItem value="1v1">1v1 Match Applications</SelectItem>
-                    <SelectItem value="2v2">2v2 Match Applications</SelectItem>
-                    <SelectItem value="3v3">3v3 Match Applications</SelectItem>
-                    <SelectItem value="squad">Team/Squad Finder</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
       </div>
 
       <div className="space-y-8">

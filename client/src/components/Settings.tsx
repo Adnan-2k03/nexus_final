@@ -2,10 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PrivacySettings } from "./PrivacySettings";
 import { PushNotificationToggle } from "./PushNotificationPrompt";
-import { Users as UsersIcon, Layout, Check } from "lucide-react";
+import { Users as UsersIcon, Layout, Check, Sparkles, Zap, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { User } from "@shared/schema";
 import { useLayout, type LayoutWidth } from "@/contexts/LayoutContext";
+import { useBackground } from "./BackgroundProvider";
 
 interface SettingsProps {
   user?: User | null;
@@ -13,6 +14,7 @@ interface SettingsProps {
 
 export function Settings({ user }: SettingsProps) {
   const { layoutWidth, setLayoutWidth, getContainerClass } = useLayout();
+  const { background, setBackground } = useBackground();
 
   // Fetch total user count
   const { data: userCount, isLoading: isLoadingCount } = useQuery<number>({
@@ -114,8 +116,56 @@ export function Settings({ user }: SettingsProps) {
                 </Button>
               </div>
             </div>
+
+            <div>
+              <label className="text-sm font-medium mb-3 block">Background Effect</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <Button
+                  variant={background === "canvas2d" ? "default" : "outline"}
+                  className="h-auto flex-col gap-2 py-4"
+                  onClick={() => setBackground("canvas2d")}
+                  data-testid="button-background-canvas2d"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-6 w-6" />
+                    {background === "canvas2d" && <Check className="h-4 w-4" />}
+                  </div>
+                  <span className="font-semibold">Animated Stars</span>
+                  <span className="text-xs text-muted-foreground">Classic effect</span>
+                </Button>
+
+                <Button
+                  variant={background === "webgl" ? "default" : "outline"}
+                  className="h-auto flex-col gap-2 py-4"
+                  onClick={() => setBackground("webgl")}
+                  data-testid="button-background-webgl"
+                >
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-6 w-6" />
+                    {background === "webgl" && <Check className="h-4 w-4" />}
+                  </div>
+                  <span className="font-semibold">3D Stars</span>
+                  <span className="text-xs text-muted-foreground">High performance</span>
+                </Button>
+
+                <Button
+                  variant={background === "solid" ? "default" : "outline"}
+                  className="h-auto flex-col gap-2 py-4"
+                  onClick={() => setBackground("solid")}
+                  data-testid="button-background-solid"
+                >
+                  <div className="flex items-center gap-2">
+                    <Square className="h-6 w-6" />
+                    {background === "solid" && <Check className="h-4 w-4" />}
+                  </div>
+                  <span className="font-semibold">Solid Dark</span>
+                  <span className="text-xs text-muted-foreground">Simple & clean</span>
+                </Button>
+              </div>
+            </div>
+
             <p className="text-xs text-muted-foreground">
-              Theme can be changed from the navigation menu
+              Color theme can be changed from the navigation menu
             </p>
           </CardContent>
         </Card>
