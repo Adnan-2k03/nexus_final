@@ -33,7 +33,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production" || !!process.env.REPL_ID,
-      sameSite: "lax",
+      sameSite: !!process.env.REPL_ID ? "none" : "lax",
       maxAge: sessionTtl,
     },
   });
