@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { BackgroundProvider, useBackground } from "@/components/BackgroundProvider";
-import { LayoutProvider } from "@/contexts/LayoutContext";
+import { LayoutProvider, useLayout } from "@/contexts/LayoutContext";
 import { useState, useEffect } from "react";
 
 // Hooks
