@@ -566,7 +566,12 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             placeholder="Search by gamertag..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 overflow-x-auto whitespace-nowrap"
+            style={{
+              textOverflow: 'clip',
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none'
+            }}
             data-testid="input-search-connections"
           />
         </div>
