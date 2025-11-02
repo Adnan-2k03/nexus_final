@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 
 // Components
-import { AuthPage } from "@/components/AuthPage";
+import { LandingPage } from "@/components/LandingPage";
 import { GameNavigation } from "@/components/GameNavigation";
 import { MatchFeed } from "@/components/MatchFeed";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
@@ -90,8 +90,8 @@ function Router() {
     );
   }
 
-  const handleAuthSuccess = () => {
-    window.location.href = "/";
+  const handleLogin = () => {
+    window.location.href = "/api/auth/google";
   };
 
   const handleLogout = () => {
@@ -340,7 +340,7 @@ function Router() {
       {!isAuthenticated ? (
         <Route
           path="/"
-          component={() => <AuthPage onAuthSuccess={handleAuthSuccess} />}
+          component={() => <LandingPage onLogin={handleLogin} />}
         />
       ) : (
         <>
