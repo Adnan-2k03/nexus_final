@@ -1,11 +1,16 @@
 import { useState } from "react";
-import { Gamepad2, Zap, Users, Trophy, Shield, Menu, X } from "lucide-react";
+import { Gamepad2, Zap, Users, Trophy, Shield, Menu, X, Target, Clock, MessageSquare } from "lucide-react";
+import heroImage from "@assets/Gemini_Generated_Image_rl0g6nrl0g6nrl0g_1762075477562.png";
+import leftWarrior from "@assets/left_1762075484949.jpg";
+import rightWarrior from "@assets/right_1762075491469.jpg";
+import aboutImage from "@assets/abt_1762075393318.webp";
+import supportImage from "@assets/sup_1762075536689.webp";
 
 interface LandingPageProps {
-  onLogin: () => void;
+  onShowAuth: () => void;
 }
 
-export function LandingPage({ onLogin }: LandingPageProps) {
+export function LandingPage({ onShowAuth }: LandingPageProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const scrollToSection = (id: string) => {
@@ -17,14 +22,12 @@ export function LandingPage({ onLogin }: LandingPageProps) {
   };
 
   const games = [
-    { name: "Apex Legends", type: "Battle Royale", icon: "https://cdn-icons-png.flaticon.com/32/854/854894.png" },
-    { name: "Valorant", type: "Tactical FPS", icon: "https://cdn-icons-png.flaticon.com/32/5969/5969276.png" },
-    { name: "Warzone", type: "Battle Royale", icon: "https://cdn-icons-png.flaticon.com/32/5968/5968267.png" },
-    { name: "Fortnite", type: "Battle Royale", icon: "https://cdn-icons-png.flaticon.com/32/854/854902.png" },
-    { name: "League of Legends", type: "MOBA", icon: "https://cdn-icons-png.flaticon.com/32/5969/5969300.png" },
-    { name: "Dota 2", type: "MOBA", icon: "https://cdn-icons-png.flaticon.com/32/5968/5968853.png" },
-    { name: "Overwatch 2", type: "Hero Shooter", icon: "https://cdn-icons-png.flaticon.com/32/854/854888.png" },
-    { name: "Rainbow Six", type: "Tactical FPS", icon: "https://cdn-icons-png.flaticon.com/32/5968/5968882.png" }
+    { name: "Apex Legends", type: "Battle Royale" },
+    { name: "Valorant", type: "Tactical FPS" },
+    { name: "Warzone", type: "Battle Royale" },
+    { name: "Fortnite", type: "Battle Royale" },
+    { name: "League of Legends", type: "MOBA" },
+    { name: "Dota 2", type: "MOBA" }
   ];
 
   return (
@@ -48,12 +51,12 @@ export function LandingPage({ onLogin }: LandingPageProps) {
             <a href="#how" onClick={() => scrollToSection('how')} data-testid="link-how-it-works">How It Works</a>
             <a href="#games" onClick={() => scrollToSection('games')} data-testid="link-games">Games</a>
             <a href="#community" onClick={() => scrollToSection('community')} data-testid="link-community">Community</a>
-            <a href="#why" onClick={() => scrollToSection('why')} data-testid="link-why">Why Us</a>
+            <a href="#about" onClick={() => scrollToSection('about')} data-testid="link-about">About</a>
           </div>
           
           <button 
             className="signup-btn" 
-            onClick={onLogin}
+            onClick={onShowAuth}
             data-testid="button-signup-nav"
           >
             Sign Up Free
@@ -70,7 +73,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           <div className="btn-group">
             <button 
               className="btn btn-primary" 
-              onClick={onLogin}
+              onClick={onShowAuth}
               data-testid="button-find-match"
             >
               Find a Match
@@ -84,8 +87,8 @@ export function LandingPage({ onLogin }: LandingPageProps) {
           </div>
         </div>
         <div className="hero-image">
-          <div className="glow"></div>
-          <Gamepad2 className="w-64 h-64 text-cyan-400 floating" />
+          <div className="hero-image-glow"></div>
+          <img src={heroImage} alt="Gaming Arena" className="hero-img" />
         </div>
       </section>
 
@@ -103,7 +106,7 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         <div className="feature-grid">
           <div className="card" data-testid="card-step-1">
             <h3>1. Create Profile</h3>
-            <p>Sign up with Google, set your games, skill level, and play style preferences.</p>
+            <p>Sign up quickly, set your games, skill level, and play style preferences.</p>
           </div>
           <div className="card" data-testid="card-step-2">
             <h3>2. Match Instantly</h3>
@@ -127,7 +130,6 @@ export function LandingPage({ onLogin }: LandingPageProps) {
                 className="game-card"
                 data-testid={`card-game-${game.name.toLowerCase().replace(/\s+/g, '-')}`}
               >
-                <img src={game.icon} alt={game.name} />
                 <h4>{game.name}</h4>
                 <p>{game.type}</p>
               </div>
@@ -141,17 +143,17 @@ export function LandingPage({ onLogin }: LandingPageProps) {
 
         <div className="match-players">
           <div className="neon-gamer">
-            <Users className="w-full h-full text-cyan-400" />
+            <img src={leftWarrior} alt="Player 1" className="warrior-img" />
           </div>
           <div className="match-beam"></div>
           <div className="neon-gamer">
-            <Users className="w-full h-full text-purple-500" />
+            <img src={rightWarrior} alt="Player 2" className="warrior-img" />
           </div>
         </div>
 
         <div className="match-stats">
           <div className="stat-item">
-            <Zap className="stat-icon" />
+            <Clock className="stat-icon" />
             <div>
               <div className="stat-label">Avg Match Time</div>
               <div className="stat-value">8s</div>
@@ -177,25 +179,14 @@ export function LandingPage({ onLogin }: LandingPageProps) {
         <p className="match-subtitle">Your duo is ready — lock in and dominate.</p>
         <button 
           className="btn-large" 
-          onClick={onLogin}
+          onClick={onShowAuth}
           data-testid="button-join-voice"
         >
           Join Voice & Launch
         </button>
-        <a 
-          href="#how" 
-          className="demo-link"
-          onClick={(e) => {
-            e.preventDefault();
-            scrollToSection('how');
-          }}
-          data-testid="link-how-matching-works"
-        >
-          See how matching works
-        </a>
       </section>
 
-      <section id="why" className="why-section nexus-container">
+      <section className="why-section nexus-container">
         <h2 className="text-center mb-12 text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
           Why GameMatch?
         </h2>
@@ -205,22 +196,98 @@ export function LandingPage({ onLogin }: LandingPageProps) {
               <Zap className="w-20 h-20 text-cyan-400" />
             </div>
             <h3>Lightning-Fast Matchmaking</h3>
-            <p>AI instantly finds the best teammate and drops you into the action.</p>
+            <p>AI instantly finds the best teammates and drops you into the action in under 10 seconds.</p>
           </div>
           <div className="why-card" data-testid="card-why-secure">
             <div className="why-icon">
               <Shield className="w-20 h-20 text-cyan-400" />
             </div>
             <h3>Verified & Secure Community</h3>
-            <p>Strict bans, verified profiles, and end-to-end encrypted voice.</p>
+            <p>Christian bans, verified profiles, and end-to-end encrypted voice.</p>
           </div>
-          <div className="why-card" data-testid="card-why-social">
+          <div className="why-card" data-testid="card-why-precision">
             <div className="why-icon">
-              <Users className="w-20 h-20 text-cyan-400" />
+              <Target className="w-20 h-20 text-cyan-400" />
             </div>
-            <h3>Built for Social Gaming</h3>
-            <p>Connect with like-minded players and build lasting gaming friendships.</p>
+            <h3>Smart, Precision Filters</h3>
+            <p>Find enemies that match exactly what you need—rank, language, and region.</p>
           </div>
+          <div className="why-card" data-testid="card-why-platform">
+            <div className="why-icon">
+              <MessageSquare className="w-20 h-20 text-cyan-400" />
+            </div>
+            <h3>Cross-Platform Sync</h3>
+            <p>Play with friends on PC, console, or mobile — seamlessly.</p>
+          </div>
+          <div className="why-card" data-testid="card-why-toxicity">
+            <div className="why-icon">
+              <Shield className="w-20 h-20 text-purple-500" />
+            </div>
+            <h3>Zero Toxicity</h3>
+            <p>AI moderation + community reporting keeps chats clean.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="about" className="about-section">
+        <div className="nexus-container">
+          <div className="about-grid">
+            <div className="about-image">
+              <img src={aboutImage} alt="Build Your Legacy" />
+            </div>
+            <div className="about-content">
+              <h2>About GameMatch</h2>
+              <p>We believe gaming is better together. Founded in 2025 by competitive gamers and engineers, GameMatch eliminates the frustration of solo queue and toxic lobbies.</p>
+              <p className="mt-4">Our mission is to create meaningful connections through shared victories — whether you're climbing ranks or just having fun with friends.</p>
+              <ul className="mt-6 space-y-2">
+                <li>✓ AI-powered compatibility matching</li>
+                <li>✓ Zero-to-match in under 10 seconds</li>
+                <li>✓ Cross-platform voice & party sync</li>
+                <li>✓ Family-safe mode with content filters</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="support-section">
+        <div className="nexus-container">
+          <div className="support-grid">
+            <div className="support-content">
+              <h2>Support & Help Center</h2>
+              <p className="mb-6">Need help? We're here 24/7.</p>
+              <div className="faq-list">
+                <h3 className="text-cyan-400 mb-4">Frequently Asked Questions</h3>
+                <div className="faq-item">
+                  <strong>How do I report a player?</strong> Use the in-app report button after a match.
+                </div>
+                <div className="faq-item">
+                  <strong>Is voice chat encrypted?</strong> Yes, end-to-end encrypted via WebRTC.
+                </div>
+                <div className="faq-item">
+                  <strong>Can I use it on mobile?</strong> Full app coming Q1 2026 — web works on all devices now.
+                </div>
+              </div>
+              <p className="mt-6">Email us at <a href="mailto:support@gamematch.app" className="text-cyan-400">support@gamematch.app</a></p>
+            </div>
+            <div className="support-image">
+              <img src={supportImage} alt="Forge Your Esports Legacy" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="cta-section">
+        <div className="nexus-container text-center">
+          <h2 className="text-5xl font-bold mb-4">Ready to Find Your Squad?</h2>
+          <p className="text-xl text-gray-300 mb-8">Join thousands of gamers already winning together</p>
+          <button 
+            className="btn btn-primary btn-large" 
+            onClick={onShowAuth}
+            data-testid="button-cta-signup"
+          >
+            Sign Up Free Now
+          </button>
         </div>
       </section>
 

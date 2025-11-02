@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 
 // Components
 import { LandingPage } from "@/components/LandingPage";
+import { AuthPage } from "@/components/AuthPage";
 import { GameNavigation } from "@/components/GameNavigation";
 import { MatchFeed } from "@/components/MatchFeed";
 import { CreateMatchForm } from "@/components/CreateMatchForm";
@@ -65,6 +66,7 @@ function Router() {
     | "connections"
   >("home");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showAuthPage, setShowAuthPage] = useState(false);
 
   // Auto-redirect authenticated users without gamertag to profile setup
   useEffect(() => {
@@ -90,8 +92,16 @@ function Router() {
     );
   }
 
-  const handleLogin = () => {
-    window.location.href = "/api/auth/google";
+  const handleShowAuth = () => {
+    setShowAuthPage(true);
+  };
+
+  const handleAuthSuccess = () => {
+    window.location.href = "/";
+  };
+
+  const handleBackToLanding = () => {
+    setShowAuthPage(false);
   };
 
   const handleLogout = () => {
@@ -340,7 +350,13 @@ function Router() {
       {!isAuthenticated ? (
         <Route
           path="/"
-          component={() => <LandingPage onLogin={handleLogin} />}
+          component={() => 
+            showAuthPage ? (
+              <AuthPage onAuthSuccess={handleAuthSuccess} />
+            ) : (
+              <LandingPage onShowAuth={handleShowAuth} />
+            )
+          }
         />
       ) : (
         <>
