@@ -1,192 +1,231 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  Gamepad2, 
-  Users, 
-  Zap, 
-  Shield, 
-  Star,
-  ArrowRight,
-  Play
-} from "lucide-react";
+import { useState } from "react";
+import { Gamepad2, Zap, Users, Trophy, Shield, Menu, X } from "lucide-react";
 
 interface LandingPageProps {
   onLogin: () => void;
 }
 
 export function LandingPage({ onLogin }: LandingPageProps) {
-  const features = [
-    {
-      icon: Users,
-      title: "Find Your Squad",
-      description: "Connect with gamers who match your playstyle and skill level"
-    },
-    {
-      icon: Zap,
-      title: "Real-Time Matching",
-      description: "Instant notifications when players accept your match requests"
-    },
-    {
-      icon: Shield,
-      title: "Verified Players",
-      description: "Safe, secure platform with authenticated gaming profiles"
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+      setMenuOpen(false);
     }
-  ];
+  };
 
   const games = [
-    "Valorant", "League of Legends", "CS2", "Apex Legends", 
-    "Rocket League", "Overwatch 2", "Dota 2", "Fortnite"
+    { name: "Apex Legends", type: "Battle Royale", icon: "https://cdn-icons-png.flaticon.com/32/854/854894.png" },
+    { name: "Valorant", type: "Tactical FPS", icon: "https://cdn-icons-png.flaticon.com/32/5969/5969276.png" },
+    { name: "Warzone", type: "Battle Royale", icon: "https://cdn-icons-png.flaticon.com/32/5968/5968267.png" },
+    { name: "Fortnite", type: "Battle Royale", icon: "https://cdn-icons-png.flaticon.com/32/854/854902.png" },
+    { name: "League of Legends", type: "MOBA", icon: "https://cdn-icons-png.flaticon.com/32/5969/5969300.png" },
+    { name: "Dota 2", type: "MOBA", icon: "https://cdn-icons-png.flaticon.com/32/5968/5968853.png" },
+    { name: "Overwatch 2", type: "Hero Shooter", icon: "https://cdn-icons-png.flaticon.com/32/854/854888.png" },
+    { name: "Rainbow Six", type: "Tactical FPS", icon: "https://cdn-icons-png.flaticon.com/32/5968/5968882.png" }
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted">
-      {/* Header */}
-      <header className="container mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-            <Gamepad2 className="h-6 w-6 text-primary-foreground" />
+    <div className="nexus-landing">
+      <nav className="nexus-nav">
+        <div className="nexus-container nav-container">
+          <div className="logo">
+            <Gamepad2 className="w-8 h-8 text-cyan-400" />
+            <span className="font-bold text-xl">GameMatch</span>
           </div>
-          <h1 className="text-2xl font-bold text-foreground font-display">GameMatch</h1>
-        </div>
-        
-        <Button 
-          onClick={onLogin}
-          className="gap-2"
-          data-testid="button-login-header"
-        >
-          <Play className="h-4 w-4" />
-          Get Started
-        </Button>
-      </header>
-
-      {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="max-w-4xl mx-auto space-y-8">
-          <div className="space-y-4">
-            <Badge variant="secondary" className="mb-4">
-              🎮 Social Gaming Platform
-            </Badge>
-            <h2 className="text-4xl md:text-6xl font-bold text-foreground font-display leading-tight">
-              Find Your Perfect
-              <span className="text-primary block">Gaming Squad</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Join thousands of gamers creating teams, finding opponents, and making lasting gaming connections in real-time.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button 
-              size="lg" 
-              onClick={onLogin}
-              className="gap-2 text-lg px-8 py-6"
-              data-testid="button-login-hero"
-            >
-              Start Matching
-              <ArrowRight className="h-5 w-5" />
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Free to join • No credit card required
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Featured Games */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold text-foreground mb-4">Popular Games</h3>
-          <p className="text-muted-foreground">Find teammates for your favorite games</p>
-        </div>
-        
-        <div className="flex flex-wrap justify-center gap-3 max-w-4xl mx-auto">
-          {games.map((game) => (
-            <Badge 
-              key={game} 
-              variant="outline" 
-              className="px-4 py-2 text-sm hover-elevate cursor-pointer"
-            >
-              {game}
-            </Badge>
-          ))}
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h3 className="text-2xl font-bold text-foreground mb-4">Why Choose GameMatch?</h3>
-          <p className="text-muted-foreground">Built by gamers, for gamers</p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {features.map((feature, index) => {
-            const Icon = feature.icon;
-            return (
-              <Card key={index} className="text-center hover-elevate">
-                <CardContent className="pt-8 pb-6 px-6">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Icon className="h-8 w-8 text-primary" />
-                  </div>
-                  <h4 className="text-lg font-semibold text-foreground mb-2">
-                    {feature.title}
-                  </h4>
-                  <p className="text-muted-foreground text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="container mx-auto px-4 py-16">
-        <Card className="max-w-4xl mx-auto text-center">
-          <CardContent className="py-12 px-8">
-            <div className="flex justify-center mb-6">
-              {[...Array(5)].map((_, i) => (
-                <Star key={i} className="h-6 w-6 text-yellow-500 fill-current" />
-              ))}
-            </div>
-            <blockquote className="text-xl text-foreground mb-4 italic">
-              "GameMatch helped me find my perfect ranked team. We've climbed from Gold to Diamond together!"
-            </blockquote>
-            <cite className="text-muted-foreground">
-              - ProGamer2024, Valorant Player
-            </cite>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16">
-        <div className="text-center space-y-8">
-          <h3 className="text-3xl font-bold text-foreground font-display">
-            Ready to Level Up Your Gaming?
-          </h3>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Join the community and start finding your perfect gaming matches today.
-          </p>
-          <Button 
-            size="lg" 
-            onClick={onLogin}
-            className="gap-2 text-lg px-8 py-6"
-            data-testid="button-login-cta"
+          
+          <button 
+            className={`hamburger ${menuOpen ? 'active' : ''}`}
+            onClick={() => setMenuOpen(!menuOpen)}
+            data-testid="button-menu-toggle"
           >
-            <Gamepad2 className="h-5 w-5" />
-            Start Your Journey
-          </Button>
+            {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+          
+          <div className={`nav-links ${menuOpen ? 'active' : ''}`}>
+            <a href="#how" onClick={() => scrollToSection('how')} data-testid="link-how-it-works">How It Works</a>
+            <a href="#games" onClick={() => scrollToSection('games')} data-testid="link-games">Games</a>
+            <a href="#community" onClick={() => scrollToSection('community')} data-testid="link-community">Community</a>
+            <a href="#why" onClick={() => scrollToSection('why')} data-testid="link-why">Why Us</a>
+          </div>
+          
+          <button 
+            className="signup-btn" 
+            onClick={onLogin}
+            data-testid="button-signup-nav"
+          >
+            Sign Up Free
+          </button>
+        </div>
+      </nav>
+
+      <section className="hero nexus-container">
+        <div className="hero-content">
+          <h1>
+            GameMatch <span className="text-cyan-400">— Connect. Play. Win.</span>
+          </h1>
+          <p>A next-generation social gaming matchmaking platform built for gamers who want to connect instantly, team up seamlessly, and dominate together.</p>
+          <div className="btn-group">
+            <button 
+              className="btn btn-primary" 
+              onClick={onLogin}
+              data-testid="button-find-match"
+            >
+              Find a Match
+            </button>
+            <button 
+              className="btn btn-outline"
+              data-testid="button-watch-demo"
+            >
+              Watch Demo
+            </button>
+          </div>
+        </div>
+        <div className="hero-image">
+          <div className="glow"></div>
+          <Gamepad2 className="w-64 h-64 text-cyan-400 floating" />
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="container mx-auto px-4 py-8 border-t border-border">
-        <div className="text-center text-muted-foreground text-sm">
-          <p>&copy; 2025 GameMatch. Built for the gaming community.</p>
+      <div 
+        className="scroll-indicator" 
+        onClick={() => scrollToSection('how')}
+        data-testid="button-scroll-indicator"
+      >
+        <span className="text-2xl">↓</span>
+        <span className="ml-2">EXPLORE MORE</span>
+      </div>
+
+      <section id="how" className="features nexus-container">
+        <h2>How It Works</h2>
+        <div className="feature-grid">
+          <div className="card" data-testid="card-step-1">
+            <h3>1. Create Profile</h3>
+            <p>Sign up with Google, set your games, skill level, and play style preferences.</p>
+          </div>
+          <div className="card" data-testid="card-step-2">
+            <h3>2. Match Instantly</h3>
+            <p>Our AI finds compatible teammates in under 10 seconds using behavior and skill data.</p>
+          </div>
+          <div className="card" data-testid="card-step-3">
+            <h3>3. Jump In-Game</h3>
+            <p>Auto-join voice chat, get party invites, and launch directly into the action.</p>
+          </div>
         </div>
+      </section>
+
+      <section id="games" className="games-section">
+        <div className="nexus-container">
+          <h2>Supported Games</h2>
+          <p>Deep integration with the hottest multiplayer titles — seamless matchmaking, voice sync, and cross-play.</p>
+          <div className="games-grid">
+            {games.map((game) => (
+              <div 
+                key={game.name} 
+                className="game-card"
+                data-testid={`card-game-${game.name.toLowerCase().replace(/\s+/g, '-')}`}
+              >
+                <img src={game.icon} alt={game.name} />
+                <h4>{game.name}</h4>
+                <p>{game.type}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="community" className="hero-match">
+        <div className="match-bg"></div>
+
+        <div className="match-players">
+          <div className="neon-gamer">
+            <Users className="w-full h-full text-cyan-400" />
+          </div>
+          <div className="match-beam"></div>
+          <div className="neon-gamer">
+            <Users className="w-full h-full text-purple-500" />
+          </div>
+        </div>
+
+        <div className="match-stats">
+          <div className="stat-item">
+            <Zap className="stat-icon" />
+            <div>
+              <div className="stat-label">Avg Match Time</div>
+              <div className="stat-value">8s</div>
+            </div>
+          </div>
+          <div className="stat-item">
+            <Trophy className="stat-icon" />
+            <div>
+              <div className="stat-label">Win Rate Boost</div>
+              <div className="stat-value">+23%</div>
+            </div>
+          </div>
+          <div className="stat-item">
+            <Users className="stat-icon" />
+            <div>
+              <div className="stat-label">Active Players</div>
+              <div className="stat-value">50K+</div>
+            </div>
+          </div>
+        </div>
+
+        <h1 className="match-title">MATCH FOUND!</h1>
+        <p className="match-subtitle">Your duo is ready — lock in and dominate.</p>
+        <button 
+          className="btn-large" 
+          onClick={onLogin}
+          data-testid="button-join-voice"
+        >
+          Join Voice & Launch
+        </button>
+        <a 
+          href="#how" 
+          className="demo-link"
+          onClick={(e) => {
+            e.preventDefault();
+            scrollToSection('how');
+          }}
+          data-testid="link-how-matching-works"
+        >
+          See how matching works
+        </a>
+      </section>
+
+      <section id="why" className="why-section nexus-container">
+        <h2 className="text-center mb-12 text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+          Why GameMatch?
+        </h2>
+        <div className="why-grid">
+          <div className="why-card" data-testid="card-why-fast">
+            <div className="why-icon">
+              <Zap className="w-20 h-20 text-cyan-400" />
+            </div>
+            <h3>Lightning-Fast Matchmaking</h3>
+            <p>AI instantly finds the best teammate and drops you into the action.</p>
+          </div>
+          <div className="why-card" data-testid="card-why-secure">
+            <div className="why-icon">
+              <Shield className="w-20 h-20 text-cyan-400" />
+            </div>
+            <h3>Verified & Secure Community</h3>
+            <p>Strict bans, verified profiles, and end-to-end encrypted voice.</p>
+          </div>
+          <div className="why-card" data-testid="card-why-social">
+            <div className="why-icon">
+              <Users className="w-20 h-20 text-cyan-400" />
+            </div>
+            <h3>Built for Social Gaming</h3>
+            <p>Connect with like-minded players and build lasting gaming friendships.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer className="text-center py-8 text-gray-400 text-sm border-t border-gray-800">
+        <p>&copy; 2025 GameMatch. Built for the gaming community.</p>
       </footer>
     </div>
   );
