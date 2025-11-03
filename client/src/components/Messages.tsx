@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
-import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, ChevronUp, CheckCircle, X, UserMinus } from "lucide-react";
+import { MessageCircle, Phone, RefreshCw, Search, UserPlus, ChevronDown, ChevronUp, CheckCircle, X, UserMinus, Users } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +22,7 @@ import { useLayout } from "@/contexts/LayoutContext";
 
 interface MessagesProps {
   currentUserId?: string;
+  onNavigateToVoiceChannels?: () => void;
 }
 
 function formatTimeAgo(date: string | Date | null): string {
@@ -39,7 +40,7 @@ function formatTimeAgo(date: string | Date | null): string {
   return `${diffDays}d ago`;
 }
 
-export function Messages({ currentUserId }: MessagesProps) {
+export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesProps) {
   const [selectedConnection, setSelectedConnection] = useState<ConnectionRequestWithUser | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
@@ -64,7 +65,7 @@ export function Messages({ currentUserId }: MessagesProps) {
   });
 
   // Fetch user data for all connected users
-  const { data: allUsers = [] } = useQuery<User[]>({
+  const { data: usersResponse } = useQuery<{ users: User[] }>({
     queryKey: ['/api/users'],
     queryFn: async () => {
       const response = await fetch('/api/users');
@@ -75,6 +76,8 @@ export function Messages({ currentUserId }: MessagesProps) {
     },
     retry: false,
   });
+
+  const allUsers = usersResponse?.users || [];
 
   // Helper function to get user data
   const getUserData = (userId: string) => {
@@ -206,6 +209,17 @@ export function Messages({ currentUserId }: MessagesProps) {
           <Badge variant="secondary" className="text-sm">
             {filteredConnections.length} conversation{filteredConnections.length !== 1 ? 's' : ''}
           </Badge>
+          {onNavigateToVoiceChannels && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={onNavigateToVoiceChannels}
+              data-testid="button-voice-channels"
+            >
+              <Users className="h-4 w-4 mr-1" />
+              Voice Channels
+            </Button>
+          )}
           <Button
             variant="outline"
             size="sm"

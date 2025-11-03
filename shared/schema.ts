@@ -218,6 +218,33 @@ export const voiceChannels = pgTable("voice_channels", {
   index("idx_connection_voice_channels").on(table.connectionId),
 ]);
 
+// Group Voice Channels table - supports multi-user voice channels
+export const groupVoiceChannels = pgTable("group_voice_channels", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  creatorId: varchar("creator_id").notNull().references(() => users.id),
+  hmsRoomId: varchar("hms_room_id"), // 100ms room ID
+  inviteCode: varchar("invite_code").notNull().unique(), // Unique invite link code
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_group_voice_creator").on(table.creatorId),
+  index("idx_group_voice_invite").on(table.inviteCode),
+]);
+
+// Group Voice Channel Members table - tracks invited/joined members
+export const groupVoiceMembers = pgTable("group_voice_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").notNull().references(() => groupVoiceChannels.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isActive: boolean("is_active").notNull().default(false), // Currently in the channel
+  isMuted: boolean("is_muted").notNull().default(false),
+  joinedAt: timestamp("joined_at").defaultNow(),
+}, (table) => [
+  index("idx_group_voice_channel_members").on(table.channelId),
+  index("idx_group_voice_user_members").on(table.userId),
+]);
+
 // Voice Participants table - tracks who's currently in each voice channel
 export const voiceParticipants = pgTable("voice_participants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -265,6 +292,10 @@ export type InsertPortfolioPage = typeof portfolioPages.$inferInsert;
 export type PortfolioPage = typeof portfolioPages.$inferSelect;
 export type InsertVoiceChannel = typeof voiceChannels.$inferInsert;
 export type VoiceChannel = typeof voiceChannels.$inferSelect;
+export type InsertGroupVoiceChannel = typeof groupVoiceChannels.$inferInsert;
+export type GroupVoiceChannel = typeof groupVoiceChannels.$inferSelect;
+export type InsertGroupVoiceMember = typeof groupVoiceMembers.$inferInsert;
+export type GroupVoiceMember = typeof groupVoiceMembers.$inferSelect;
 export type InsertVoiceParticipant = typeof voiceParticipants.$inferInsert;
 export type VoiceParticipant = typeof voiceParticipants.$inferSelect;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
@@ -306,6 +337,22 @@ export type VoiceParticipantWithUser = VoiceParticipant & {
   profileImageUrl: string | null;
 };
 
+// Group voice channel with creator and members information
+export type GroupVoiceChannelWithDetails = GroupVoiceChannel & {
+  creatorGamertag: string | null;
+  creatorProfileImageUrl: string | null;
+  memberCount: number;
+  activeCount: number;
+};
+
+// Group voice member with user information
+export type GroupVoiceMemberWithUser = GroupVoiceMember & {
+  gamertag: string | null;
+  profileImageUrl: string | null;
+  firstName: string | null;
+  lastName: string | null;
+};
+
 export const insertUserSchema = createInsertSchema(users);
 
 // Local registration schema - minimal fields required to create account
@@ -333,6 +380,8 @@ export const insertGameProfileSchema = createInsertSchema(gameProfiles).omit({ i
 export const insertHobbySchema = createInsertSchema(hobbies).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertPortfolioPageSchema = createInsertSchema(portfolioPages).omit({ id: true, userId: true, createdAt: true, updatedAt: true });
 export const insertVoiceChannelSchema = createInsertSchema(voiceChannels).omit({ id: true, createdAt: true });
+export const insertGroupVoiceChannelSchema = createInsertSchema(groupVoiceChannels).omit({ id: true, createdAt: true });
+export const insertGroupVoiceMemberSchema = createInsertSchema(groupVoiceMembers).omit({ id: true, joinedAt: true });
 export const insertVoiceParticipantSchema = createInsertSchema(voiceParticipants).omit({ id: true, joinedAt: true });
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true });
 

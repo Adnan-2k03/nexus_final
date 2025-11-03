@@ -10,6 +10,8 @@ import {
   hobbies,
   voiceChannels,
   voiceParticipants,
+  groupVoiceChannels,
+  groupVoiceMembers,
   pushSubscriptions,
   type User,
   type UpsertUser,
@@ -38,6 +40,12 @@ import {
   type VoiceParticipant,
   type VoiceParticipantWithUser,
   type InsertVoiceParticipant,
+  type GroupVoiceChannel,
+  type GroupVoiceChannelWithDetails,
+  type InsertGroupVoiceChannel,
+  type GroupVoiceMember,
+  type GroupVoiceMemberWithUser,
+  type InsertGroupVoiceMember,
   type PushSubscription,
   type InsertPushSubscription,
 } from "@shared/schema";
@@ -141,6 +149,19 @@ export interface IStorage {
   getVoiceParticipants(voiceChannelId: string): Promise<VoiceParticipantWithUser[]>;
   updateParticipantMuteStatus(voiceChannelId: string, userId: string, isMuted: boolean): Promise<VoiceParticipant>;
   getUserActiveVoiceChannel(userId: string): Promise<VoiceChannel | undefined>;
+
+  // Group voice channel operations
+  createGroupVoiceChannel(name: string, creatorId: string, hmsRoomId?: string): Promise<GroupVoiceChannel>;
+  getGroupVoiceChannel(id: string): Promise<GroupVoiceChannel | undefined>;
+  getGroupVoiceChannelByInvite(inviteCode: string): Promise<GroupVoiceChannel | undefined>;
+  getUserGroupVoiceChannels(userId: string): Promise<GroupVoiceChannelWithDetails[]>;
+  updateGroupVoiceChannelRoomId(channelId: string, hmsRoomId: string): Promise<GroupVoiceChannel>;
+  deleteGroupVoiceChannel(channelId: string, userId: string): Promise<void>;
+  addGroupVoiceMember(channelId: string, userId: string): Promise<GroupVoiceMember>;
+  removeGroupVoiceMember(channelId: string, userId: string): Promise<void>;
+  getGroupVoiceMembers(channelId: string): Promise<GroupVoiceMemberWithUser[]>;
+  setGroupMemberActive(channelId: string, userId: string, isActive: boolean): Promise<GroupVoiceMember>;
+  setGroupMemberMuted(channelId: string, userId: string, isMuted: boolean): Promise<GroupVoiceMember>;
 }
 
 // Database storage implementation using PostgreSQL
@@ -1205,6 +1226,172 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     return result || undefined;
+  }
+
+  async createGroupVoiceChannel(name: string, creatorId: string, hmsRoomId?: string): Promise<GroupVoiceChannel> {
+    const inviteCode = randomUUID().substring(0, 8);
+    
+    const [channel] = await db
+      .insert(groupVoiceChannels)
+      .values({ name, creatorId, hmsRoomId, inviteCode, isActive: true })
+      .returning();
+    
+    await this.addGroupVoiceMember(channel.id, creatorId);
+    
+    return channel;
+  }
+
+  async getGroupVoiceChannel(id: string): Promise<GroupVoiceChannel | undefined> {
+    const [channel] = await db
+      .select()
+      .from(groupVoiceChannels)
+      .where(eq(groupVoiceChannels.id, id));
+    
+    return channel || undefined;
+  }
+
+  async getGroupVoiceChannelByInvite(inviteCode: string): Promise<GroupVoiceChannel | undefined> {
+    const [channel] = await db
+      .select()
+      .from(groupVoiceChannels)
+      .where(eq(groupVoiceChannels.inviteCode, inviteCode));
+    
+    return channel || undefined;
+  }
+
+  async getUserGroupVoiceChannels(userId: string): Promise<GroupVoiceChannelWithDetails[]> {
+    const channels = await db
+      .select({
+        id: groupVoiceChannels.id,
+        name: groupVoiceChannels.name,
+        creatorId: groupVoiceChannels.creatorId,
+        hmsRoomId: groupVoiceChannels.hmsRoomId,
+        inviteCode: groupVoiceChannels.inviteCode,
+        isActive: groupVoiceChannels.isActive,
+        createdAt: groupVoiceChannels.createdAt,
+        creatorGamertag: users.gamertag,
+        creatorProfileImageUrl: users.profileImageUrl,
+      })
+      .from(groupVoiceMembers)
+      .innerJoin(groupVoiceChannels, eq(groupVoiceMembers.channelId, groupVoiceChannels.id))
+      .leftJoin(users, eq(groupVoiceChannels.creatorId, users.id))
+      .where(eq(groupVoiceMembers.userId, userId));
+
+    const channelsWithCounts = await Promise.all(
+      channels.map(async (channel) => {
+        const members = await this.getGroupVoiceMembers(channel.id);
+        return {
+          ...channel,
+          memberCount: members.length,
+          activeCount: members.filter(m => m.isActive).length,
+        };
+      })
+    );
+
+    return channelsWithCounts;
+  }
+
+  async updateGroupVoiceChannelRoomId(channelId: string, hmsRoomId: string): Promise<GroupVoiceChannel> {
+    const [updated] = await db
+      .update(groupVoiceChannels)
+      .set({ hmsRoomId })
+      .where(eq(groupVoiceChannels.id, channelId))
+      .returning();
+    
+    return updated;
+  }
+
+  async deleteGroupVoiceChannel(channelId: string, userId: string): Promise<void> {
+    const channel = await this.getGroupVoiceChannel(channelId);
+    
+    if (!channel || channel.creatorId !== userId) {
+      throw new Error('Unauthorized or channel not found');
+    }
+    
+    await db.delete(groupVoiceChannels).where(eq(groupVoiceChannels.id, channelId));
+  }
+
+  async addGroupVoiceMember(channelId: string, userId: string): Promise<GroupVoiceMember> {
+    const [existing] = await db
+      .select()
+      .from(groupVoiceMembers)
+      .where(
+        and(
+          eq(groupVoiceMembers.channelId, channelId),
+          eq(groupVoiceMembers.userId, userId)
+        )
+      );
+    
+    if (existing) return existing;
+    
+    const [member] = await db
+      .insert(groupVoiceMembers)
+      .values({ channelId, userId, isActive: false, isMuted: false })
+      .returning();
+    
+    return member;
+  }
+
+  async removeGroupVoiceMember(channelId: string, userId: string): Promise<void> {
+    await db
+      .delete(groupVoiceMembers)
+      .where(
+        and(
+          eq(groupVoiceMembers.channelId, channelId),
+          eq(groupVoiceMembers.userId, userId)
+        )
+      );
+  }
+
+  async getGroupVoiceMembers(channelId: string): Promise<GroupVoiceMemberWithUser[]> {
+    const members = await db
+      .select({
+        id: groupVoiceMembers.id,
+        channelId: groupVoiceMembers.channelId,
+        userId: groupVoiceMembers.userId,
+        isActive: groupVoiceMembers.isActive,
+        isMuted: groupVoiceMembers.isMuted,
+        joinedAt: groupVoiceMembers.joinedAt,
+        gamertag: users.gamertag,
+        profileImageUrl: users.profileImageUrl,
+        firstName: users.firstName,
+        lastName: users.lastName,
+      })
+      .from(groupVoiceMembers)
+      .leftJoin(users, eq(groupVoiceMembers.userId, users.id))
+      .where(eq(groupVoiceMembers.channelId, channelId));
+    
+    return members;
+  }
+
+  async setGroupMemberActive(channelId: string, userId: string, isActive: boolean): Promise<GroupVoiceMember> {
+    const [updated] = await db
+      .update(groupVoiceMembers)
+      .set({ isActive })
+      .where(
+        and(
+          eq(groupVoiceMembers.channelId, channelId),
+          eq(groupVoiceMembers.userId, userId)
+        )
+      )
+      .returning();
+    
+    return updated;
+  }
+
+  async setGroupMemberMuted(channelId: string, userId: string, isMuted: boolean): Promise<GroupVoiceMember> {
+    const [updated] = await db
+      .update(groupVoiceMembers)
+      .set({ isMuted })
+      .where(
+        and(
+          eq(groupVoiceMembers.channelId, channelId),
+          eq(groupVoiceMembers.userId, userId)
+        )
+      )
+      .returning();
+    
+    return updated;
   }
 }
 

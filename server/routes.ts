@@ -1971,5 +1971,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/group-voice/create', authMiddleware, async (req: any, res) => {
+    try {
+      if (!hmsService.isConfigured()) {
+        return res.status(503).json({ message: "Voice service not configured" });
+      }
+
+      const userId = req.user.id;
+      const { name } = req.body;
+
+      if (!name) {
+        return res.status(400).json({ message: "Channel name required" });
+      }
+
+      const room = await hmsService.createRoom({
+        name: `group-${name}-${Date.now()}`,
+        description: `Group voice channel: ${name}`,
+      });
+
+      const channel = await storage.createGroupVoiceChannel(name, userId, room.id);
+
+      res.json({
+        channelId: channel.id,
+        roomId: room.id,
+        inviteCode: channel.inviteCode,
+      });
+    } catch (error) {
+      console.error("Error creating group voice channel:", error);
+      res.status(500).json({ message: "Failed to create group voice channel" });
+    }
+  });
+
+  app.get('/api/group-voice/channels', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const channels = await storage.getUserGroupVoiceChannels(userId);
+      res.json(channels);
+    } catch (error) {
+      console.error("Error fetching group voice channels:", error);
+      res.status(500).json({ message: "Failed to fetch channels" });
+    }
+  });
+
+  app.get('/api/group-voice/channel/:channelId', authMiddleware, async (req: any, res) => {
+    try {
+      const { channelId } = req.params;
+      const channel = await storage.getGroupVoiceChannel(channelId);
+      
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+
+      const members = await storage.getGroupVoiceMembers(channelId);
+      res.json({ channel, members });
+    } catch (error) {
+      console.error("Error fetching channel:", error);
+      res.status(500).json({ message: "Failed to fetch channel" });
+    }
+  });
+
+  app.post('/api/group-voice/join', authMiddleware, async (req: any, res) => {
+    try {
+      if (!hmsService.isConfigured()) {
+        return res.status(503).json({ message: "Voice service not configured" });
+      }
+
+      const userId = req.user.id;
+      const { channelId, inviteCode } = req.body;
+
+      let channel;
+      if (channelId) {
+        channel = await storage.getGroupVoiceChannel(channelId);
+      } else if (inviteCode) {
+        channel = await storage.getGroupVoiceChannelByInvite(inviteCode);
+      }
+
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+
+      await storage.addGroupVoiceMember(channel.id, userId);
+      await storage.setGroupMemberActive(channel.id, userId, true);
+
+      const token = await hmsService.generateAuthToken({
+        roomId: channel.hmsRoomId || `group-${channel.name}`,
+        userId,
+        role: channel.creatorId === userId ? 'host' : 'guest',
+      });
+
+      res.json({ 
+        token, 
+        channelId: channel.id,
+        roomId: channel.hmsRoomId 
+      });
+    } catch (error) {
+      console.error("Error joining group voice channel:", error);
+      res.status(500).json({ message: "Failed to join channel" });
+    }
+  });
+
+  app.post('/api/group-voice/leave', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { channelId } = req.body;
+
+      if (!channelId) {
+        return res.status(400).json({ message: "Channel ID required" });
+      }
+
+      await storage.setGroupMemberActive(channelId, userId, false);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving group voice channel:", error);
+      res.status(500).json({ message: "Failed to leave channel" });
+    }
+  });
+
+  app.post('/api/group-voice/invite', authMiddleware, async (req: any, res) => {
+    try {
+      const { channelId, userIds } = req.body;
+
+      if (!channelId || !userIds || !Array.isArray(userIds)) {
+        return res.status(400).json({ message: "Channel ID and user IDs required" });
+      }
+
+      for (const userId of userIds) {
+        await storage.addGroupVoiceMember(channelId, userId);
+      }
+
+      res.json({ success: true, invitedCount: userIds.length });
+    } catch (error) {
+      console.error("Error inviting to group voice channel:", error);
+      res.status(500).json({ message: "Failed to invite users" });
+    }
+  });
+
+  app.delete('/api/group-voice/channel/:channelId', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { channelId } = req.params;
+
+      await storage.deleteGroupVoiceChannel(channelId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting group voice channel:", error);
+      res.status(500).json({ message: "Failed to delete channel" });
+    }
+  });
+
+  app.get('/api/group-voice/:channelId/members', authMiddleware, async (req: any, res) => {
+    try {
+      const { channelId } = req.params;
+      const members = await storage.getGroupVoiceMembers(channelId);
+      res.json(members);
+    } catch (error) {
+      console.error("Error fetching channel members:", error);
+      res.status(500).json({ message: "Failed to fetch members" });
+    }
+  });
+
   return httpServer;
 }

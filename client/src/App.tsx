@@ -23,6 +23,7 @@ import { Connections } from "@/components/Connections";
 import { Messages } from "@/components/Messages";
 import { Discover } from "@/components/Discover";
 import { Settings } from "@/components/Settings";
+import { VoiceChannelsPage } from "@/pages/VoiceChannelsPage";
 import NotFound from "@/pages/not-found";
 import { StarBackground } from "@/components/StarBackground";
 import { WebGLStarBackground } from "@/components/WebGLStarBackground";
@@ -61,6 +62,7 @@ function Router() {
     | "create"
     | "profile"
     | "messages"
+    | "voice-channels"
     | "settings"
     | "profile-setup"
     | "connections"
@@ -306,7 +308,16 @@ function Router() {
       case "messages":
         return (
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
-            <Messages currentUserId={user?.id} />
+            <Messages 
+              currentUserId={user?.id}
+              onNavigateToVoiceChannels={() => setCurrentPage("voice-channels")}
+            />
+          </div>
+        );
+      case "voice-channels":
+        return (
+          <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
+            <VoiceChannelsPage currentUserId={user?.id} />
           </div>
         );
       case "settings":
