@@ -46,10 +46,15 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
 
   const createChannelMutation = useMutation({
     mutationFn: async (name: string) => {
+      console.log('Creating channel with name:', name);
       const response = await apiRequest('POST', '/api/group-voice/create', { name });
-      return await response.json();
+      console.log('Response received:', response.status);
+      const data = await response.json();
+      console.log('Response data:', data);
+      return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Channel created successfully:', data);
       queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
       setCreateDialogOpen(false);
       setChannelName("");
@@ -58,7 +63,8 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
         description: "Your voice channel is ready",
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error('Error creating channel:', error);
       toast({
         title: "Error",
         description: "Failed to create channel",
