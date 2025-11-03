@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus Match - Instant Gaming Matchmaking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    /* Same styling retained from your original homepage */
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:"Outfit",sans-serif;
+      background:linear-gradient(to bottom,#0b0f19,#05070d);
+      color:#fff;
+      overflow-x:hidden;
+      scroll-behavior:smooth;
+    }
+    a{text-decoration:none;color:inherit;}
+    h1,h2,h3,h4{font-weight:700;}
+    .container{width:90%;max-width:1200px;margin:auto;}
+    nav{
+      position:fixed;top:0;width:100%;padding:1rem 0;
+      background:rgba(11,15,25,0.95);backdrop-filter:blur(12px);
+      z-index:1000;border-bottom:1px solid rgba(56,189,248,.2);
+    }
+    .nav-container{display:flex;justify-content:space-between;align-items:center;}
+    .logo{display:flex;align-items:center;gap:.5rem;font-weight:700;font-size:1.5rem;}
+    .logo span{color:#38bdf8;}
+    .nav-links{display:none;gap:2rem;}
+    .hamburger{display:none;flex-direction:column;gap:4px;cursor:pointer;}
+    .hamburger span{width:25px;height:3px;background:#38bdf8;border-radius:2px;transition:all .3s;}
+    @media(min-width:768px){.nav-links{display:flex;}}
+    .nav-links a{font-weight:500;transition:color .3s;}
+    .nav-links a:hover{color:#38bdf8;}
+    .signup-btn{
+      background:linear-gradient(135deg,#38bdf8,#8b5cf6);
+      padding:.6rem 1.2rem;border-radius:8px;font-weight:600;font-size:.9rem;
+      transition:transform .2s;
+    }
+    .signup-btn:hover{transform:scale(1.05);}
+    @media(max-width:767px){
+      .hamburger{display:flex;}
+      .nav-links{
+        position:absolute;top:100%;left:0;width:100%;background:rgba(11,15,25,.98);
+        flex-direction:column;gap:0;padding:1rem 0;display:none;
+        border-bottom:1px solid rgba(56,189,248,.2);
+      }
+      .nav-links.active{display:flex;}
+      .nav-links a{padding:1rem 2rem;border-bottom:1px solid rgba(56,189,248,.1);}
+    }
+    .hero{display:flex;flex-direction:column-reverse;align-items:center;justify-content:space-between;padding:6rem 0 4rem;}
+    @media(min-width:768px){.hero{flex-direction:row;}}
+    .hero-content{max-width:600px;}
+    .hero h1{font-size:3rem;line-height:1.2;}
+    .hero h1 span{color:#38bdf8;}
+    .hero p{margin:1.5rem 0;color:#cbd5e1;font-size:1.125rem;}
+    .btn-group{display:flex;gap:1rem;flex-wrap:wrap;}
+    .btn{padding:.9rem 1.8rem;border-radius:8px;font-size:1rem;cursor:pointer;transition:all .3s ease;}
+    .btn-primary{background:#38bdf8;border:none;color:#fff;}
+    .btn-primary:hover{background:#0284c7;}
+    .btn-outline{border:1px solid #38bdf8;color:#38bdf8;background:transparent;}
+    .btn-outline:hover{background:#0c4a6e;}
+    .hero-image{position:relative;width:320px;height:auto;margin-bottom:3rem;}
+    .glow{position:absolute;inset:0;border-radius:50%;filter:blur(60px);background:rgba(56,189,248,.4);z-index:0;}
+    .hero-image img{position:relative;width:100%;z-index:1;filter:drop-shadow(0 0 20px rgba(56,189,248,.8));animation:float 4s ease-in-out infinite;}
+    @keyframes float{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+    .scroll-indicator{text-align:center;font-size:2rem;color:#38bdf8;animation:bounce 2s infinite;margin-bottom:5rem;cursor:pointer;}
+    @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
+    .features{padding:4rem 0;text-align:center;}
+    .features h2{font-size:2.5rem;margin-bottom:2rem;}
+    .feature-grid{display:grid;gap:2rem;}
+    @media(min-width:768px){.feature-grid{grid-template-columns:repeat(3,1fr);}}
+    .card{background:#10141f;border:1px solid rgba(56,189,248,.2);border-radius:16px;padding:2rem;text-align:left;}
+    .card h3{color:#38bdf8;margin-bottom:1rem;}
+    .card p{color:#cbd5e1;line-height:1.6;}
+    .games-section{background:#0a0f18;padding:4rem 0;}
+    .games-section h2{text-align:center;font-size:2.5rem;margin-bottom:1rem;background:linear-gradient(135deg,#38bdf8,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+    .games-section p{text-align:center;color:#cbd5e1;max-width:800px;margin:auto auto 3rem;}
+    .games-grid{display:grid;gap:1.5rem;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));max-width:1100px;margin:auto;}
+    .game-card{background:rgba(16,20,31,.7);border:1px solid rgba(56,189,248,.3);border-radius:16px;padding:1.5rem;text-align:center;transition:transform .3s,box-shadow .3s;backdrop-filter:blur(6px);}
+    .game-card:hover{transform:translateY(-8px);box-shadow:0 0 25px rgba(56,189,248,.4);}
+    .game-card img{width:48px;height:48px;object-fit:contain;margin-bottom:.8rem;filter:drop-shadow(0 0 8px #38bdf8);}
+    .game-card h4{font-size:1rem;color:#fff;margin-bottom:.3rem;}
+    .game-card p{font-size:.8rem;color:#94a3b8;}
+    footer{background:#0a0f18;padding:2rem 0;text-align:center;color:#94a3b8;}
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <div class="container nav-container">
+      <div class="logo"><span>N</span> Nexus Match</div>
+      <div class="hamburger"><span></span><span></span><span></span></div>
+      <div class="nav-links">
+        <a href="#how">Features</a>
+        <a href="#games">Games</a>
+        <a href="#community">Community</a>
+        <a href="#support">Support</a>
+        <a href="#about">About</a>
+      </div>
+      <a href="#" class="signup-btn">Join Now</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero container">
+    <div class="hero-content">
+      <h1>Nexus Match <span>— Find Your Perfect Gaming Partner</span></h1>
+      <p>The ultimate platform for instant matchmaking, real-time voice chat, and gamer networking. Connect by skill, game, and playstyle — in seconds.</p>
+      <div class="btn-group">
+        <button class="btn btn-primary">Find Players</button>
+        <button class="btn btn-outline">Explore Features</button>
+      </div>
+    </div>
+    <div class="hero-image tilt">
+      <div class="glow"></div>
+      <img src="https://cdn-icons-png.flaticon.com/512/5969/5969276.png" alt="Hero Gamer" />
+    </div>
+  </section>
+
+  <div class="scroll-indicator" onclick="scrollToSection('how')">EXPLORE FEATURES</div>
+
+  <!-- FEATURES -->
+<section id="how" class="features container">
+  <h2>Core Features</h2>
+  <div class="feature-grid">
+    <div class="card">
+      <h3>1. Authentication & Profiles</h3>
+      <p>Jump in using Google, Discord, or a custom gamertag-only login. Shape your profile with stats, favorite games, and playstyle preferences — your gaming identity, redefined.</p>
+    </div>
+
+    <div class="card">
+      <h3>2. Smart Search & Discovery</h3>
+      <p>Find your ideal teammates faster than ever. Filter by skill, playstyle, language, or vibe — and instantly discover players who share your energy, not just your rank.</p>
+    </div>
+
+    <div class="card">
+      <h3>3. Game Portfolios</h3>
+      <p>Turn your gaming journey into a visual showcase. Highlight your top clips, tournament wins, or creative achievements with stylish, customizable game cards.</p>
+    </div>
+
+    <div class="card">
+      <h3>4. Real-Time Chat & Voice</h3>
+      <p>Talk, plan, or just vibe with teammates through lightning-fast voice and chat channels. Powered by 100ms — optimized for low latency, zero lag, and crystal-clear comms.</p>
+    </div>
+
+    <div class="card">
+      <h3>5. Progressive Web App</h3>
+      <p>Install Nexus Match directly on your desktop or phone. Experience native-speed performance, instant push notifications, and offline access — all in one lightweight PWA.</p>
+    </div>
+
+    <div class="card">
+      <h3>6. Advanced Search Filters</h3>
+      <p>Drill down to the perfect squad. Filter by distance, rank, gender, game mode, or even microphone preference — because the best teams start with the right chemistry.</p>
+    </div>
+  </div>
+</section>
+
+
+
+  <!-- GAMES -->
+  <section id="games" class="games-section">
+    <div class="container">
+      <h2>Supported Games</h2>
+      <p>Connect instantly across major multiplayer titles. Whether you’re a casual or competitive gamer, Nexus Match helps you find your squad fast.</p>
+      <div class="games-grid">
+        <div class="game-card"><img src="https://cdn-icons-png.flaticon.com/32/854/854894.png"><h4>Apex Legends</h4><p>Battle Royale</p></div>
+        <div class="game-card"><img src="https://cdn-icons-png.flaticon.com/32/5969/5969276.png"><h4>Valorant</h4><p>Tactical FPS</p></div>
+        <div class="game-card"><img src="https://cdn-icons-png.flaticon.com/32/5969/5969300.png"><h4>League of Legends</h4><p>MOBA</p></div>
+        <div class="game-card"><img src="https://cdn-icons-png.flaticon.com/32/854/854902.png"><h4>Fortnite</h4><p>Battle Royale</p></div>
+        <div class="game-card"><img src="https://cdn-icons-png.flaticon.com/32/854/854888.png"><h4>Overwatch 2</h4><p>Hero Shooter</p></div>
+        <div class="game-card"><img src="https://cdn-icons-png.flaticon.com/32/5968/5968882.png"><h4>Rainbow Six</h4><p>Tactical FPS</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMMUNITY -->
+  <section id="community" class="features container">
+    <h2>Join the Nexus Community</h2>
+    <p style="max-width:800px;margin:1rem auto 3rem;color:#cbd5e1;">
+      Meet gamers who share your passion. Discover friends, connect directly, and share your gaming journey through voice, chat, and portfolios.
+    </p>
+    <div class="feature-grid">
+      <div class="card">
+        <h3>Mutual Interests</h3>
+        <p>Find players who share your hobbies — music, anime, art, books, and more — all visible through customizable profiles.</p>
+      </div>
+      <div class="card">
+        <h3>Direct Connections</h3>
+        <p>Send, accept, or decline friend requests. Manage connections easily and see shared games, ranks, and hobbies.</p>
+      </div>
+      <div class="card">
+        <h3>Notifications & Updates</h3>
+        <p>Stay in the loop with in-app and push notifications for matches, requests, and messages — in real-time via WebSocket.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="features container">
+    <h2>About Nexus Match</h2>
+    <p style="max-width:800px;margin:1rem auto;color:#cbd5e1;line-height:1.7;">
+      Nexus Match is built for gamers who want smarter, faster, and more meaningful multiplayer experiences. Powered by AI matchmaking and real-time communication, it’s the bridge between casual and competitive players worldwide.
+    </p>
+    <div class="feature-grid">
+      <div class="card">
+        <h3>Our Mission</h3>
+        <p>To eliminate solo queue frustration by connecting gamers through compatibility — skill, attitude, and playstyle — not just rank.</p>
+      </div>
+      <div class="card">
+        <h3>Our Technology</h3>
+        <p>Backed by PostgreSQL, WebSockets, Cloudflare R2, and a PWA architecture, Nexus Match delivers instant updates and seamless user experience.</p>
+      </div>
+      <div class="card">
+        <h3>Our Vision</h3>
+        <p>To redefine how players connect — not through random queues, but through shared purpose, respect, and teamwork.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SUPPORT -->
+  <section id="support" class="features container">
+    <h2>Support & Help Center</h2>
+    <p style="max-width:800px;margin:1rem auto 2rem;color:#cbd5e1;">
+      Need assistance? We’re here 24/7 to help you make the most of Nexus Match.
+    </p>
+    <div class="feature-grid">
+      <div class="card">
+        <h3>FAQs</h3>
+        <p><strong>How do I report a player?</strong> Use the in-app reporting tool available on every match and chat window.</p>
+        <p><strong>Is my voice data secure?</strong> 100% — all voice chat is encrypted end-to-end via WebRTC.</p>
+      </div>
+      <div class="card">
+        <h3>Contact Support</h3>
+        <p>For technical help or bug reports, reach out to <a href="mailto:support@nexusmatch.gg" style="color:#38bdf8;">support@nexusmatch.gg</a>.</p>
+      </div>
+      <div class="card">
+        <h3>Future Updates</h3>
+        <p>Mobile apps launching in Q1 2026 — stay tuned for push notifications, AI duo suggestions, and personalized stats dashboards.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="con
+tainer">
+      <p>© 2025 Nexus Match. All rights reserved. | <a href="#">Privacy</a> | <a href="#">Terms</a> | <a href="#">System Status</a></p>
+    </div>
+  </footer>
+
+  <script>
+    const hamburger=document.querySelector('.hamburger');
+    const navLinks=document.querySelector('.nav-links');
+    hamburger.addEventListener('click',()=>navLinks.classList.toggle('active'));
+    function scrollToSection(id){document.getElementById(id).scrollIntoView({behavior:'smooth'});}
+  </script>
+</body>
+</html>
