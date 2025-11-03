@@ -60,6 +60,12 @@ export function MatchFeed({
   const [showLongTerm, setShowLongTerm] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters]);
 
   // Request user's location for distance-based filtering
   useEffect(() => {
@@ -87,8 +93,8 @@ export function MatchFeed({
   }, [filters.distance, userLocation]);
 
   // Fetch match requests from API
-  const { data: fetchedMatches = [], isLoading: isFetchingMatches, refetch } = useQuery<MatchRequestWithUser[]>({
-    queryKey: ['/api/match-requests', filters, userLocation],
+  const { data: paginatedData, isLoading: isFetchingMatches, refetch } = useQuery<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }>({
+    queryKey: ['/api/match-requests', filters, userLocation, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (filters.game) params.append('game', filters.game);
@@ -101,6 +107,8 @@ export function MatchFeed({
         params.append('longitude', userLocation.longitude.toString());
         params.append('maxDistance', filters.distance);
       }
+      params.append('page', currentPage.toString());
+      params.append('limit', '10');
       
       const response = await fetch(`/api/match-requests?${params}`);
       if (!response.ok) {
@@ -110,6 +118,9 @@ export function MatchFeed({
     },
     retry: false,
   });
+  
+  const fetchedMatches = paginatedData?.matchRequests || [];
+  const totalPages = paginatedData?.totalPages || 1;
 
   // Fetch hidden match IDs
   const { data: hiddenMatchIds = [] } = useQuery<string[]>({
@@ -572,9 +583,36 @@ export function MatchFeed({
         </TabsContent>
       </Tabs>
 
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+            disabled={currentPage === 1}
+            data-testid="button-previous-page"
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+            disabled={currentPage === totalPages}
+            data-testid="button-next-page"
+          >
+            Next
+          </Button>
+        </div>
+      )}
+
       {/* Live Updates Indicator */}
       {isConnected && (
-        <div className="text-center text-xs text-muted-foreground">
+        <div className="text-center text-xs text-muted-foreground mt-4">
           🔴 Live updates enabled • New matches appear automatically
         </div>
       )}

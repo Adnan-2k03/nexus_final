@@ -63,7 +63,11 @@ export const users = pgTable("users", {
   showMutualHobbies: varchar("show_mutual_hobbies").default("everyone"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_users_gender").on(table.gender),
+  index("idx_users_language").on(table.language),
+  index("idx_users_created_at").on(table.createdAt),
+]);
 
 // Match requests table
 export const matchRequests = pgTable("match_requests", {
@@ -79,7 +83,12 @@ export const matchRequests = pgTable("match_requests", {
   region: varchar("region"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_match_requests_user_id").on(table.userId),
+  index("idx_match_requests_status").on(table.status),
+  index("idx_match_requests_game_name").on(table.gameName),
+  index("idx_match_requests_created_at").on(table.createdAt),
+]);
 
 // Direct connection requests (user-to-user, no match required)
 export const connectionRequests = pgTable("connection_requests", {
@@ -89,7 +98,11 @@ export const connectionRequests = pgTable("connection_requests", {
   status: varchar("status").notNull().default("pending"), // pending, accepted, declined
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_connection_requests_sender").on(table.senderId),
+  index("idx_connection_requests_receiver").on(table.receiverId),
+  index("idx_connection_requests_status").on(table.status),
+]);
 
 // Match connections table (for match-based connections)
 export const matchConnections = pgTable("match_connections", {
@@ -100,7 +113,11 @@ export const matchConnections = pgTable("match_connections", {
   status: varchar("status").notNull().default("pending"), // pending, accepted, declined
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_match_connections_requester").on(table.requesterId),
+  index("idx_match_connections_accepter").on(table.accepterId),
+  index("idx_match_connections_request").on(table.requestId),
+]);
 
 // Hidden matches table - tracks which users have hidden which match requests
 export const hiddenMatches = pgTable("hidden_matches", {
@@ -132,11 +149,11 @@ export const notifications = pgTable("notifications", {
   message: text("message").notNull(),
   relatedUserId: varchar("related_user_id").references(() => users.id), // The user who triggered this notification
   relatedMatchId: varchar("related_match_id").references(() => matchRequests.id),
-  isRead: varchar("is_read").notNull().default("false"),
+  isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_user_notifications").on(table.userId),
-  index("idx_notifications_read").on(table.isRead),
+  index("idx_notifications_is_read").on(table.isRead),
 ]);
 
 // Game profiles table - stores detailed game achievements per user per game
@@ -184,7 +201,7 @@ export const portfolioPages = pgTable("portfolio_pages", {
   themeName: varchar("theme_name").notNull(), // e.g., "modern", "minimal", "vibrant"
   layout: jsonb("layout").notNull(), // JSON structure with sections, colors, components
   prompt: text("prompt"), // Original prompt used for AI generation
-  isActive: varchar("is_active").default("true"), // Whether this is the active portfolio
+  isActive: boolean("is_active").notNull().default(true), // Whether this is the active portfolio
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -205,7 +222,7 @@ export const voiceParticipants = pgTable("voice_participants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   voiceChannelId: varchar("voice_channel_id").notNull().references(() => voiceChannels.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  isMuted: varchar("is_muted").default("false"),
+  isMuted: boolean("is_muted").notNull().default(false),
   joinedAt: timestamp("joined_at").defaultNow(),
 }, (table) => [
   index("idx_voice_channel_participants").on(table.voiceChannelId),

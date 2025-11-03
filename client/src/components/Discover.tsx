@@ -74,8 +74,14 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [connectingUserId, setConnectingUserId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
+  
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedGender, selectedLanguage, selectedGame, selectedDistance]);
 
   // Request user's location for distance-based filtering
   useEffect(() => {
@@ -113,13 +119,18 @@ export function Discover({ currentUserId }: DiscoverProps) {
     queryParams.append("longitude", userLocation.longitude.toString());
     queryParams.append("maxDistance", selectedDistance);
   }
+  queryParams.append("page", currentPage.toString());
+  queryParams.append("limit", "10");
 
-  const queryUrl = queryParams.toString() ? `/api/users?${queryParams.toString()}` : "/api/users";
+  const queryUrl = `/api/users?${queryParams.toString()}`;
   
-  const { data: users, isLoading: isLoadingUsers, refetch } = useQuery<User[]>({
+  const { data: paginatedData, isLoading: isLoadingUsers, refetch } = useQuery<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>({
     queryKey: [queryUrl],
     enabled: true,
   });
+  
+  const users = paginatedData?.users || [];
+  const totalPages = paginatedData?.totalPages || 1;
 
   // Fetch existing connection requests to check if already requested
   const { data: connectionRequests = [] } = useQuery({
@@ -175,7 +186,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
     },
   });
 
-  const filteredUsers = users?.filter(user => {
+  const filteredUsers = users.filter(user => {
     if (user.id === currentUserId) return false;
     
     // Only filter out users with accepted direct connection requests (friend connections)
@@ -190,7 +201,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
     if (hasDirectConnection) return false;
     
     return true;
-  }) || [];
+  });
 
   const handleClearFilters = () => {
     setSearchTerm("");
@@ -198,6 +209,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
     setSelectedLanguage("all");
     setSelectedGame("all");
     setSelectedDistance("global");
+    setCurrentPage(1);
   };
 
   const handleRefresh = () => {
@@ -492,6 +504,47 @@ export function Discover({ currentUserId }: DiscoverProps) {
             </Card>
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              data-testid="button-previous-page"
+            >
+              Previous
+            </Button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                if (pageNum > totalPages) return null;
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                    data-testid={`button-page-${pageNum}`}
+                  >
+                    {pageNum}
+                  </Button>
+                );
+              })}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              data-testid="button-next-page"
+            >
+              Next
+            </Button>
+          </div>
+        )}
       )}
 
       {/* Profile View Dialog */}

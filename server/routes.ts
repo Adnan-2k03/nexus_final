@@ -128,16 +128,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User discovery routes
   app.get('/api/users', async (req, res) => {
     try {
-      const { search, gender, language, game, latitude, longitude, maxDistance } = req.query as Record<string, string>;
-      const filters: any = { search, gender, language, game };
+      const { search, gender, language, game, rank, latitude, longitude, maxDistance, page, limit } = req.query as Record<string, string>;
+      const filters: any = { search, gender, language, game, rank };
       
       // Parse location filters
       if (latitude) filters.latitude = parseFloat(latitude);
       if (longitude) filters.longitude = parseFloat(longitude);
       if (maxDistance) filters.maxDistance = parseFloat(maxDistance);
       
-      const users = await storage.getAllUsers(filters);
-      res.json(users);
+      // Parse pagination
+      if (page) filters.page = parseInt(page, 10);
+      if (limit) filters.limit = parseInt(limit, 10);
+      
+      const result = await storage.getAllUsers(filters);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
@@ -158,16 +162,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Match request routes
   app.get('/api/match-requests', async (req, res) => {
     try {
-      const { game, mode, region, gender, language, latitude, longitude, maxDistance } = req.query as Record<string, string>;
-      const filters: any = { game, mode, region, gender, language };
+      const { game, mode, region, gender, language, rank, latitude, longitude, maxDistance, page, limit } = req.query as Record<string, string>;
+      const filters: any = { game, mode, region, gender, language, rank };
       
       // Parse location filters
       if (latitude) filters.latitude = parseFloat(latitude);
       if (longitude) filters.longitude = parseFloat(longitude);
       if (maxDistance) filters.maxDistance = parseFloat(maxDistance);
       
-      const matchRequests = await storage.getMatchRequests(filters);
-      res.json(matchRequests);
+      // Parse pagination
+      if (page) filters.page = parseInt(page, 10);
+      if (limit) filters.limit = parseInt(limit, 10);
+      
+      const result = await storage.getMatchRequests(filters);
+      res.json(result);
     } catch (error) {
       console.error("Error fetching match requests:", error);
       res.status(500).json({ message: "Failed to fetch match requests" });
@@ -350,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: `${requesterUser?.gamertag || "Someone"} wants to join your ${matchRequest.gameName} ${matchRequest.gameMode} match`,
         relatedUserId: requesterId,
         relatedMatchId: requestId,
-        isRead: "false",
+        isRead: false,
       });
       
       // Broadcast notification in real-time
@@ -412,7 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `${accepterUser?.gamertag || "Someone"} accepted your match application`,
           relatedUserId: connectionToUpdate.accepterId,
           relatedMatchId: connectionToUpdate.requestId,
-          isRead: "false",
+          isRead: false,
         });
         
         // Broadcast notification in real-time
@@ -438,7 +446,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: `${accepterUser?.gamertag || "Someone"} declined your match application`,
           relatedUserId: connectionToUpdate.accepterId,
           relatedMatchId: connectionToUpdate.requestId,
-          isRead: "false",
+          isRead: false,
         });
         
         // Broadcast notification in real-time
@@ -520,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         title: "New Connection Request",
         message: `${senderUser?.gamertag || "Someone"} wants to connect with you`,
         relatedUserId: senderId,
-        isRead: "false",
+        isRead: false,
       });
       
       // Broadcast notification in real-time
@@ -579,7 +587,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: "Connection Request Declined",
           message: `${receiverUser?.gamertag || "Someone"} declined your connection request`,
           relatedUserId: requestToUpdate.receiverId,
-          isRead: "false",
+          isRead: false,
         });
         
         // Broadcast notification in real-time
@@ -616,7 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           title: "Connection Request Accepted",
           message: `${receiverUser?.gamertag || "Someone"} accepted your connection request`,
           relatedUserId: requestToUpdate.receiverId,
-          isRead: "false",
+          isRead: false,
         });
         
         // Broadcast notification in real-time

@@ -64,7 +64,7 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByGamertag(gamertag: string): Promise<User | undefined>;
-  getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<User[]>;
+  getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>;
   getUserCount(): Promise<number>;
   upsertUser(user: UpsertUser): Promise<User>;
   upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
@@ -73,7 +73,7 @@ export interface IStorage {
   updatePrivacySettings(id: string, settings: { showMutualGames?: string; showMutualFriends?: string; showMutualHobbies?: string }): Promise<User>;
   
   // Match request operations
-  getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<MatchRequestWithUser[]>;
+  getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }>;
   createMatchRequest(request: InsertMatchRequest): Promise<MatchRequest>;
   updateMatchRequestStatus(id: string, status: "waiting" | "connected" | "declined"): Promise<MatchRequest>;
   deleteMatchRequest(id: string): Promise<void>;
@@ -150,8 +150,11 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<User[]> {
+  async getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }> {
     const conditions = [];
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+    const offset = (page - 1) * limit;
     
     // Search filter (by name or gamertag)
     if (filters?.search) {
@@ -179,19 +182,24 @@ export class DatabaseStorage implements IStorage {
       conditions.push(sql`${filters.game} = ANY(${users.preferredGames})`);
     }
     
-    // Fetch users
-    let query = db.select().from(users);
-    let allUsers: User[];
+    // Build base query
+    let baseQuery = db.select().from(users);
+    let countQuery = db.select({ count: sql<number>`count(*)::int` }).from(users);
     
     if (conditions.length > 0) {
-      allUsers = await query.where(and(...conditions));
-    } else {
-      allUsers = await query;
+      baseQuery = baseQuery.where(and(...conditions)) as any;
+      countQuery = countQuery.where(and(...conditions)) as any;
     }
     
-    // Apply distance filter if coordinates are provided
+    // Fetch users with pagination
+    let fetchedUsers = await baseQuery
+      .orderBy(desc(users.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    // Apply distance filter if coordinates are provided (post-query filtering)
     if (filters?.latitude != null && filters?.longitude != null && filters?.maxDistance != null) {
-      allUsers = allUsers.filter(user => {
+      fetchedUsers = fetchedUsers.filter(user => {
         if (user.latitude == null || user.longitude == null) return false;
         const distance = calculateDistance(
           filters.latitude!,
@@ -203,7 +211,18 @@ export class DatabaseStorage implements IStorage {
       });
     }
     
-    return allUsers;
+    // Get total count
+    const [countResult] = await countQuery;
+    const total = countResult?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+    
+    return {
+      users: fetchedUsers,
+      total,
+      page,
+      limit,
+      totalPages
+    };
   }
 
   async getUserCount(): Promise<number> {
@@ -330,9 +349,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Match request operations
-  async getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; latitude?: number; longitude?: number; maxDistance?: number }): Promise<MatchRequestWithUser[]> {
+  async getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }> {
     const matchConditions = [];
     const userConditions = [];
+    const page = filters?.page || 1;
+    const limit = filters?.limit || 10;
+    const offset = (page - 1) * limit;
     
     // Match request filters
     if (filters?.game) {
@@ -353,8 +375,11 @@ export class DatabaseStorage implements IStorage {
       userConditions.push(eq(users.language, filters.language));
     }
     
+    // Combine all conditions
+    const allConditions = [...matchConditions, ...userConditions];
+    
     // Join with users table to get gamertag and profile data plus location
-    const query = db
+    let query = db
       .select({
         id: matchRequests.id,
         userId: matchRequests.userId,
@@ -376,20 +401,24 @@ export class DatabaseStorage implements IStorage {
       .from(matchRequests)
       .leftJoin(users, eq(matchRequests.userId, users.id));
     
-    // Combine all conditions
-    const allConditions = [...matchConditions, ...userConditions];
+    // Count query for total
+    let countQuery = db
+      .select({ count: sql<number>`count(DISTINCT ${matchRequests.id})::int` })
+      .from(matchRequests)
+      .leftJoin(users, eq(matchRequests.userId, users.id));
     
-    let requests;
     if (allConditions.length > 0) {
-      requests = await query
-        .where(and(...allConditions))
-        .orderBy(desc(matchRequests.createdAt));
-    } else {
-      requests = await query
-        .orderBy(desc(matchRequests.createdAt));
+      query = query.where(and(...allConditions)) as any;
+      countQuery = countQuery.where(and(...allConditions)) as any;
     }
     
-    // Apply distance filter if coordinates are provided
+    // Fetch with pagination
+    let requests = await query
+      .orderBy(desc(matchRequests.createdAt))
+      .limit(limit)
+      .offset(offset);
+    
+    // Apply distance filter if coordinates are provided (post-query filtering)
     if (filters?.latitude != null && filters?.longitude != null && filters?.maxDistance != null) {
       requests = requests.filter(request => {
         if (request.latitude == null || request.longitude == null) return false;
@@ -403,8 +432,21 @@ export class DatabaseStorage implements IStorage {
       });
     }
     
+    // Get total count
+    const [countResult] = await countQuery;
+    const total = countResult?.count || 0;
+    const totalPages = Math.ceil(total / limit);
+    
     // Remove latitude/longitude from results (they were only needed for filtering)
-    return requests.map(({ latitude, longitude, ...rest }) => rest) as MatchRequestWithUser[];
+    const cleanedRequests = requests.map(({ latitude, longitude, ...rest }) => rest) as MatchRequestWithUser[];
+    
+    return {
+      matchRequests: cleanedRequests,
+      total,
+      page,
+      limit,
+      totalPages
+    };
   }
 
   async createMatchRequest(requestData: InsertMatchRequest): Promise<MatchRequest> {
@@ -687,7 +729,7 @@ export class DatabaseStorage implements IStorage {
     const conditions = [eq(notifications.userId, userId)];
     
     if (unreadOnly) {
-      conditions.push(eq(notifications.isRead, "false"));
+      conditions.push(eq(notifications.isRead, false));
     }
     
     const userNotifications = await db
@@ -717,7 +759,7 @@ export class DatabaseStorage implements IStorage {
     
     const [updatedNotification] = await db
       .update(notifications)
-      .set({ isRead: "true" })
+      .set({ isRead: true })
       .where(eq(notifications.id, id))
       .returning();
     
@@ -748,7 +790,7 @@ export class DatabaseStorage implements IStorage {
       .from(notifications)
       .where(and(
         eq(notifications.userId, userId),
-        eq(notifications.isRead, "false")
+        eq(notifications.isRead, false)
       ));
     
     return result[0]?.count || 0;
@@ -1043,7 +1085,7 @@ export class DatabaseStorage implements IStorage {
     // Add user to channel with ON CONFLICT to handle race conditions
     const [participant] = await db
       .insert(voiceParticipants)
-      .values({ voiceChannelId, userId, isMuted: "false" })
+      .values({ voiceChannelId, userId, isMuted: false })
       .onConflictDoUpdate({
         target: [voiceParticipants.voiceChannelId, voiceParticipants.userId],
         set: { joinedAt: sql`EXCLUDED.joined_at` }
@@ -1091,7 +1133,7 @@ export class DatabaseStorage implements IStorage {
   async updateParticipantMuteStatus(voiceChannelId: string, userId: string, isMuted: boolean): Promise<VoiceParticipant> {
     const [participant] = await db
       .update(voiceParticipants)
-      .set({ isMuted: isMuted ? "true" : "false" })
+      .set({ isMuted })
       .where(
         and(
           eq(voiceParticipants.voiceChannelId, voiceChannelId),
