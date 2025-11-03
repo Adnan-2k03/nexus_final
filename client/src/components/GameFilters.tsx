@@ -7,8 +7,8 @@ import { Search, Filter, X } from "lucide-react";
 import { useState } from "react";
 
 interface GameFiltersProps {
-  onFilterChange: (filters: { search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string }) => void;
-  activeFilters?: { search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string };
+  onFilterChange: (filters: { search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string; rank?: string }) => void;
+  activeFilters?: { search?: string; game?: string; mode?: string; region?: string; gender?: string; language?: string; distance?: string; rank?: string };
 }
 
 export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersProps) {
@@ -35,6 +35,11 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
     { value: "25", label: "Within 25km" },
     { value: "50", label: "Within 50km" },
     { value: "100", label: "Within 100km" }
+  ];
+  
+  const ranks = [
+    "Bronze", "Silver", "Gold", "Platinum", "Diamond", 
+    "Master", "Grandmaster", "Challenger", "Immortal", "Radiant"
   ];
 
   const handleSearchChange = (value: string) => {
@@ -198,6 +203,20 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
               </Button>
             </Badge>
           )}
+          {activeFilters.rank && (
+            <Badge variant="secondary" className="gap-1 pr-1">
+              Rank: {activeFilters.rank}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-auto p-0 hover:bg-transparent"
+                onClick={() => clearFilter('rank')}
+                data-testid={`button-clear-rank-filter`}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </Badge>
+          )}
         </div>
       )}
 
@@ -300,6 +319,23 @@ export function GameFilters({ onFilterChange, activeFilters = {} }: GameFiltersP
                 {distances.map((distance) => (
                   <SelectItem key={distance.value} value={distance.value}>
                     {distance.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Rank</label>
+            <Select value={activeFilters.rank || "all"} onValueChange={(value) => handleFilterChange('rank', value)}>
+              <SelectTrigger data-testid="select-rank-filter">
+                <SelectValue placeholder="All ranks" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All ranks</SelectItem>
+                {ranks.map((rank) => (
+                  <SelectItem key={rank} value={rank}>
+                    {rank}
                   </SelectItem>
                 ))}
               </SelectContent>
