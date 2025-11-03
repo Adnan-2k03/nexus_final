@@ -13,6 +13,8 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import fs from "fs";
 import { sendPushNotification } from "./pushNotifications";
+import { r2Storage, generateFileKey } from "./services/r2-storage";
+import { hmsService, generateRoomName } from "./services/hms-service";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -1767,6 +1769,207 @@ export async function registerRoutes(app: Express): Promise<Server> {
     toUsers: broadcastToUsers,
     toAll: broadcastToAll
   };
+
+  // File upload endpoints (using Cloudflare R2)
+  const r2Upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 10 * 1024 * 1024,
+    },
+  });
+
+  app.post('/api/upload/profile-image', authMiddleware, r2Upload.single('image'), async (req: any, res) => {
+    try {
+      if (!r2Storage.isConfigured()) {
+        return res.status(503).json({ message: "File storage not configured" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const userId = req.user.id;
+      const key = generateFileKey(userId, req.file.originalname, 'profile-images');
+
+      const url = await r2Storage.uploadFile({
+        key,
+        buffer: req.file.buffer,
+        contentType: req.file.mimetype,
+      });
+
+      await storage.updateUserProfile(userId, { profileImageUrl: url });
+
+      res.json({ url });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  app.post('/api/upload/stats-photo', authMiddleware, r2Upload.single('image'), async (req: any, res) => {
+    try {
+      if (!r2Storage.isConfigured()) {
+        return res.status(503).json({ message: "File storage not configured" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const userId = req.user.id;
+      const { gameProfileId } = req.body;
+
+      if (!gameProfileId) {
+        return res.status(400).json({ message: "Game profile ID required" });
+      }
+
+      const key = generateFileKey(userId, req.file.originalname, 'stats-photos');
+
+      const url = await r2Storage.uploadFile({
+        key,
+        buffer: req.file.buffer,
+        contentType: req.file.mimetype,
+      });
+
+      res.json({ url });
+    } catch (error) {
+      console.error("Error uploading stats photo:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
+  app.post('/api/upload/clip', authMiddleware, r2Upload.single('video'), async (req: any, res) => {
+    try {
+      if (!r2Storage.isConfigured()) {
+        return res.status(503).json({ message: "File storage not configured" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const userId = req.user.id;
+      const key = generateFileKey(userId, req.file.originalname, 'clips');
+
+      const url = await r2Storage.uploadFile({
+        key,
+        buffer: req.file.buffer,
+        contentType: req.file.mimetype,
+      });
+
+      res.json({ url });
+    } catch (error) {
+      console.error("Error uploading clip:", error);
+      res.status(500).json({ message: "Failed to upload video" });
+    }
+  });
+
+  // Voice channel endpoints (using 100ms)
+  app.post('/api/voice/create-room', authMiddleware, async (req: any, res) => {
+    try {
+      if (!hmsService.isConfigured()) {
+        return res.status(503).json({ message: "Voice service not configured" });
+      }
+
+      const { connectionId } = req.body;
+
+      if (!connectionId) {
+        return res.status(400).json({ message: "Connection ID required" });
+      }
+
+      const existingChannel = await storage.getVoiceChannel(connectionId);
+      
+      if (existingChannel && existingChannel.hmsRoomId) {
+        return res.json({
+          voiceChannelId: existingChannel.id,
+          roomId: existingChannel.hmsRoomId,
+          message: "Using existing voice room"
+        });
+      }
+
+      const roomName = generateRoomName(connectionId);
+      const room = await hmsService.createRoom({
+        name: roomName,
+        description: `Voice chat for connection ${connectionId}`,
+      });
+
+      const voiceChannel = await storage.getOrCreateVoiceChannel(connectionId, room.id);
+
+      res.json({
+        voiceChannelId: voiceChannel.id,
+        roomId: room.id,
+      });
+    } catch (error) {
+      console.error("Error creating voice room:", error);
+      res.status(500).json({ message: "Failed to create voice room" });
+    }
+  });
+
+  app.post('/api/voice/join', authMiddleware, async (req: any, res) => {
+    try {
+      if (!hmsService.isConfigured()) {
+        return res.status(503).json({ message: "Voice service not configured" });
+      }
+
+      const userId = req.user.id;
+      const { voiceChannelId, role = 'guest' } = req.body;
+
+      if (!voiceChannelId) {
+        return res.status(400).json({ message: "Voice channel ID required" });
+      }
+
+      const voiceChannel = await storage.getVoiceChannel(voiceChannelId);
+      if (!voiceChannel) {
+        return res.status(404).json({ message: "Voice channel not found" });
+      }
+
+      const roomName = generateRoomName(voiceChannel.id);
+      
+      await storage.joinVoiceChannel(voiceChannelId, userId);
+
+      const token = await hmsService.generateAuthToken({
+        roomId: roomName,
+        userId,
+        role: role as 'guest' | 'host',
+      });
+
+      res.json({ token });
+    } catch (error) {
+      console.error("Error joining voice channel:", error);
+      res.status(500).json({ message: "Failed to join voice channel" });
+    }
+  });
+
+  app.post('/api/voice/leave', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { voiceChannelId } = req.body;
+
+      if (!voiceChannelId) {
+        return res.status(400).json({ message: "Voice channel ID required" });
+      }
+
+      await storage.leaveVoiceChannel(voiceChannelId, userId);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error leaving voice channel:", error);
+      res.status(500).json({ message: "Failed to leave voice channel" });
+    }
+  });
+
+  app.get('/api/voice/:voiceChannelId/participants', authMiddleware, async (req: any, res) => {
+    try {
+      const { voiceChannelId } = req.params;
+
+      const participants = await storage.getVoiceParticipants(voiceChannelId);
+
+      res.json(participants);
+    } catch (error) {
+      console.error("Error fetching voice participants:", error);
+      res.status(500).json({ message: "Failed to fetch participants" });
+    }
+  });
 
   return httpServer;
 }

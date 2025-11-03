@@ -132,8 +132,9 @@ export interface IStorage {
   getMutualHobbies(userId1: string, userId2: string): Promise<{category: string; count: number}[]>;
   
   // Voice channel operations
-  getOrCreateVoiceChannel(connectionId: string): Promise<VoiceChannel>;
+  getOrCreateVoiceChannel(connectionId: string, hmsRoomId?: string): Promise<VoiceChannel>;
   getVoiceChannel(connectionId: string): Promise<VoiceChannel | undefined>;
+  updateVoiceChannelRoomId(voiceChannelId: string, hmsRoomId: string): Promise<VoiceChannel>;
   deleteVoiceChannel(voiceChannelId: string): Promise<void>;
   joinVoiceChannel(voiceChannelId: string, userId: string): Promise<VoiceParticipant>;
   leaveVoiceChannel(voiceChannelId: string, userId: string): Promise<void>;
@@ -1073,7 +1074,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Voice channel operations
-  async getOrCreateVoiceChannel(connectionId: string): Promise<VoiceChannel> {
+  async getOrCreateVoiceChannel(connectionId: string, hmsRoomId?: string): Promise<VoiceChannel> {
     // First try to get existing channel
     const existing = await this.getVoiceChannel(connectionId);
     if (existing) return existing;
@@ -1081,11 +1082,22 @@ export class DatabaseStorage implements IStorage {
     // Use INSERT ... ON CONFLICT to handle race conditions
     const [channel] = await db
       .insert(voiceChannels)
-      .values({ connectionId })
+      .values({ connectionId, hmsRoomId })
       .onConflictDoUpdate({
         target: voiceChannels.connectionId,
-        set: { createdAt: sql`EXCLUDED.created_at` }
+        set: { 
+          hmsRoomId: hmsRoomId ? sql`EXCLUDED.hms_room_id` : sql`voice_channels.hms_room_id`
+        }
       })
+      .returning();
+    return channel;
+  }
+
+  async updateVoiceChannelRoomId(voiceChannelId: string, hmsRoomId: string): Promise<VoiceChannel> {
+    const [channel] = await db
+      .update(voiceChannels)
+      .set({ hmsRoomId })
+      .where(eq(voiceChannels.id, voiceChannelId))
       .returning();
     return channel;
   }
@@ -1184,6 +1196,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: voiceChannels.id,
         connectionId: voiceChannels.connectionId,
+        hmsRoomId: voiceChannels.hmsRoomId,
         createdAt: voiceChannels.createdAt,
       })
       .from(voiceParticipants)

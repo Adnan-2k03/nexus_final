@@ -11,6 +11,9 @@
     "db:push": "tsx node_modules/drizzle-kit/bin.cjs push --config drizzle.config.ts"
   },
   "dependencies": {
+    "@100mslive/server-sdk": "^0.3.0",
+    "@aws-sdk/client-s3": "^3.922.0",
+    "@aws-sdk/s3-request-presigner": "^3.922.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",

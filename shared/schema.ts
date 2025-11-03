@@ -212,6 +212,7 @@ export const portfolioPages = pgTable("portfolio_pages", {
 export const voiceChannels = pgTable("voice_channels", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   connectionId: varchar("connection_id").notNull().unique(), // References either connectionRequests or matchConnections - UNIQUE to prevent duplicate channels
+  hmsRoomId: varchar("hms_room_id"), // 100ms room ID for reusing existing rooms
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_connection_voice_channels").on(table.connectionId),
