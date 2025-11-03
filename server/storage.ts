@@ -352,6 +352,7 @@ export class DatabaseStorage implements IStorage {
   async getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }> {
     const matchConditions = [];
     const userConditions = [];
+    const gameProfileConditions = [];
     const page = filters?.page || 1;
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
@@ -375,10 +376,21 @@ export class DatabaseStorage implements IStorage {
       userConditions.push(eq(users.language, filters.language));
     }
     
+    // Game profile filters (rank)
+    if (filters?.rank) {
+      gameProfileConditions.push(
+        or(
+          eq(gameProfiles.currentRank, filters.rank),
+          eq(gameProfiles.highestRank, filters.rank)
+        )
+      );
+    }
+    
     // Combine all conditions
-    const allConditions = [...matchConditions, ...userConditions];
+    const allConditions = [...matchConditions, ...userConditions, ...gameProfileConditions];
     
     // Join with users table to get gamertag and profile data plus location
+    // Join with game profiles if rank filter is applied
     let query = db
       .select({
         id: matchRequests.id,
@@ -401,11 +413,33 @@ export class DatabaseStorage implements IStorage {
       .from(matchRequests)
       .leftJoin(users, eq(matchRequests.userId, users.id));
     
+    // Add game profile join if rank filter is present
+    if (filters?.rank) {
+      query = query.leftJoin(
+        gameProfiles, 
+        and(
+          eq(gameProfiles.userId, matchRequests.userId),
+          eq(gameProfiles.gameName, matchRequests.gameName)
+        )
+      ) as any;
+    }
+    
     // Count query for total
     let countQuery = db
       .select({ count: sql<number>`count(DISTINCT ${matchRequests.id})::int` })
       .from(matchRequests)
       .leftJoin(users, eq(matchRequests.userId, users.id));
+    
+    // Add game profile join to count query if rank filter is present
+    if (filters?.rank) {
+      countQuery = countQuery.leftJoin(
+        gameProfiles,
+        and(
+          eq(gameProfiles.userId, matchRequests.userId),
+          eq(gameProfiles.gameName, matchRequests.gameName)
+        )
+      ) as any;
+    }
     
     if (allConditions.length > 0) {
       query = query.where(and(...allConditions)) as any;
