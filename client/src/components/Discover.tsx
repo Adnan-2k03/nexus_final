@@ -427,8 +427,9 @@ export function Discover({ currentUserId }: DiscoverProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredUsers.map((user) => (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredUsers.map((user) => (
             <Card
               key={user.id}
               className="hover:shadow-lg transition-shadow cursor-pointer"
@@ -502,49 +503,50 @@ export function Discover({ currentUserId }: DiscoverProps) {
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="flex justify-center items-center gap-2 mt-8">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
-              data-testid="button-previous-page"
-            >
-              Previous
-            </Button>
-            <div className="flex items-center gap-2">
-              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
-                if (pageNum > totalPages) return null;
-                return (
-                  <Button
-                    key={pageNum}
-                    variant={currentPage === pageNum ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setCurrentPage(pageNum)}
-                    data-testid={`button-page-${pageNum}`}
-                  >
-                    {pageNum}
-                  </Button>
-                );
-              })}
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              disabled={currentPage === totalPages}
-              data-testid="button-next-page"
-            >
-              Next
-            </Button>
+            ))}
           </div>
-        )}
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                data-testid="button-previous-page"
+              >
+                Previous
+              </Button>
+              <div className="flex items-center gap-2">
+                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                  const pageNum = currentPage <= 3 ? i + 1 : currentPage - 2 + i;
+                  if (pageNum > totalPages) return null;
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      data-testid={`button-page-${pageNum}`}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                data-testid="button-next-page"
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {/* Profile View Dialog */}
