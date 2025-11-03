@@ -46,7 +46,8 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
 
   const createChannelMutation = useMutation({
     mutationFn: async (name: string) => {
-      return await apiRequest('POST', '/api/group-voice/create', { name });
+      const response = await apiRequest('POST', '/api/group-voice/create', { name });
+      return await response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
@@ -68,7 +69,8 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
 
   const inviteMutation = useMutation({
     mutationFn: async ({ channelId, userIds }: { channelId: string; userIds: string[] }) => {
-      return await apiRequest('POST', '/api/group-voice/invite', { channelId, userIds });
+      const response = await apiRequest('POST', '/api/group-voice/invite', { channelId, userIds });
+      return await response.json();
     },
     onSuccess: () => {
       setInviteDialogOpen(false);
