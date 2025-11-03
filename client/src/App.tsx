@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { BackgroundProvider, useBackground } from "@/components/BackgroundProvider";
 import { LayoutProvider, useLayout } from "@/contexts/LayoutContext";
+import { HMSRoomProvider } from "@100mslive/react-sdk";
 import { useState, useEffect } from "react";
 
 // Hooks
@@ -420,20 +421,22 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="gamematch-ui-theme">
-        <BackgroundProvider>
-          <LayoutProvider>
-            <TooltipProvider>
-              {/* Background layer */}
-              <BackgroundRenderer />
+      <HMSRoomProvider>
+        <ThemeProvider defaultTheme="dark" storageKey="gamematch-ui-theme">
+          <BackgroundProvider>
+            <LayoutProvider>
+              <TooltipProvider>
+                {/* Background layer */}
+                <BackgroundRenderer />
 
-              {/* Foreground content */}
-              <Router />
-              <Toaster />
-            </TooltipProvider>
-          </LayoutProvider>
-        </BackgroundProvider>
-      </ThemeProvider>
+                {/* Foreground content */}
+                <Router />
+                <Toaster />
+              </TooltipProvider>
+            </LayoutProvider>
+          </BackgroundProvider>
+        </ThemeProvider>
+      </HMSRoomProvider>
     </QueryClientProvider>
   );
 }

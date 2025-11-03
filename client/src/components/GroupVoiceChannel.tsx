@@ -66,15 +66,17 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
   const joinChannel = async () => {
     setIsJoining(true);
     try {
-      const response = await apiRequest<{ token: string; roomId: string }>(
+      const response = await apiRequest(
         "POST",
         "/api/group-voice/join",
         { channelId: channel.id }
       );
 
+      const data = await response.json() as { token: string; roomId: string };
+
       await hmsActions.join({
         userName: currentUserId,
-        authToken: response.token,
+        authToken: data.token,
       });
 
       toast({

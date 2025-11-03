@@ -21,7 +21,7 @@ import { UnifiedThemeSelector } from "./UnifiedThemeSelector";
 import { NotificationBell } from "./NotificationBell";
 
 interface GameNavigationProps {
-  currentPage: "home" | "search" | "create" | "profile" | "messages" | "settings" | "profile-setup" | "connections";
+  currentPage: "home" | "search" | "create" | "profile" | "messages" | "voice-channels" | "settings" | "profile-setup" | "connections";
   onNavigate: (page: string) => void;
   user?: {
     gamertag: string;
