@@ -372,6 +372,56 @@ function Router() {
         />
       ) : (
         <>
+          <Route path="/voice-channels">
+            {() => {
+              if (currentPage !== "voice-channels") {
+                setCurrentPage("voice-channels");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={(page) => {
+                        setCurrentPage(page as any);
+                        setShowCreateForm(false);
+                      }}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
+          <Route path="/messages">
+            {() => {
+              if (currentPage !== "messages") {
+                setCurrentPage("messages");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={(page) => {
+                        setCurrentPage(page as any);
+                        setShowCreateForm(false);
+                      }}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
           <Route path="/">
             {() => (
               <div className="min-h-screen relative">

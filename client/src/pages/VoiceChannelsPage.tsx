@@ -33,6 +33,10 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     queryKey: ['/api/group-voice/channels'],
   });
 
+  const { data: pendingInvites = [] } = useQuery<any[]>({
+    queryKey: ['/api/group-voice/invites'],
+  });
+
   const { data: connectionsResponse } = useQuery<ConnectionRequestWithUser[]>({
     queryKey: ['/api/connection-requests'],
   });
@@ -90,6 +94,49 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
       toast({
         title: "Error",
         description: "Failed to send invites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const acceptInviteMutation = useMutation({
+    mutationFn: async (inviteId: string) => {
+      const response = await apiRequest('POST', `/api/group-voice/invite/${inviteId}/accept`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
+      toast({
+        title: "Invite accepted",
+        description: "You've joined the voice channel",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to accept invite",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const declineInviteMutation = useMutation({
+    mutationFn: async (inviteId: string) => {
+      const response = await apiRequest('POST', `/api/group-voice/invite/${inviteId}/decline`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
+      toast({
+        title: "Invite declined",
+        description: "You've declined the channel invite",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to decline invite",
         variant: "destructive",
       });
     },
@@ -181,51 +228,103 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
         </Dialog>
       </div>
 
-      <div className="grid gap-4">
-        {channels.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center text-muted-foreground">
-                <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                <p>No voice channels yet</p>
-                <p className="text-sm">Create your first channel to get started</p>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          channels.map((channel) => (
-            <div key={channel.id}>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>{channel.name}</span>
-                    {channel.creatorId === currentUserId && (
+      {pendingInvites.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Pending Invites</h2>
+          <div className="grid gap-3">
+            {pendingInvites.map((invite: any) => (
+              <Card key={invite.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarImage src={invite.inviter?.profileImageUrl || undefined} />
+                        <AvatarFallback>
+                          {invite.inviter?.gamertag?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{invite.channel?.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Invited by {invite.inviter?.gamertag || "Unknown"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => acceptInviteMutation.mutate(invite.id)}
+                        disabled={acceptInviteMutation.isPending}
+                        data-testid={`button-accept-invite-${invite.id}`}
+                      >
+                        Accept
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => {
-                          setSelectedChannel(channel);
-                          setInviteDialogOpen(true);
-                        }}
-                        data-testid={`button-invite-${channel.id}`}
+                        onClick={() => declineInviteMutation.mutate(invite.id)}
+                        disabled={declineInviteMutation.isPending}
+                        data-testid={`button-decline-invite-${invite.id}`}
                       >
-                        <UserPlus className="h-4 w-4 mr-1" />
-                        Invite
+                        <X className="h-4 w-4" />
                       </Button>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <GroupVoiceChannel
-                    channel={channel}
-                    currentUserId={currentUserId}
-                    onLeave={() => queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] })}
-                  />
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            </div>
-          ))
-        )}
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <h2 className="text-xl font-semibold">My Channels</h2>
+        <div className="grid gap-4">
+          {channels.length === 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-center text-muted-foreground">
+                  <Users className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p>No voice channels yet</p>
+                  <p className="text-sm">Create your first channel to get started</p>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            channels.map((channel) => (
+              <div key={channel.id}>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center justify-between">
+                      <span>{channel.name}</span>
+                      {channel.creatorId === currentUserId && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedChannel(channel);
+                            setInviteDialogOpen(true);
+                          }}
+                          data-testid={`button-invite-${channel.id}`}
+                        >
+                          <UserPlus className="h-4 w-4 mr-1" />
+                          Invite
+                        </Button>
+                      )}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <GroupVoiceChannel
+                      channel={channel}
+                      currentUserId={currentUserId}
+                      onLeave={() => queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] })}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            ))
+          )}
+        </div>
       </div>
 
       <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
