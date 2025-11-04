@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -464,10 +464,28 @@ function BackgroundRenderer() {
 }
 
 function App() {
+  const [, setLocation] = useLocation();
+
   // Register service worker for PWA and push notifications
   useEffect(() => {
     registerServiceWorker();
   }, []);
+
+  // Listen for navigation messages from service worker
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'NAVIGATE') {
+        const { url } = event.data;
+        setLocation(url);
+      }
+    };
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+    };
+  }, [setLocation]);
 
   return (
     <QueryClientProvider client={queryClient}>

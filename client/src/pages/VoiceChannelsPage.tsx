@@ -33,9 +33,12 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     queryKey: ['/api/group-voice/channels'],
   });
 
-  const { data: pendingInvites = [] } = useQuery<any[]>({
+  const { data: allInvites = [] } = useQuery<any[]>({
     queryKey: ['/api/group-voice/invites'],
   });
+
+  const receivedInvites = allInvites.filter((inv: any) => inv.inviteeId === currentUserId);
+  const sentInvites = allInvites.filter((inv: any) => inv.inviterId === currentUserId);
 
   const { data: connectionsResponse } = useQuery<ConnectionRequestWithUser[]>({
     queryKey: ['/api/connection-requests'],
@@ -198,7 +201,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   };
 
   const getSentInvitesForChannel = (channelId: string) => {
-    return pendingInvites.filter((inv: any) => inv.channelId === channelId && inv.inviterId === currentUserId);
+    return sentInvites.filter((inv: any) => inv.channelId === channelId);
   };
 
   const getInviteStatus = (channelId: string, userId: string) => {
@@ -286,11 +289,11 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
         </div>
       </div>
 
-      {pendingInvites.length > 0 && (
+      {receivedInvites.length > 0 && (
         <div className="space-y-2">
           <h2 className="text-xl font-semibold">Pending Invites</h2>
           <div className="grid gap-3">
-            {pendingInvites.map((invite: any) => (
+            {receivedInvites.map((invite: any) => (
               <Card key={invite.id}>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -348,6 +351,65 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                         data-testid={`button-decline-invite-${invite.id}`}
                       >
                         <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sentInvites.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xl font-semibold">Sent Invites</h2>
+          <div className="grid gap-3">
+            {sentInvites.map((invite: any) => (
+              <Card key={invite.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Avatar 
+                        className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary" 
+                        onClick={() => {
+                          if (invite.inviteeId) {
+                            window.location.href = `/profile/${invite.inviteeId}`;
+                          }
+                        }}
+                        data-testid={`avatar-invitee-${invite.id}`}
+                      >
+                        <AvatarImage src={invite.inviteeProfileImageUrl || undefined} />
+                        <AvatarFallback>
+                          {invite.inviteeGamertag?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-medium">{invite.channelName || "Voice Channel"}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Sent to <span 
+                            className="cursor-pointer hover:underline" 
+                            onClick={() => {
+                              if (invite.inviteeId) {
+                                window.location.href = `/profile/${invite.inviteeId}`;
+                              }
+                            }}
+                            data-testid={`invitee-name-${invite.id}`}
+                          >
+                            {invite.inviteeGamertag || "Unknown"}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => cancelInviteMutation.mutate(invite.id)}
+                        disabled={cancelInviteMutation.isPending}
+                        data-testid={`button-cancel-sent-invite-${invite.id}`}
+                      >
+                        Cancel
                       </Button>
                     </div>
                   </div>

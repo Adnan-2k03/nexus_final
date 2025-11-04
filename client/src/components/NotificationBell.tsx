@@ -151,13 +151,6 @@ export function NotificationBell() {
       case "voice_channel_invite_declined":
         // Navigate to voice channels page
         setLocation("/voice-channels");
-        // Force a scroll to pending invites if it's an invite
-        if (notification.type === "voice_channel_invite") {
-          setTimeout(() => {
-            const element = document.querySelector('[data-testid^="button-accept-invite-"]');
-            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }, 100);
-        }
         break;
       
       case "connection_request":
