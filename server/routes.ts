@@ -2115,8 +2115,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const inviter = await storage.getUser(inviterId);
       const invitedUserIds: string[] = [];
+      const skippedUserIds: string[] = [];
 
       for (const userId of userIds) {
+        // Check if user already has a pending invite
+        const hasExistingInvite = await storage.hasExistingPendingInvite(channelId, userId);
+        if (hasExistingInvite) {
+          skippedUserIds.push(userId);
+          continue;
+        }
+
         // Create invite
         await storage.createGroupVoiceInvite(channelId, inviterId, userId);
         invitedUserIds.push(userId);
@@ -2145,7 +2153,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json({ success: true, invitedCount: invitedUserIds.length });
+      res.json({ 
+        success: true, 
+        invitedCount: invitedUserIds.length,
+        skippedCount: skippedUserIds.length,
+        message: skippedUserIds.length > 0 
+          ? `Invited ${invitedUserIds.length} user(s). Skipped ${skippedUserIds.length} user(s) who already have pending invites.`
+          : undefined
+      });
     } catch (error) {
       console.error("Error inviting to group voice channel:", error);
       res.status(500).json({ message: "Failed to invite users" });

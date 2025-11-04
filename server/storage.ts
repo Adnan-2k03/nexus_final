@@ -171,6 +171,7 @@ export interface IStorage {
   createGroupVoiceInvite(channelId: string, inviterId: string, inviteeId: string): Promise<GroupVoiceInvite>;
   getPendingGroupVoiceInvites(userId: string): Promise<GroupVoiceInviteWithUser[]>;
   getGroupVoiceInvite(inviteId: string): Promise<GroupVoiceInvite | undefined>;
+  hasExistingPendingInvite(channelId: string, inviteeId: string): Promise<boolean>;
   acceptGroupVoiceInvite(inviteId: string): Promise<void>;
   declineGroupVoiceInvite(inviteId: string): Promise<void>;
 }
@@ -1451,6 +1452,22 @@ export class DatabaseStorage implements IStorage {
       .where(eq(groupVoiceInvites.id, inviteId));
     
     return invite || undefined;
+  }
+
+  async hasExistingPendingInvite(channelId: string, inviteeId: string): Promise<boolean> {
+    const [existing] = await db
+      .select()
+      .from(groupVoiceInvites)
+      .where(
+        and(
+          eq(groupVoiceInvites.channelId, channelId),
+          eq(groupVoiceInvites.inviteeId, inviteeId),
+          eq(groupVoiceInvites.status, 'pending')
+        )
+      )
+      .limit(1);
+    
+    return !!existing;
   }
 
   async acceptGroupVoiceInvite(inviteId: string): Promise<void> {
