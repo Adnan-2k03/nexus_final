@@ -237,16 +237,39 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={invite.inviter?.profileImageUrl || undefined} />
+                      <Avatar 
+                        className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary" 
+                        onClick={() => {
+                          if (invite.inviterId) {
+                            const user = allUsers.find(u => u.id === invite.inviterId);
+                            if (user) {
+                              const profileDialog = document.createElement('button');
+                              profileDialog.setAttribute('data-user-id', invite.inviterId);
+                              profileDialog.click();
+                            }
+                          }
+                        }}
+                        data-testid={`avatar-inviter-${invite.id}`}
+                      >
+                        <AvatarImage src={invite.inviterProfileImageUrl || undefined} />
                         <AvatarFallback>
-                          {invite.inviter?.gamertag?.[0]?.toUpperCase() || "?"}
+                          {invite.inviterGamertag?.[0]?.toUpperCase() || "?"}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-medium">{invite.channel?.name}</p>
+                        <p className="font-medium">{invite.channelName || "Voice Channel"}</p>
                         <p className="text-sm text-muted-foreground">
-                          Invited by {invite.inviter?.gamertag || "Unknown"}
+                          Invited by <span 
+                            className="cursor-pointer hover:underline" 
+                            onClick={() => {
+                              if (invite.inviterId) {
+                                window.location.href = `/profile/${invite.inviterId}`;
+                              }
+                            }}
+                            data-testid={`inviter-name-${invite.id}`}
+                          >
+                            {invite.inviterGamertag || "Unknown"}
+                          </span>
                         </p>
                       </div>
                     </div>
