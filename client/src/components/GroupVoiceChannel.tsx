@@ -91,10 +91,17 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
 
       const data = await response.json() as { token: string; roomId: string };
 
-      await hmsActions.join({
-        userName: currentUserId,
-        authToken: data.token,
+      const joinTimeout = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Connection timeout - 100ms credentials may be invalid")), 10000);
       });
+
+      await Promise.race([
+        hmsActions.join({
+          userName: currentUserId,
+          authToken: data.token,
+        }),
+        joinTimeout
+      ]);
 
       toast({
         title: "Joined voice channel",
@@ -102,9 +109,12 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
       });
     } catch (error) {
       console.error("Error joining channel:", error);
+      const errorMessage = error instanceof Error ? error.message : "Could not connect to voice channel";
       toast({
         title: "Failed to join",
-        description: "Could not connect to voice channel",
+        description: errorMessage.includes("credentials") 
+          ? "Voice service credentials are invalid. Please contact support."
+          : errorMessage,
         variant: "destructive",
       });
     } finally {
