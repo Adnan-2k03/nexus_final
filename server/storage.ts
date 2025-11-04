@@ -12,6 +12,7 @@ import {
   voiceParticipants,
   groupVoiceChannels,
   groupVoiceMembers,
+  groupVoiceInvites,
   pushSubscriptions,
   type User,
   type UpsertUser,
@@ -46,6 +47,9 @@ import {
   type GroupVoiceMember,
   type GroupVoiceMemberWithUser,
   type InsertGroupVoiceMember,
+  type GroupVoiceInvite,
+  type GroupVoiceInviteWithUser,
+  type InsertGroupVoiceInvite,
   type PushSubscription,
   type InsertPushSubscription,
 } from "@shared/schema";
@@ -162,6 +166,13 @@ export interface IStorage {
   getGroupVoiceMembers(channelId: string): Promise<GroupVoiceMemberWithUser[]>;
   setGroupMemberActive(channelId: string, userId: string, isActive: boolean): Promise<GroupVoiceMember>;
   setGroupMemberMuted(channelId: string, userId: string, isMuted: boolean): Promise<GroupVoiceMember>;
+  
+  // Group voice channel invite operations
+  createGroupVoiceInvite(channelId: string, inviterId: string, inviteeId: string): Promise<GroupVoiceInvite>;
+  getPendingGroupVoiceInvites(userId: string): Promise<GroupVoiceInviteWithUser[]>;
+  getGroupVoiceInvite(inviteId: string): Promise<GroupVoiceInvite | undefined>;
+  acceptGroupVoiceInvite(inviteId: string): Promise<void>;
+  declineGroupVoiceInvite(inviteId: string): Promise<void>;
 }
 
 // Database storage implementation using PostgreSQL
@@ -1392,6 +1403,93 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updated;
+  }
+
+  // Group voice channel invite operations
+  async createGroupVoiceInvite(channelId: string, inviterId: string, inviteeId: string): Promise<GroupVoiceInvite> {
+    const [invite] = await db
+      .insert(groupVoiceInvites)
+      .values({ channelId, inviterId, inviteeId, status: 'pending' })
+      .returning();
+    
+    return invite;
+  }
+
+  async getPendingGroupVoiceInvites(userId: string): Promise<GroupVoiceInviteWithUser[]> {
+    const invites = await db
+      .select({
+        id: groupVoiceInvites.id,
+        channelId: groupVoiceInvites.channelId,
+        inviterId: groupVoiceInvites.inviterId,
+        inviteeId: groupVoiceInvites.inviteeId,
+        status: groupVoiceInvites.status,
+        createdAt: groupVoiceInvites.createdAt,
+        respondedAt: groupVoiceInvites.respondedAt,
+        inviterGamertag: users.gamertag,
+        inviterProfileImageUrl: users.profileImageUrl,
+        inviteeGamertag: sql<string | null>`NULL`,
+        inviteeProfileImageUrl: sql<string | null>`NULL`,
+        channelName: groupVoiceChannels.name,
+      })
+      .from(groupVoiceInvites)
+      .leftJoin(users, eq(groupVoiceInvites.inviterId, users.id))
+      .leftJoin(groupVoiceChannels, eq(groupVoiceInvites.channelId, groupVoiceChannels.id))
+      .where(
+        and(
+          eq(groupVoiceInvites.inviteeId, userId),
+          eq(groupVoiceInvites.status, 'pending')
+        )
+      );
+    
+    return invites;
+  }
+
+  async getGroupVoiceInvite(inviteId: string): Promise<GroupVoiceInvite | undefined> {
+    const [invite] = await db
+      .select()
+      .from(groupVoiceInvites)
+      .where(eq(groupVoiceInvites.id, inviteId));
+    
+    return invite || undefined;
+  }
+
+  async acceptGroupVoiceInvite(inviteId: string): Promise<void> {
+    const invite = await this.getGroupVoiceInvite(inviteId);
+    
+    if (!invite) {
+      throw new Error('Invite not found');
+    }
+    
+    if (invite.status !== 'pending') {
+      throw new Error('Invite already responded to');
+    }
+    
+    // Add user to channel members
+    await this.addGroupVoiceMember(invite.channelId, invite.inviteeId);
+    
+    // Update invite status
+    await db
+      .update(groupVoiceInvites)
+      .set({ status: 'accepted', respondedAt: sql`NOW()` })
+      .where(eq(groupVoiceInvites.id, inviteId));
+  }
+
+  async declineGroupVoiceInvite(inviteId: string): Promise<void> {
+    const invite = await this.getGroupVoiceInvite(inviteId);
+    
+    if (!invite) {
+      throw new Error('Invite not found');
+    }
+    
+    if (invite.status !== 'pending') {
+      throw new Error('Invite already responded to');
+    }
+    
+    // Update invite status
+    await db
+      .update(groupVoiceInvites)
+      .set({ status: 'declined', respondedAt: sql`NOW()` })
+      .where(eq(groupVoiceInvites.id, inviteId));
   }
 }
 

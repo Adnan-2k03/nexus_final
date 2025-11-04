@@ -245,6 +245,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                   <Checkbox
                     checked={selectedFriends.includes(friend.id)}
                     onCheckedChange={() => toggleFriendSelection(friend.id)}
+                    onClick={(e) => e.stopPropagation()}
                   />
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={friend.profileImageUrl || undefined} />

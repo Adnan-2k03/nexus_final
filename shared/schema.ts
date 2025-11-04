@@ -25,7 +25,10 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "connection_declined",
   "match_application",
   "match_accepted",
-  "match_declined"
+  "match_declined",
+  "voice_channel_invite",
+  "voice_channel_invite_accepted",
+  "voice_channel_invite_declined"
 ]);
 
 // Session storage table for authentication
@@ -144,11 +147,13 @@ export const chatMessages = pgTable("chat_messages", {
 export const notifications = pgTable("notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  type: varchar("type").notNull(), // connection_request, connection_accepted, connection_declined, match_application, match_accepted, match_declined
+  type: varchar("type").notNull(), // connection_request, connection_accepted, connection_declined, match_application, match_accepted, match_declined, voice_channel_invite, etc.
   title: varchar("title").notNull(),
   message: text("message").notNull(),
   relatedUserId: varchar("related_user_id").references(() => users.id), // The user who triggered this notification
   relatedMatchId: varchar("related_match_id").references(() => matchRequests.id),
+  actionUrl: varchar("action_url"), // URL to navigate to when notification is clicked
+  actionData: jsonb("action_data"), // Additional data needed for notification action
   isRead: boolean("is_read").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
@@ -245,6 +250,21 @@ export const groupVoiceMembers = pgTable("group_voice_members", {
   index("idx_group_voice_user_members").on(table.userId),
 ]);
 
+// Group Voice Channel Invites table - tracks pending invitations
+export const groupVoiceInvites = pgTable("group_voice_invites", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  channelId: varchar("channel_id").notNull().references(() => groupVoiceChannels.id, { onDelete: "cascade" }),
+  inviterId: varchar("inviter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  inviteeId: varchar("invitee_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: varchar("status").notNull().default("pending"), // pending, accepted, declined
+  createdAt: timestamp("created_at").defaultNow(),
+  respondedAt: timestamp("responded_at"),
+}, (table) => [
+  index("idx_group_voice_invites_channel").on(table.channelId),
+  index("idx_group_voice_invites_invitee").on(table.inviteeId),
+  index("idx_group_voice_invites_status").on(table.status),
+]);
+
 // Voice Participants table - tracks who's currently in each voice channel
 export const voiceParticipants = pgTable("voice_participants", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -296,6 +316,8 @@ export type InsertGroupVoiceChannel = typeof groupVoiceChannels.$inferInsert;
 export type GroupVoiceChannel = typeof groupVoiceChannels.$inferSelect;
 export type InsertGroupVoiceMember = typeof groupVoiceMembers.$inferInsert;
 export type GroupVoiceMember = typeof groupVoiceMembers.$inferSelect;
+export type InsertGroupVoiceInvite = typeof groupVoiceInvites.$inferInsert;
+export type GroupVoiceInvite = typeof groupVoiceInvites.$inferSelect;
 export type InsertVoiceParticipant = typeof voiceParticipants.$inferInsert;
 export type VoiceParticipant = typeof voiceParticipants.$inferSelect;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
@@ -353,6 +375,15 @@ export type GroupVoiceMemberWithUser = GroupVoiceMember & {
   lastName: string | null;
 };
 
+// Group voice invite with user information
+export type GroupVoiceInviteWithUser = GroupVoiceInvite & {
+  inviterGamertag: string | null;
+  inviterProfileImageUrl: string | null;
+  inviteeGamertag: string | null;
+  inviteeProfileImageUrl: string | null;
+  channelName: string | null;
+};
+
 export const insertUserSchema = createInsertSchema(users);
 
 // Local registration schema - minimal fields required to create account
@@ -382,6 +413,7 @@ export const insertPortfolioPageSchema = createInsertSchema(portfolioPages).omit
 export const insertVoiceChannelSchema = createInsertSchema(voiceChannels).omit({ id: true, createdAt: true });
 export const insertGroupVoiceChannelSchema = createInsertSchema(groupVoiceChannels).omit({ id: true, createdAt: true });
 export const insertGroupVoiceMemberSchema = createInsertSchema(groupVoiceMembers).omit({ id: true, joinedAt: true });
+export const insertGroupVoiceInviteSchema = createInsertSchema(groupVoiceInvites).omit({ id: true, createdAt: true, respondedAt: true });
 export const insertVoiceParticipantSchema = createInsertSchema(voiceParticipants).omit({ id: true, joinedAt: true });
 export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions).omit({ id: true, createdAt: true });
 

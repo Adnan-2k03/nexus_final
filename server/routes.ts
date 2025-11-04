@@ -2089,20 +2089,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/group-voice/invite', authMiddleware, async (req: any, res) => {
     try {
+      const inviterId = req.user.id;
       const { channelId, userIds } = req.body;
 
       if (!channelId || !userIds || !Array.isArray(userIds)) {
         return res.status(400).json({ message: "Channel ID and user IDs required" });
       }
 
-      for (const userId of userIds) {
-        await storage.addGroupVoiceMember(channelId, userId);
+      const channel = await storage.getGroupVoiceChannel(channelId);
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
       }
 
-      res.json({ success: true, invitedCount: userIds.length });
+      const inviter = await storage.getUser(inviterId);
+      const invitedUserIds: string[] = [];
+
+      for (const userId of userIds) {
+        // Create invite
+        await storage.createGroupVoiceInvite(channelId, inviterId, userId);
+        invitedUserIds.push(userId);
+
+        // Create notification
+        await storage.createNotification({
+          userId: userId,
+          type: "voice_channel_invite",
+          title: "Voice Channel Invite",
+          message: `${inviter?.gamertag || "Someone"} invited you to join "${channel.name}"`,
+          relatedUserId: inviterId,
+          actionUrl: "/voice-channels",
+          actionData: { channelId, inviteId: null },
+        });
+
+        // Send push notification
+        try {
+          await sendPushNotification(
+            userId,
+            "Voice Channel Invite",
+            `${inviter?.gamertag || "Someone"} invited you to join "${channel.name}"`,
+            { url: "/voice-channels", channelId }
+          );
+        } catch (pushError) {
+          console.error("Error sending push notification:", pushError);
+        }
+      }
+
+      res.json({ success: true, invitedCount: invitedUserIds.length });
     } catch (error) {
       console.error("Error inviting to group voice channel:", error);
       res.status(500).json({ message: "Failed to invite users" });
+    }
+  });
+
+  // Get pending voice channel invites
+  app.get('/api/group-voice/invites', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const invites = await storage.getPendingGroupVoiceInvites(userId);
+      res.json(invites);
+    } catch (error) {
+      console.error("Error fetching pending invites:", error);
+      res.status(500).json({ message: "Failed to fetch invites" });
+    }
+  });
+
+  // Accept voice channel invite
+  app.post('/api/group-voice/invite/:inviteId/accept', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { inviteId } = req.params;
+
+      const invite = await storage.getGroupVoiceInvite(inviteId);
+      if (!invite) {
+        return res.status(404).json({ message: "Invite not found" });
+      }
+
+      if (invite.inviteeId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      await storage.acceptGroupVoiceInvite(inviteId);
+
+      // Create notification for inviter
+      const invitee = await storage.getUser(userId);
+      const channel = await storage.getGroupVoiceChannel(invite.channelId);
+      
+      await storage.createNotification({
+        userId: invite.inviterId,
+        type: "voice_channel_invite_accepted",
+        title: "Invite Accepted",
+        message: `${invitee?.gamertag || "Someone"} accepted your invite to "${channel?.name || "voice channel"}"`,
+        relatedUserId: userId,
+        actionUrl: "/voice-channels",
+      });
+
+      res.json({ success: true, channelId: invite.channelId });
+    } catch (error) {
+      console.error("Error accepting invite:", error);
+      res.status(500).json({ message: "Failed to accept invite" });
+    }
+  });
+
+  // Decline voice channel invite
+  app.post('/api/group-voice/invite/:inviteId/decline', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { inviteId } = req.params;
+
+      const invite = await storage.getGroupVoiceInvite(inviteId);
+      if (!invite) {
+        return res.status(404).json({ message: "Invite not found" });
+      }
+
+      if (invite.inviteeId !== userId) {
+        return res.status(403).json({ message: "Unauthorized" });
+      }
+
+      await storage.declineGroupVoiceInvite(inviteId);
+
+      // Optionally create notification for inviter
+      const invitee = await storage.getUser(userId);
+      const channel = await storage.getGroupVoiceChannel(invite.channelId);
+      
+      await storage.createNotification({
+        userId: invite.inviterId,
+        type: "voice_channel_invite_declined",
+        title: "Invite Declined",
+        message: `${invitee?.gamertag || "Someone"} declined your invite to "${channel?.name || "voice channel"}"`,
+        relatedUserId: userId,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error declining invite:", error);
+      res.status(500).json({ message: "Failed to decline invite" });
     }
   });
 
@@ -2127,6 +2246,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching channel members:", error);
       res.status(500).json({ message: "Failed to fetch members" });
+    }
+  });
+
+  // Remove member from voice channel (creator only)
+  app.delete('/api/group-voice/:channelId/member/:userId', authMiddleware, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      const { channelId, userId } = req.params;
+
+      const channel = await storage.getGroupVoiceChannel(channelId);
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+
+      if (channel.creatorId !== currentUserId) {
+        return res.status(403).json({ message: "Only the creator can remove members" });
+      }
+
+      await storage.removeGroupVoiceMember(channelId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing member:", error);
+      res.status(500).json({ message: "Failed to remove member" });
     }
   });
 

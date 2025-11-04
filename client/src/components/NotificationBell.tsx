@@ -15,11 +15,13 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import type { Notification, User } from "@shared/schema";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
 
 export function NotificationBell() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
 
@@ -138,10 +140,20 @@ export function NotificationBell() {
       markAsReadMutation.mutate(notification.id);
     }
     
-    // If it's a connection accepted notification, open the profile dialog
+    // Check if notification has a custom action URL
+    if (notification.actionUrl) {
+      setLocation(notification.actionUrl);
+      return;
+    }
+    
+    // Handle specific notification types
     if (notification.type === "connection_accepted" && notification.relatedUserId) {
       setProfileDialogUserId(notification.relatedUserId);
       setOpenProfileDialog(true);
+    } else if (notification.type === "voice_channel_invite") {
+      setLocation("/voice-channels");
+    } else if (notification.type === "match_application" || notification.type === "match_accepted") {
+      setLocation("/messages");
     }
   };
 
@@ -159,6 +171,12 @@ export function NotificationBell() {
         return "🎉";
       case "match_declined":
         return "⛔";
+      case "voice_channel_invite":
+        return "🎙️";
+      case "voice_channel_invite_accepted":
+        return "✅";
+      case "voice_channel_invite_declined":
+        return "❌";
       default:
         return "📬";
     }

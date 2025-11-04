@@ -12,6 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ProfileDialog } from "@/components/ui/profile-dialog";
+import { useQuery } from "@tanstack/react-query";
+import type { User } from "@shared/schema";
 import {
   Mic,
   MicOff,
@@ -21,6 +24,7 @@ import {
   Users,
   Copy,
   Check,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -43,7 +47,20 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
   const [isJoining, setIsJoining] = useState(false);
   const [members, setMembers] = useState<GroupVoiceMemberWithUser[]>([]);
   const [copiedInvite, setCopiedInvite] = useState(false);
+  const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
+  const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const { toast } = useToast();
+
+  const { data: profileUser } = useQuery<User>({
+    queryKey: ["/api/users", profileDialogUserId],
+    queryFn: async () => {
+      if (!profileDialogUserId) throw new Error("No user ID");
+      const response = await fetch(`/api/users/${profileDialogUserId}`);
+      if (!response.ok) throw new Error("Failed to fetch user");
+      return response.json();
+    },
+    enabled: !!profileDialogUserId,
+  });
 
   const inviteLink = `${window.location.origin}/join-channel/${channel.inviteCode}`;
 
@@ -149,6 +166,23 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
     setTimeout(() => setCopiedInvite(false), 2000);
   };
 
+  const handleRemoveMember = async (userId: string) => {
+    try {
+      await apiRequest("DELETE", `/api/group-voice/${channel.id}/member/${userId}`);
+      toast({
+        title: "Member removed",
+        description: "User has been removed from the channel",
+      });
+      fetchMembers();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove member",
+        variant: "destructive",
+      });
+    }
+  };
+
   const screenSharePeers = peers.filter(peer => peer.auxiliaryTracks.length > 0);
 
   return (
@@ -205,9 +239,29 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
                         {member.gamertag?.[0]?.toUpperCase() || "?"}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-xs">{member.gamertag || "Unknown"}</span>
+                    <span
+                      className="text-xs cursor-pointer hover:underline"
+                      onClick={() => {
+                        setProfileDialogUserId(member.userId);
+                        setOpenProfileDialog(true);
+                      }}
+                      data-testid={`member-name-${member.userId}`}
+                    >
+                      {member.gamertag || "Unknown"}
+                    </span>
                     {member.isActive && (
                       <div className="h-2 w-2 bg-green-500 rounded-full" data-testid={`active-${member.userId}`} />
+                    )}
+                    {channel.creatorId === currentUserId && member.userId !== currentUserId && (
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                        onClick={() => handleRemoveMember(member.userId)}
+                        data-testid={`button-remove-${member.userId}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
                     )}
                   </div>
                 ))}
@@ -345,6 +399,12 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
           </CardContent>
         </Card>
       )}
+
+      <ProfileDialog
+        user={profileUser}
+        open={openProfileDialog}
+        onOpenChange={setOpenProfileDialog}
+      />
     </div>
   );
 }
