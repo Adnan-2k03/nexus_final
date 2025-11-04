@@ -1,13 +1,13 @@
 import { SDK } from '@100mslive/server-sdk';
 
-const HMS_APP_ACCESS_KEY = process.env.HMS_APP_ACCESS_KEY;
+const HMS_APP_ID = process.env.HMS_APP_ID;
 const HMS_APP_SECRET = process.env.HMS_APP_SECRET;
 const HMS_TEMPLATE_ID = process.env.HMS_TEMPLATE_ID;
 
 let hmsClient: SDK | null = null;
 
-if (HMS_APP_ACCESS_KEY && HMS_APP_SECRET) {
-  hmsClient = new SDK(HMS_APP_ACCESS_KEY, HMS_APP_SECRET);
+if (HMS_APP_ID && HMS_APP_SECRET) {
+  hmsClient = new SDK(HMS_APP_ID, HMS_APP_SECRET);
 }
 
 export interface CreateRoomOptions {
@@ -31,7 +31,7 @@ export interface HMSService {
 
 export const hmsService: HMSService = {
   isConfigured: () => {
-    return !!(HMS_APP_ACCESS_KEY && HMS_APP_SECRET);
+    return !!(HMS_APP_ID && HMS_APP_SECRET);
   },
 
   createRoom: async ({ name, description, templateId }: CreateRoomOptions) => {
@@ -67,7 +67,14 @@ export const hmsService: HMSService = {
       throw new Error('100ms is not configured. Please set HMS environment variables.');
     }
 
-    await hmsClient.rooms.update(roomId, { enabled: false });
+    try {
+      await (hmsClient as any).activeRooms.endRoom(roomId, {
+        reason: 'Voice channel ended',
+        lock: false
+      });
+    } catch (error) {
+      console.error('Error ending room:', error);
+    }
   },
 };
 

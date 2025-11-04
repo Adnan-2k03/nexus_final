@@ -24,6 +24,7 @@ export function NotificationBell() {
   const [, setLocation] = useLocation();
   const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Set up WebSocket connection for real-time notifications
   useEffect(() => {
@@ -136,9 +137,12 @@ export function NotificationBell() {
   });
 
   const handleNotificationClick = (notification: Notification) => {
-    if (notification.isRead === "false") {
+    if (notification.isRead === false) {
       markAsReadMutation.mutate(notification.id);
     }
+    
+    // Close the dropdown menu
+    setDropdownOpen(false);
     
     // Check if notification has a custom action URL
     if (notification.actionUrl) {
@@ -184,7 +188,7 @@ export function NotificationBell() {
 
   return (
     <>
-      <DropdownMenu>
+      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
@@ -221,7 +225,7 @@ export function NotificationBell() {
               <DropdownMenuItem
                 key={notification.id}
                 className={`flex flex-col items-start p-4 cursor-pointer ${
-                  notification.isRead === "false"
+                  notification.isRead === false
                     ? "bg-blue-50 dark:bg-blue-950"
                     : ""
                 }`}
@@ -237,7 +241,7 @@ export function NotificationBell() {
                       <h4 className="font-semibold text-sm">
                         {notification.title}
                       </h4>
-                      {notification.isRead === "false" && (
+                      {notification.isRead === false && (
                         <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
                       )}
                     </div>
