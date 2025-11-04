@@ -28,13 +28,13 @@
 
 ### 2. Get App Credentials
 From the dashboard, copy these values:
-- **App ID**
+- **Access Key** (also called App ID)
 - **App Secret**
 - **Template ID** (for voice-only rooms)
 
 ### 3. Add Secrets to Replit
 ```bash
-HMS_APP_ID=your_app_id
+HMS_APP_ACCESS_KEY=your_access_key
 HMS_APP_SECRET=your_app_secret
 HMS_TEMPLATE_ID=your_template_id
 ```
@@ -51,7 +51,7 @@ import jwt from 'jsonwebtoken';
 
 export function generateHMSToken(userId: string, roomId: string, role: string = 'guest'): string {
   const payload = {
-    access_key: process.env.HMS_APP_ID,
+    access_key: process.env.HMS_APP_ACCESS_KEY,
     room_id: roomId,
     user_id: userId,
     role: role,
