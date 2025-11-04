@@ -1989,11 +1989,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: `Group voice channel: ${name}`,
       });
 
-      const channel = await storage.createGroupVoiceChannel(name, userId, room.id);
+      console.log('HMS Room created:', room);
+      const hmsRoomId = room?.id || room?.data?.id;
+      
+      if (!hmsRoomId) {
+        console.error('HMS room ID not found in response:', room);
+        throw new Error('Failed to get room ID from HMS');
+      }
+
+      const channel = await storage.createGroupVoiceChannel(name, userId, hmsRoomId);
 
       res.json({
         channelId: channel.id,
-        roomId: room.id,
+        roomId: hmsRoomId,
         inviteCode: channel.inviteCode,
       });
     } catch (error) {
@@ -2053,8 +2061,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.addGroupVoiceMember(channel.id, userId);
       await storage.setGroupMemberActive(channel.id, userId, true);
 
+      if (!channel.hmsRoomId) {
+        return res.status(500).json({ message: "Channel HMS room ID not found" });
+      }
+
       const token = await hmsService.generateAuthToken({
-        roomId: channel.hmsRoomId || `group-${channel.name}`,
+        roomId: channel.hmsRoomId,
         userId,
         role: channel.creatorId === userId ? 'host' : 'guest',
       });
