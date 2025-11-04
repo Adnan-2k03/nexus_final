@@ -13,7 +13,8 @@ import {
   X,
   Users,
   Search,
-  MoreVertical
+  MoreVertical,
+  Mic
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ export function GameNavigation({
     { id: "search", label: "Discover", icon: Search },
     { id: "connections", label: "Matches", icon: Users },
     { id: "messages", label: "Messages", icon: MessageCircle },
+    { id: "voice-channels", label: "Voice", icon: Mic },
     { id: "profile", label: "Profile", icon: User },
   ];
 
