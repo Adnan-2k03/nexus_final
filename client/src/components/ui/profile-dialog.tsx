@@ -12,7 +12,7 @@ import type { User } from "@shared/schema";
 
 interface ProfileDialogProps {
   userId: string;
-  gamertag: string;
+  gamertag?: string;
   profileImageUrl?: string;
   children?: React.ReactNode;
   trigger?: React.ReactNode;
@@ -67,7 +67,7 @@ export function ProfileDialog({
       setOpen(false);
       toast({
         title: "Connection Removed",
-        description: `You have disconnected from ${gamertag}`,
+        description: `You have disconnected from ${gamertag || 'this user'}`,
       });
     },
     onError: () => {
@@ -146,9 +146,9 @@ export function ProfileDialog({
       data-testid={`button-view-profile-${userId}`}
     >
       <Avatar className="h-10 w-10">
-        <AvatarImage src={profileImageUrl} alt={gamertag} />
+        <AvatarImage src={profileImageUrl} alt={gamertag || 'User'} />
         <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
-          {gamertag.slice(0, 2).toUpperCase()}
+          {(gamertag || 'U').slice(0, 2).toUpperCase()}
         </AvatarFallback>
       </Avatar>
       {children}
@@ -206,9 +206,9 @@ export function ProfileDialog({
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Disconnect from {gamertag}?</AlertDialogTitle>
+                  <AlertDialogTitle>Disconnect from {gamertag || 'this user'}?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    This will remove your connection with {gamertag}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
+                    This will remove your connection with {gamertag || 'this user'}. Your chat history will be lost, and you'll need to send a new connection request to reconnect.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
