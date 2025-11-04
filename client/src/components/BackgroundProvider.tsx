@@ -12,7 +12,7 @@ const BackgroundContext = createContext<BackgroundContextType | undefined>(undef
 export function BackgroundProvider({ children }: { children: React.ReactNode }) {
   const [background, setBackgroundState] = useState<BackgroundTheme>(() => {
     const stored = localStorage.getItem("gamematch-background-theme");
-    return (stored as BackgroundTheme) || "canvas2d";
+    return (stored as BackgroundTheme) || "solid";
   });
 
   useEffect(() => {
