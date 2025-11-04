@@ -2167,15 +2167,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get pending voice channel invites
+  // Get pending voice channel invites (received and sent)
   app.get('/api/group-voice/invites', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const invites = await storage.getPendingGroupVoiceInvites(userId);
-      res.json(invites);
+      const receivedInvites = await storage.getPendingGroupVoiceInvites(userId);
+      const sentInvites = await storage.getSentGroupVoiceInvites(userId);
+      res.json([...receivedInvites, ...sentInvites]);
     } catch (error) {
       console.error("Error fetching pending invites:", error);
       res.status(500).json({ message: "Failed to fetch invites" });
+    }
+  });
+
+  // Cancel voice channel invite (inviter only)
+  app.delete('/api/group-voice/invite/:inviteId', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { inviteId } = req.params;
+
+      const invite = await storage.getGroupVoiceInvite(inviteId);
+      if (!invite) {
+        return res.status(404).json({ message: "Invite not found" });
+      }
+
+      if (invite.inviterId !== userId) {
+        return res.status(403).json({ message: "Unauthorized - only inviter can cancel" });
+      }
+
+      await storage.declineGroupVoiceInvite(inviteId);
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error cancelling invite:", error);
+      res.status(500).json({ message: "Failed to cancel invite" });
     }
   });
 

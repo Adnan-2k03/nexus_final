@@ -144,14 +144,22 @@ export function NotificationBell() {
     // Close the dropdown menu
     setDropdownOpen(false);
     
-    // Check if notification has a custom action URL
-    if (notification.actionUrl) {
-      setLocation(notification.actionUrl);
-      return;
-    }
-    
-    // Handle specific notification types
+    // Handle specific notification types with proper data handling
     switch (notification.type) {
+      case "voice_channel_invite":
+      case "voice_channel_invite_accepted":
+      case "voice_channel_invite_declined":
+        // Navigate to voice channels page
+        setLocation("/voice-channels");
+        // Force a scroll to pending invites if it's an invite
+        if (notification.type === "voice_channel_invite") {
+          setTimeout(() => {
+            const element = document.querySelector('[data-testid^="button-accept-invite-"]');
+            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 100);
+        }
+        break;
+      
       case "connection_request":
       case "connection_accepted":
       case "connection_declined":
@@ -161,20 +169,18 @@ export function NotificationBell() {
         }
         break;
       
-      case "voice_channel_invite":
-      case "voice_channel_invite_accepted":
-      case "voice_channel_invite_declined":
-        setLocation("/voice-channels");
-        break;
-      
       case "match_application":
       case "match_accepted":
       case "match_declined":
+        // Navigate to messages to see the match conversation
         setLocation("/messages");
         break;
       
       default:
-        if (notification.relatedUserId) {
+        // Use custom action URL if available
+        if (notification.actionUrl) {
+          setLocation(notification.actionUrl);
+        } else if (notification.relatedUserId) {
           setProfileDialogUserId(notification.relatedUserId);
           setOpenProfileDialog(true);
         }

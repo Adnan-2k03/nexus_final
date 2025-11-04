@@ -338,32 +338,45 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
                 Participants ({peers.length})
               </p>
               <div className="grid grid-cols-2 gap-2">
-                {peers.map((peer) => (
-                  <div
-                    key={peer.id}
-                    className="flex items-center gap-2 bg-background rounded-lg p-2"
-                    data-testid={`peer-${peer.id}`}
-                  >
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>
-                        {peer.name[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{peer.name}</p>
-                      <div className="flex gap-1">
-                        {peer.audioTrack ? (
-                          <Mic className="h-3 w-3 text-green-500" />
-                        ) : (
-                          <MicOff className="h-3 w-3 text-muted-foreground" />
-                        )}
-                        {peer.auxiliaryTracks.length > 0 && (
-                          <MonitorUp className="h-3 w-3 text-primary" />
-                        )}
+                {peers.map((peer) => {
+                  const member = members.find((m: any) => m.userId === peer.name);
+                  
+                  return (
+                    <div
+                      key={peer.id}
+                      className="flex items-center gap-2 bg-background rounded-lg p-2 cursor-pointer hover:bg-muted"
+                      onClick={() => {
+                        if (member?.userId) {
+                          setProfileDialogUserId(member.userId);
+                          setOpenProfileDialog(true);
+                        }
+                      }}
+                      data-testid={`peer-${peer.id}`}
+                    >
+                      <Avatar className="h-8 w-8">
+                        {member?.profileImageUrl ? (
+                          <AvatarImage src={member.profileImageUrl} />
+                        ) : null}
+                        <AvatarFallback>
+                          {peer.name[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{member?.gamertag || peer.name}</p>
+                        <div className="flex gap-1">
+                          {peer.audioTrack ? (
+                            <Mic className="h-3 w-3 text-green-500" />
+                          ) : (
+                            <MicOff className="h-3 w-3 text-muted-foreground" />
+                          )}
+                          {peer.auxiliaryTracks.length > 0 && (
+                            <MonitorUp className="h-3 w-3 text-primary" />
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
@@ -400,11 +413,27 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
         </Card>
       )}
 
-      <ProfileDialog
-        user={profileUser}
-        open={openProfileDialog}
-        onOpenChange={setOpenProfileDialog}
-      />
+      {openProfileDialog && profileDialogUserId && profileUser && (
+        <ProfileDialog
+          userId={profileDialogUserId}
+          gamertag={profileUser.gamertag || profileUser.firstName || "Unknown"}
+          profileImageUrl={profileUser.profileImageUrl || undefined}
+          currentUserId={currentUserId}
+          trigger={
+            <button 
+              style={{ display: 'none' }} 
+              ref={(el) => {
+                if (el && openProfileDialog) {
+                  setTimeout(() => {
+                    el.click();
+                    setOpenProfileDialog(false);
+                  }, 50);
+                }
+              }}
+            />
+          }
+        />
+      )}
     </div>
   );
 }

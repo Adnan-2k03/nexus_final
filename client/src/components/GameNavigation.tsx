@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { UnifiedThemeSelector } from "./UnifiedThemeSelector";
 import { NotificationBell } from "./NotificationBell";
 
 interface GameNavigationProps {
@@ -124,10 +123,6 @@ export function GameNavigation({
             <NotificationBell />
           </div>
           
-          <div className="flex items-center justify-center">
-            <UnifiedThemeSelector />
-          </div>
-          
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -180,8 +175,6 @@ export function GameNavigation({
           
           <NotificationBell />
           
-          <UnifiedThemeSelector />
-          
           <Button
             variant="ghost"
             size="sm"
@@ -203,11 +196,6 @@ export function GameNavigation({
               ))}
               
               <div className="border-t border-border pt-4 mt-4 space-y-2">
-                <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm font-medium">Appearance</span>
-                  <UnifiedThemeSelector />
-                </div>
-                
                 <Button
                   variant="ghost"
                   onClick={() => {

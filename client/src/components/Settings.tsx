@@ -2,11 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PrivacySettings } from "./PrivacySettings";
 import { PushNotificationToggle } from "./PushNotificationPrompt";
-import { Users as UsersIcon, Layout, Check, Sparkles, Zap, Square } from "lucide-react";
+import { Users as UsersIcon, Layout, Check, Sparkles, Zap, Square, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { User } from "@shared/schema";
 import { useLayout, type LayoutWidth } from "@/contexts/LayoutContext";
 import { useBackground } from "./BackgroundProvider";
+import { UnifiedThemeSelector } from "./UnifiedThemeSelector";
 
 interface SettingsProps {
   user?: User | null;
@@ -58,12 +59,20 @@ export function Settings({ user }: SettingsProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Layout className="h-5 w-5" />
+              <Palette className="h-5 w-5" />
               Appearance
             </CardTitle>
             <CardDescription>Customize your viewing experience</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <label className="text-sm font-medium mb-3 block">Color Theme</label>
+              <div className="flex items-center gap-3">
+                <UnifiedThemeSelector />
+                <span className="text-sm text-muted-foreground">Choose your preferred color theme</span>
+              </div>
+            </div>
+
             <div>
               <label className="text-sm font-medium mb-3 block">Page Width</label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -163,10 +172,6 @@ export function Settings({ user }: SettingsProps) {
                 </Button>
               </div>
             </div>
-
-            <p className="text-xs text-muted-foreground">
-              Color theme can be changed from the navigation menu
-            </p>
           </CardContent>
         </Card>
 

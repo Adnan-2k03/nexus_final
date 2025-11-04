@@ -365,6 +365,7 @@ export type GroupVoiceChannelWithDetails = GroupVoiceChannel & {
   creatorProfileImageUrl: string | null;
   memberCount: number;
   activeCount: number;
+  members?: GroupVoiceMemberWithUser[];
 };
 
 // Group voice member with user information

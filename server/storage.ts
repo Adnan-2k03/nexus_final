@@ -1296,6 +1296,7 @@ export class DatabaseStorage implements IStorage {
           ...channel,
           memberCount: members.length,
           activeCount: members.filter(m => m.isActive).length,
+          members: members,
         };
       })
     );
@@ -1438,6 +1439,35 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(groupVoiceInvites.inviteeId, userId),
+          eq(groupVoiceInvites.status, 'pending')
+        )
+      );
+    
+    return invites;
+  }
+
+  async getSentGroupVoiceInvites(userId: string): Promise<GroupVoiceInviteWithUser[]> {
+    const invites = await db
+      .select({
+        id: groupVoiceInvites.id,
+        channelId: groupVoiceInvites.channelId,
+        inviterId: groupVoiceInvites.inviterId,
+        inviteeId: groupVoiceInvites.inviteeId,
+        status: groupVoiceInvites.status,
+        createdAt: groupVoiceInvites.createdAt,
+        respondedAt: groupVoiceInvites.respondedAt,
+        inviterGamertag: sql<string | null>`NULL`,
+        inviterProfileImageUrl: sql<string | null>`NULL`,
+        inviteeGamertag: users.gamertag,
+        inviteeProfileImageUrl: users.profileImageUrl,
+        channelName: groupVoiceChannels.name,
+      })
+      .from(groupVoiceInvites)
+      .leftJoin(users, eq(groupVoiceInvites.inviteeId, users.id))
+      .leftJoin(groupVoiceChannels, eq(groupVoiceInvites.channelId, groupVoiceChannels.id))
+      .where(
+        and(
+          eq(groupVoiceInvites.inviterId, userId),
           eq(groupVoiceInvites.status, 'pending')
         )
       );

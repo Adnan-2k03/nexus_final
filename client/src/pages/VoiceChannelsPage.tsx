@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Users, UserPlus, X } from "lucide-react";
+import { Plus, Users, UserPlus, X, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { GroupVoiceChannel } from "@/components/GroupVoiceChannel";
@@ -82,18 +82,41 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
       const response = await apiRequest('POST', '/api/group-voice/invite', { channelId, userIds });
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
       setInviteDialogOpen(false);
       setSelectedFriends([]);
       toast({
         title: "Invites sent",
-        description: "Friends have been invited to the channel",
+        description: data.message || `Invited ${data.invitedCount || 0} user(s)`,
       });
     },
     onError: () => {
       toast({
         title: "Error",
         description: "Failed to send invites",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const cancelInviteMutation = useMutation({
+    mutationFn: async (inviteId: string) => {
+      const response = await apiRequest('DELETE', `/api/group-voice/invite/${inviteId}`);
+      return await response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
+      toast({
+        title: "Invite cancelled",
+        description: "The invitation has been withdrawn",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to cancel invite",
         variant: "destructive",
       });
     },
@@ -174,12 +197,37 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     }).filter((f): f is User => f !== undefined);
   };
 
+  const getSentInvitesForChannel = (channelId: string) => {
+    return pendingInvites.filter((inv: any) => inv.channelId === channelId && inv.inviterId === currentUserId);
+  };
+
+  const getInviteStatus = (channelId: string, userId: string) => {
+    const sentInvites = getSentInvitesForChannel(channelId);
+    const existingInvite = sentInvites.find((inv: any) => inv.inviteeId === userId);
+    
+    if (!selectedChannel) return { status: 'none', inviteId: null };
+    
+    const isMember = selectedChannel.members?.some((m) => m.userId === userId);
+    if (isMember) return { status: 'member', inviteId: null };
+    if (existingInvite) return { status: 'sent', inviteId: existingInvite.id };
+    return { status: 'none', inviteId: null };
+  };
+
   const toggleFriendSelection = (userId: string) => {
     setSelectedFriends(prev =>
       prev.includes(userId)
         ? prev.filter(id => id !== userId)
         : [...prev, userId]
     );
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
+    queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
+    toast({
+      title: "Refreshed",
+      description: "Voice channels updated",
+    });
   };
 
   if (isLoading) {
@@ -193,14 +241,23 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
           <h1 className="text-3xl font-bold" data-testid="heading-voice-channels">Voice Channels</h1>
           <p className="text-muted-foreground">Create and join group voice channels</p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-create-channel">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Channel
-            </Button>
-          </DialogTrigger>
-          <DialogContent data-testid="dialog-create-channel">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={handleRefresh}
+            data-testid="button-refresh-channels"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+          <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button data-testid="button-create-channel">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Channel
+              </Button>
+            </DialogTrigger>
+            <DialogContent data-testid="dialog-create-channel">
             <DialogHeader>
               <DialogTitle>Create Voice Channel</DialogTitle>
             </DialogHeader>
@@ -225,7 +282,8 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {pendingInvites.length > 0 && (
@@ -357,27 +415,57 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
           </DialogHeader>
           <div className="space-y-4">
             <div className="max-h-80 overflow-y-auto space-y-2">
-              {getFriendsList().map((friend) => (
-                <div
-                  key={friend.id}
-                  className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted cursor-pointer"
-                  onClick={() => toggleFriendSelection(friend.id)}
-                  data-testid={`friend-item-${friend.id}`}
-                >
-                  <Checkbox
-                    checked={selectedFriends.includes(friend.id)}
-                    onCheckedChange={() => toggleFriendSelection(friend.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={friend.profileImageUrl || undefined} />
-                    <AvatarFallback>
-                      {friend.gamertag?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span>{friend.gamertag || friend.firstName || "Unknown"}</span>
-                </div>
-              ))}
+              {getFriendsList().map((friend) => {
+                const inviteStatus = getInviteStatus(selectedChannel?.id || '', friend.id);
+                const isDisabled = inviteStatus.status !== 'none';
+                
+                return (
+                  <div
+                    key={friend.id}
+                    className={`flex items-center justify-between gap-3 p-2 rounded-lg ${!isDisabled ? 'hover:bg-muted cursor-pointer' : 'opacity-60'}`}
+                    onClick={() => !isDisabled && toggleFriendSelection(friend.id)}
+                    data-testid={`friend-item-${friend.id}`}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <Checkbox
+                        checked={selectedFriends.includes(friend.id)}
+                        onCheckedChange={() => !isDisabled && toggleFriendSelection(friend.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        disabled={isDisabled}
+                      />
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={friend.profileImageUrl || undefined} />
+                        <AvatarFallback>
+                          {friend.gamertag?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="flex-1">{friend.gamertag || friend.firstName || "Unknown"}</span>
+                    </div>
+                    {inviteStatus.status === 'member' && (
+                      <span className="text-xs text-muted-foreground px-2 py-1 bg-secondary rounded">Member</span>
+                    )}
+                    {inviteStatus.status === 'sent' && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-primary px-2 py-1 bg-primary/10 rounded">Sent</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 text-xs px-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (inviteStatus.inviteId) {
+                              cancelInviteMutation.mutate(inviteStatus.inviteId);
+                            }
+                          }}
+                          data-testid={`button-cancel-invite-${friend.id}`}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {getFriendsList().length === 0 && (
                 <p className="text-center text-muted-foreground py-4">
                   No friends to invite. Add friends first!
