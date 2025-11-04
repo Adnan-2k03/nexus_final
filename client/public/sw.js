@@ -142,18 +142,24 @@ self.addEventListener('notificationclick', (event) => {
     return;
   }
 
-  // Default action or 'view' action - open the app
+  // Get the URL to navigate to
   const urlToOpen = event.notification.data?.url || '/';
+  const notificationType = event.notification.data?.type;
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((clientList) => {
-        // If a window is already open, focus it
-        for (let i = 0; i < clientList.length; i++) {
-          const client = clientList[i];
-          if (client.url === urlToOpen && 'focus' in client) {
-            return client.focus();
-          }
+        // If a window is already open, focus it and send navigation message
+        if (clientList.length > 0) {
+          const client = clientList[0];
+          client.focus();
+          // Send message to client to navigate
+          client.postMessage({
+            type: 'NAVIGATE',
+            url: urlToOpen,
+            notificationType: notificationType
+          });
+          return client;
         }
         // Otherwise, open a new window
         if (clients.openWindow) {
