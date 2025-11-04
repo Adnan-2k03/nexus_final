@@ -16,14 +16,11 @@ import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import type { Notification, User } from "@shared/schema";
-import { ProfileDialog } from "@/components/ui/profile-dialog";
+import type { Notification } from "@shared/schema";
 
 export function NotificationBell() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
-  const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   // Set up WebSocket connection for real-time notifications
@@ -85,23 +82,6 @@ export function NotificationBell() {
 
   const unreadCount = unreadCountData?.count || 0;
 
-  // Fetch current user data
-  const { data: currentUser } = useQuery<User>({
-    queryKey: ["/api/auth/user"],
-  });
-
-  // Fetch user data for profile dialog
-  const { data: profileUser } = useQuery<User>({
-    queryKey: ["/api/users", profileDialogUserId],
-    queryFn: async () => {
-      if (!profileDialogUserId) throw new Error("No user ID");
-      const response = await fetch(`/api/users/${profileDialogUserId}`);
-      if (!response.ok) throw new Error("Failed to fetch user");
-      return response.json();
-    },
-    enabled: !!profileDialogUserId,
-  });
-
   const markAsReadMutation = useMutation({
     mutationFn: async (notificationId: string) => {
       return apiRequest("PATCH", `/api/notifications/${notificationId}/read`);
@@ -144,7 +124,7 @@ export function NotificationBell() {
     // Close the dropdown menu
     setDropdownOpen(false);
     
-    // Handle specific notification types with proper data handling
+    // Handle specific notification types with proper navigation
     switch (notification.type) {
       case "voice_channel_invite":
       case "voice_channel_invite_accepted":
@@ -156,26 +136,21 @@ export function NotificationBell() {
       case "connection_request":
       case "connection_accepted":
       case "connection_declined":
-        if (notification.relatedUserId) {
-          setProfileDialogUserId(notification.relatedUserId);
-          setOpenProfileDialog(true);
-        }
+        // Navigate to connections page to manage connections
+        setLocation("/connections");
         break;
       
       case "match_application":
       case "match_accepted":
       case "match_declined":
-        // Navigate to messages to see the match conversation
-        setLocation("/messages");
+        // Navigate to home page to see match feed and applications
+        setLocation("/");
         break;
       
       default:
         // Use custom action URL if available
         if (notification.actionUrl) {
           setLocation(notification.actionUrl);
-        } else if (notification.relatedUserId) {
-          setProfileDialogUserId(notification.relatedUserId);
-          setOpenProfileDialog(true);
         }
     }
   };
@@ -294,29 +269,6 @@ export function NotificationBell() {
         </ScrollArea>
       </DropdownMenuContent>
     </DropdownMenu>
-
-    {/* Profile Dialog for connection accepted notifications */}
-    {openProfileDialog && profileDialogUserId && profileUser && (
-      <ProfileDialog
-        userId={profileDialogUserId}
-        gamertag={profileUser.gamertag || profileUser.firstName || "Unknown"}
-        profileImageUrl={profileUser.profileImageUrl || undefined}
-        currentUserId={currentUser?.id}
-        trigger={
-          <button 
-            style={{ display: 'none' }} 
-            ref={(el) => {
-              if (el && openProfileDialog) {
-                setTimeout(() => {
-                  el.click();
-                  setOpenProfileDialog(false);
-                }, 50);
-              }
-            }}
-          />
-        }
-      />
-    )}
     </>
   );
 }
