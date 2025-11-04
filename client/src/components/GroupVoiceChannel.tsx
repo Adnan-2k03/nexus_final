@@ -403,7 +403,10 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
                       <video
                         ref={(videoEl) => {
                           if (videoEl && peer.auxiliaryTracks[0]) {
-                            hmsActions.attachVideo(peer.auxiliaryTracks[0].id, videoEl);
+                            const trackId = typeof peer.auxiliaryTracks[0] === 'string' 
+                              ? peer.auxiliaryTracks[0] 
+                              : peer.auxiliaryTracks[0].id;
+                            hmsActions.attachVideo(trackId, videoEl);
                           }
                         }}
                         autoPlay
