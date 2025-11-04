@@ -151,13 +151,33 @@ export function NotificationBell() {
     }
     
     // Handle specific notification types
-    if (notification.type === "connection_accepted" && notification.relatedUserId) {
-      setProfileDialogUserId(notification.relatedUserId);
-      setOpenProfileDialog(true);
-    } else if (notification.type === "voice_channel_invite") {
-      setLocation("/voice-channels");
-    } else if (notification.type === "match_application" || notification.type === "match_accepted") {
-      setLocation("/messages");
+    switch (notification.type) {
+      case "connection_request":
+      case "connection_accepted":
+      case "connection_declined":
+        if (notification.relatedUserId) {
+          setProfileDialogUserId(notification.relatedUserId);
+          setOpenProfileDialog(true);
+        }
+        break;
+      
+      case "voice_channel_invite":
+      case "voice_channel_invite_accepted":
+      case "voice_channel_invite_declined":
+        setLocation("/voice-channels");
+        break;
+      
+      case "match_application":
+      case "match_accepted":
+      case "match_declined":
+        setLocation("/messages");
+        break;
+      
+      default:
+        if (notification.relatedUserId) {
+          setProfileDialogUserId(notification.relatedUserId);
+          setOpenProfileDialog(true);
+        }
     }
   };
 

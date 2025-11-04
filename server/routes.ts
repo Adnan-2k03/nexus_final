@@ -2142,12 +2142,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Send push notification
         try {
-          await sendPushNotification(
-            userId,
-            "Voice Channel Invite",
-            `${inviter?.gamertag || "Someone"} invited you to join "${channel.name}"`,
-            { url: "/voice-channels", channelId }
-          );
+          await sendPushNotification(userId, {
+            title: "Voice Channel Invite",
+            message: `${inviter?.gamertag || "Someone"} invited you to join "${channel.name}"`,
+            type: "voice_channel_invite",
+            relatedUserId: inviterId
+          });
         } catch (pushError) {
           console.error("Error sending push notification:", pushError);
         }
