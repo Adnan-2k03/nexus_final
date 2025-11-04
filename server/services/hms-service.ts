@@ -8,6 +8,9 @@ let hmsClient: SDK | null = null;
 
 if (HMS_APP_ACCESS_KEY && HMS_APP_SECRET) {
   hmsClient = new SDK(HMS_APP_ACCESS_KEY, HMS_APP_SECRET);
+  console.log('✅ 100ms voice service configured');
+} else {
+  console.log('⚠️  100ms not configured - voice channels will not be available');
 }
 
 export interface CreateRoomOptions {
