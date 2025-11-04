@@ -372,6 +372,31 @@ function Router() {
         />
       ) : (
         <>
+          <Route path="/connections">
+            {() => {
+              if (currentPage !== "connections") {
+                setCurrentPage("connections");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={(page) => {
+                        setCurrentPage(page as any);
+                        setShowCreateForm(false);
+                      }}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
           <Route path="/voice-channels">
             {() => {
               if (currentPage !== "voice-channels") {
