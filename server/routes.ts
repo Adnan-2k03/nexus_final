@@ -2068,7 +2068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const token = await hmsService.generateAuthToken({
         roomId: channel.hmsRoomId,
         userId,
-        role: channel.creatorId === userId ? 'host' : 'guest',
+        role: 'listener',
       });
 
       res.json({ 
