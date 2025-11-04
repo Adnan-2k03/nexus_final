@@ -7,6 +7,18 @@
     <meta name="description" content="Connect with gamers worldwide. Find teammates, create match requests, and join real-time gaming sessions.">
     <meta name="theme-color" content="#6366f1">
     
+    <!-- Allow 100ms connections -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://replit.com;
+      connect-src 'self' wss://*.100ms.live https://*.100ms.live wss://*.livekit.cloud https://*.livekit.cloud ws://localhost:* http://localhost:*;
+      media-src 'self' blob: https://*.100ms.live;
+      worker-src 'self' blob:;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com;
+      img-src 'self' data: blob: https:;
+    ">
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     
