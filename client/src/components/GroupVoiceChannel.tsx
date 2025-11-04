@@ -8,6 +8,8 @@ import {
   selectIsLocalVideoEnabled,
   selectIsLocalScreenShared,
   selectScreenShareByPeerID,
+  selectHMSMessages,
+  HMSNotificationTypes,
 } from "@100mslive/react-sdk";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +45,7 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
   const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
   const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
   const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
+  const hmsMessages = useHMSStore(selectHMSMessages);
   
   const [isJoining, setIsJoining] = useState(false);
   const [members, setMembers] = useState<GroupVoiceMemberWithUser[]>([]);
@@ -68,6 +71,57 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
     fetchMembers();
   }, [channel.id]);
 
+  useEffect(() => {
+    hmsActions.setLogLevel(4);
+    console.log('[HMS] Verbose logging enabled');
+  }, [hmsActions]);
+
+  useEffect(() => {
+    if (isConnected && isJoining) {
+      console.log('[HMS] Successfully connected to room!');
+      setIsJoining(false);
+      toast({
+        title: "Joined voice channel",
+        description: `You're now in ${channel.name}`,
+      });
+    }
+  }, [isConnected, isJoining, channel.name, toast]);
+
+  useEffect(() => {
+    if (hmsMessages && hmsMessages.length > 0) {
+      const latestMessage = hmsMessages[hmsMessages.length - 1];
+      console.log('[HMS] Notification:', latestMessage);
+      
+      if (latestMessage.type === HMSNotificationTypes.ERROR) {
+        const error = latestMessage.data;
+        console.error('[HMS] Error received:', {
+          code: error?.code,
+          message: error?.message,
+          description: error?.description,
+          isTerminal: error?.isTerminal,
+          action: error?.action,
+        });
+        
+        if (isJoining) {
+          setIsJoining(false);
+          toast({
+            title: "Connection failed",
+            description: `${error?.message || 'Could not connect to voice channel'} (Code: ${error?.code})`,
+            variant: "destructive",
+          });
+        }
+      }
+      
+      if (latestMessage.type === HMSNotificationTypes.PEER_JOINED) {
+        console.log('[HMS] Peer joined:', latestMessage.data);
+      }
+      
+      if (latestMessage.type === HMSNotificationTypes.PEER_LEFT) {
+        console.log('[HMS] Peer left:', latestMessage.data);
+      }
+    }
+  }, [hmsMessages, isJoining, toast]);
+
   const fetchMembers = async () => {
     try {
       const response = await fetch(`/api/group-voice/${channel.id}/members`);
@@ -83,6 +137,7 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
   const joinChannel = async () => {
     setIsJoining(true);
     try {
+      console.log('[HMS] Requesting auth token from backend...');
       const response = await apiRequest(
         "POST",
         "/api/group-voice/join",
@@ -90,35 +145,33 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
       );
 
       const data = await response.json() as { token: string; roomId: string };
+      console.log('[HMS] Auth token received, room ID:', data.roomId);
+      console.log('[HMS] Attempting to join room...');
 
-      const joinTimeout = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error("Connection timeout - 100ms credentials may be invalid")), 10000);
+      await hmsActions.join({
+        userName: currentUserId,
+        authToken: data.token,
+        settings: {
+          isAudioMuted: false,
+          isVideoMuted: true,
+        },
       });
 
-      await Promise.race([
-        hmsActions.join({
-          userName: currentUserId,
-          authToken: data.token,
-        }),
-        joinTimeout
-      ]);
-
+      console.log('[HMS] Join request sent successfully');
+      
       toast({
-        title: "Joined voice channel",
-        description: `You're now in ${channel.name}`,
+        title: "Connecting...",
+        description: "Joining voice channel",
       });
     } catch (error) {
-      console.error("Error joining channel:", error);
+      console.error('[HMS] Error in joinChannel:', error);
+      setIsJoining(false);
       const errorMessage = error instanceof Error ? error.message : "Could not connect to voice channel";
       toast({
         title: "Failed to join",
-        description: errorMessage.includes("credentials") 
-          ? "Voice service credentials are invalid. Please contact support."
-          : errorMessage,
+        description: errorMessage,
         variant: "destructive",
       });
-    } finally {
-      setIsJoining(false);
     }
   };
 
