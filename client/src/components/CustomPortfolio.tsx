@@ -37,10 +37,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Book, Music, Palette, Film, Coffee, Plane, Heart, Trash2, Edit, Plus, Sparkles, Pen } from "lucide-react";
+import { Book, Music, Palette, Film, Coffee, Plane, Heart, Trash2, Edit, Plus, Sparkles, Pen, X } from "lucide-react";
 import type { Hobby } from "@shared/schema";
 import { insertHobbySchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+
+interface TitleEntry {
+  id: string;
+  title: string;
+  description: string;
+}
 
 const hobbyCategories = [
   { value: "anime", label: "Anime & Manga", icon: Sparkles },
@@ -71,6 +77,9 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
   const [isOpen, setIsOpen] = useState(false);
   const [isAddingHobby, setIsAddingHobby] = useState(false);
   const [editingHobby, setEditingHobby] = useState<Hobby | null>(null);
+  const [titleEntries, setTitleEntries] = useState<TitleEntry[]>([
+    { id: '1', title: '', description: '' }
+  ]);
 
   const { data: hobbies = [], isLoading } = useQuery<Hobby[]>({
     queryKey: ['/api/users', userId, 'hobbies'],
@@ -118,12 +127,40 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
     },
   });
 
-  const onSubmit = (data: FormValues) => {
+  const onSubmit = async (data: FormValues) => {
     if (editingHobby) {
       updateMutation.mutate({ id: editingHobby.id, data });
     } else {
-      createMutation.mutate(data);
+      for (const entry of titleEntries) {
+        if (entry.title.trim()) {
+          await createMutation.mutateAsync({
+            ...data,
+            title: entry.title,
+            description: entry.description,
+          });
+        }
+      }
+      setTitleEntries([{ id: '1', title: '', description: '' }]);
     }
+  };
+
+  const addTitleEntry = () => {
+    setTitleEntries([
+      ...titleEntries,
+      { id: Date.now().toString(), title: '', description: '' }
+    ]);
+  };
+
+  const removeTitleEntry = (id: string) => {
+    if (titleEntries.length > 1) {
+      setTitleEntries(titleEntries.filter(entry => entry.id !== id));
+    }
+  };
+
+  const updateTitleEntry = (id: string, field: 'title' | 'description', value: string) => {
+    setTitleEntries(titleEntries.map(entry =>
+      entry.id === id ? { ...entry, [field]: value } : entry
+    ));
   };
 
   const handleEdit = (hobby: Hobby) => {
@@ -146,6 +183,7 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
     form.reset();
     setEditingHobby(null);
     setIsAddingHobby(false);
+    setTitleEntries([{ id: '1', title: '', description: '' }]);
   };
 
   const handleAddToCategory = (categoryValue: string) => {
@@ -243,42 +281,103 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="title"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Title</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="e.g., One Piece, Harry Potter, Swing Dancing"
-                                {...field}
-                                data-testid="input-title"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      {editingHobby ? (
+                        <>
+                          <FormField
+                            control={form.control}
+                            name="title"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Title</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="e.g., One Piece, Harry Potter, Swing Dancing"
+                                    {...field}
+                                    data-testid="input-title"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
 
-                      <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Description (Optional)</FormLabel>
-                            <FormControl>
-                              <Textarea
-                                placeholder="Share more about this interest..."
-                                {...field}
-                                value={field.value || ""}
-                                data-testid="input-description"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                          <FormField
+                            control={form.control}
+                            name="description"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Description (Optional)</FormLabel>
+                                <FormControl>
+                                  <Textarea
+                                    placeholder="Share more about this interest..."
+                                    {...field}
+                                    value={field.value || ""}
+                                    data-testid="input-description"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <FormLabel>Titles</FormLabel>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={addTitleEntry}
+                              className="gap-1"
+                              data-testid="button-add-title"
+                            >
+                              <Plus className="h-4 w-4" />
+                              Add Title
+                            </Button>
+                          </div>
+                          {titleEntries.map((entry, index) => (
+                            <Card key={entry.id} className="p-4">
+                              <div className="space-y-3">
+                                <div className="flex items-start gap-2">
+                                  <div className="flex-1">
+                                    <FormLabel>Title {index + 1}</FormLabel>
+                                    <Input
+                                      placeholder="e.g., One Piece, Harry Potter, Swing Dancing"
+                                      value={entry.title}
+                                      onChange={(e) => updateTitleEntry(entry.id, 'title', e.target.value)}
+                                      data-testid={`input-title-${index}`}
+                                      className="mt-2"
+                                    />
+                                  </div>
+                                  {titleEntries.length > 1 && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => removeTitleEntry(entry.id)}
+                                      data-testid={`button-remove-title-${index}`}
+                                      className="mt-6"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                                <div>
+                                  <FormLabel>Description (Optional)</FormLabel>
+                                  <Textarea
+                                    placeholder="Share more about this interest..."
+                                    value={entry.description}
+                                    onChange={(e) => updateTitleEntry(entry.id, 'description', e.target.value)}
+                                    data-testid={`input-description-${index}`}
+                                    className="mt-2"
+                                  />
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
 
                       <FormField
                         control={form.control}
