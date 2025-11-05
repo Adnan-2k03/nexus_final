@@ -148,6 +148,16 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
     setIsAddingHobby(false);
   };
 
+  const handleAddToCategory = (categoryValue: string) => {
+    setEditingHobby(null);
+    form.reset({
+      title: "",
+      category: categoryValue,
+      description: "",
+    });
+    setIsAddingHobby(true);
+  };
+
   const groupedHobbies = hobbies.reduce((acc, hobby) => {
     if (!acc[hobby.category]) {
       acc[hobby.category] = [];
@@ -337,6 +347,17 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
                         <Icon className="h-5 w-5 text-primary" />
                         <h3 className="text-lg font-semibold">{category.label}</h3>
                         <Badge variant="secondary">{categoryHobbies.length}</Badge>
+                        {isOwn && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 ml-auto"
+                            onClick={() => handleAddToCategory(category.value)}
+                            data-testid={`button-add-to-${category.value}`}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                       <Separator className="mb-3" />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
