@@ -6,12 +6,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Users, UserPlus, X, RefreshCw } from "lucide-react";
+import { Plus, Users, UserPlus, X, RefreshCw, Mic2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { GroupVoiceChannel } from "@/components/GroupVoiceChannel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { GroupVoiceChannelWithDetails, User, ConnectionRequestWithUser } from "@shared/schema";
+import { useLayout } from "@/contexts/LayoutContext";
 
 interface VoiceChannelsPageProps {
   currentUserId?: string;
@@ -24,6 +25,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const [selectedChannel, setSelectedChannel] = useState<GroupVoiceChannelWithDetails | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const { toast } = useToast();
+  const { getContainerClass } = useLayout();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
@@ -238,10 +240,13 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className={`w-full ${getContainerClass()} mx-auto space-y-6`}>
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold" data-testid="heading-voice-channels">Voice Channels</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2" data-testid="heading-voice-channels">
+            <Mic2 className="h-8 w-8 text-primary" />
+            Voice Channels
+          </h1>
           <p className="text-muted-foreground">Create and join group voice channels</p>
         </div>
         <div className="flex gap-2">

@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
-import { X, Plus, MapPin, User as UserIcon } from "lucide-react";
+import { X, Plus, MapPin, User as UserIcon, Gamepad2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
@@ -138,19 +138,26 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
   return (
     <div className={`${getContainerClass()} mx-auto`}>
       <Card>
-        <CardHeader>
-          <CardTitle className="text-center">
+        <CardHeader className="space-y-2 pb-6">
+          <CardTitle className="text-center text-2xl">
             {user?.gamertag ? "Edit Your Profile & Settings" : "Setup Your Gaming Profile"}
           </CardTitle>
           <p className="text-sm text-muted-foreground text-center">
             {user?.gamertag ? "Update your information, games, and privacy settings" : "Tell other players about yourself to find the perfect teammates"}
           </p>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {/* Gamertag */}
-              <FormField
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              {/* Basic Info Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <UserIcon className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Basic Information</h3>
+                </div>
+                
+                {/* Gamertag */}
+                <FormField
                 control={form.control}
                 name="gamertag"
                 render={({ field }) => (
@@ -168,9 +175,9 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
                 )}
               />
 
-              {/* Personal Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
+                {/* Personal Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
                   control={form.control}
                   name="firstName"
                   render={({ field }) => (
@@ -205,10 +212,10 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
                     </FormItem>
                   )}
                 />
-              </div>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
                   control={form.control}
                   name="age"
                   render={({ field }) => (
@@ -260,10 +267,17 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
                     </FormItem>
                   )}
                 />
+                </div>
               </div>
 
-              {/* Bio */}
-              <FormField
+              {/* Bio Section */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold">About You</h3>
+                </div>
+                
+                <FormField
                 control={form.control}
                 name="bio"
                 render={({ field }) => (
@@ -282,11 +296,16 @@ export function ProfileSetup({ user, onComplete, onCancel }: ProfileSetupProps) 
                   </FormItem>
                 )}
               />
+              </div>
 
-              {/* Preferred Games */}
+              {/* Preferred Games Section */}
               <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b">
+                  <Gamepad2 className="h-5 w-5 text-primary" />
+                  <h3 className="text-lg font-semibold">Your Games</h3>
+                </div>
+                
                 <div>
-                  <FormLabel>Preferred Games</FormLabel>
                   <p className="text-sm text-muted-foreground">Select the games you play and want to find teammates for</p>
                 </div>
 
