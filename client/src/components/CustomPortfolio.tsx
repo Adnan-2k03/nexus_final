@@ -62,7 +62,7 @@ const hobbyCategories = [
 ];
 
 const formSchema = insertHobbySchema.extend({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().optional(),
   category: z.string().min(1, "Category is required"),
 });
 
@@ -129,18 +129,35 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
 
   const onSubmit = async (data: FormValues) => {
     if (editingHobby) {
+      if (!data.title || !data.title.trim()) {
+        form.setError('title', { message: 'Title is required' });
+        return;
+      }
       updateMutation.mutate({ id: editingHobby.id, data });
     } else {
-      for (const entry of titleEntries) {
-        if (entry.title.trim()) {
+      const validEntries = titleEntries.filter(entry => entry.title.trim());
+      
+      if (validEntries.length === 0) {
+        return;
+      }
+
+      try {
+        for (const entry of validEntries) {
           await createMutation.mutateAsync({
-            ...data,
-            title: entry.title,
-            description: entry.description,
+            category: data.category,
+            title: entry.title.trim(),
+            description: entry.description.trim() || undefined,
+            link: data.link,
           });
         }
+        
+        queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'hobbies'] });
+        form.reset();
+        setTitleEntries([{ id: '1', title: '', description: '' }]);
+        setIsAddingHobby(false);
+      } catch (error) {
+        console.error('Error creating hobbies:', error);
       }
-      setTitleEntries([{ id: '1', title: '', description: '' }]);
     }
   };
 
