@@ -6,7 +6,20 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### November 1, 2025 (Current Session - Custom Profile Fields & UI Polish)
+### November 5, 2025 (Current Session - Voice Channel Fixes & Terminology Standardization)
+- **100ms Voice Channel Role Fix**: Fixed "Invalid role" error by updating HMS service to support 'speaker' role
+  - Changed all voice channel joins from 'guest' role to 'speaker' role for proper audio functionality
+  - Updated GenerateTokenOptions interface to accept 'guest' | 'host' | 'speaker'
+- **Terminology Standardization**: Unified all references to use "voice channel" consistently
+  - Backend routes, services, and database schemas all use "voice channel" terminology
+  - Frontend components standardized to "Voice Channel" naming
+- **Connection Types Clarification**: Documented the two distinct connection systems:
+  - **Match Connections**: Connections formed when users apply to match requests (LFG/LFO) in the Matches page
+  - **Direct Connections**: User-to-user connection requests in Messages/Discover pages, independent of match requests
+  - Both connection types support voice channels with identical functionality
+- **Security Enhancement**: Removed sensitive VAPID key logging from console output
+
+### November 1, 2025 (Earlier Session - Custom Profile Fields & UI Polish)
 - **Custom Section Field Types**: Enhanced GameProfileForm custom sections to support three field types:
   - Text fields: Traditional label/value pairs
   - Photo fields: Image upload with preview functionality

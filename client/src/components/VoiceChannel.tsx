@@ -159,7 +159,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       
       toast({
         title: "Left voice channel",
-        description: "You've disconnected from the voice chat",
+        description: "You've disconnected from the voice channel",
       });
     } catch (error) {
       console.error("Error leaving channel:", error);
@@ -182,7 +182,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
               <div>
                 <h3 className="font-semibold text-sm">Voice Channel</h3>
                 <p className="text-xs text-muted-foreground">
-                  Start a voice chat with {otherUserName || 'teammate'}
+                  Start a voice channel with {otherUserName || 'teammate'}
                 </p>
               </div>
             </div>

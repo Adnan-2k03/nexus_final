@@ -182,7 +182,7 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
       
       toast({
         title: "Left voice channel",
-        description: "You've disconnected from the voice chat",
+        description: "You've disconnected from the voice channel",
       });
       
       if (onLeave) onLeave();

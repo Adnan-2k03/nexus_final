@@ -2,7 +2,7 @@
 
 This project requires the following secrets to be configured in Replit Secrets (Settings > Secrets):
 
-## 100ms Voice Chat Credentials
+## 100ms Voice Channel Credentials
 
 To enable voice channels and real-time communication:
 

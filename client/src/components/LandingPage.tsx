@@ -70,7 +70,7 @@ export function LandingPage({ onShowAuth }: LandingPageProps) {
           <h1>
             Nexus Match <span className="text-cyan-400">— Find Your Perfect Gaming Partner</span>
           </h1>
-          <p>The ultimate platform for instant matchmaking, real-time voice chat, and gamer networking. Connect by skill, game, and playstyle — in seconds.</p>
+          <p>The ultimate platform for instant matchmaking, real-time voice channels, and gamer networking. Connect by skill, game, and playstyle — in seconds.</p>
           <div className="btn-group">
             <button 
               className="btn btn-primary" 
@@ -236,7 +236,7 @@ export function LandingPage({ onShowAuth }: LandingPageProps) {
                   <strong>How do I report a player?</strong> Use the in-app reporting tool available on every match and chat window.
                 </div>
                 <div className="faq-item">
-                  <strong>Is my voice data secure?</strong> 100% — all voice chat is encrypted end-to-end via WebRTC.
+                  <strong>Is my voice data secure?</strong> 100% — all voice channels are encrypted end-to-end via WebRTC.
                 </div>
                 <div className="faq-item">
                   <strong>Can I use it on mobile?</strong> Yes! Nexus Match works on all devices. Mobile apps launching in Q1 2026.

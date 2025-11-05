@@ -95,7 +95,7 @@ Users can create detailed portfolios for each game they play:
 
 ### 4. **Communication Features**
 - **Direct Messaging**: Real-time chat between connected users
-- **Voice Channels**: Integrated voice chat for each connection
+- **Voice Channels**: Integrated voice channels for each connection
 - **Online Status**: See who's currently active
 - **Voice Status**: See who's in voice channels
 - **Real-time Updates**: Instant message delivery via WebSockets
@@ -755,7 +755,7 @@ New users without gamertag are auto-redirected to `/profile-setup`.
 11. **Settings** - User settings
 12. **GameProfileForm** - Game portfolio editor
 13. **CustomPortfolio** - Hobbies/interests section
-14. **VoiceChannel** - Voice chat component
+14. **VoiceChannel** - Voice channel component
 15. **NotificationBell** - Notification dropdown
 16. **PushNotificationPrompt** - Push permission prompt
 17. **StarBackground** - Animated background
@@ -878,7 +878,7 @@ npm run start
 ### Current Limitations
 
 1. **No Password Protection**: Simplified auth for MVP (gamertag only)
-2. **Voice Chat**: Currently uses browser WebRTC (no TURN server)
+2. **Voice Channels**: Currently uses browser WebRTC (no TURN server)
 3. **File Storage**: Uploads stored locally (should use S3/CDN)
 4. **Search**: Basic filtering (could use Elasticsearch)
 5. **Caching**: Minimal Redis caching

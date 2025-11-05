@@ -1332,11 +1332,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Join the channel
       const participant = await storage.joinVoiceChannel(channel.id, userId);
       
-      // Generate HMS auth token
+      // Generate HMS auth token with speaker role for audio
       const token = await hmsService.generateAuthToken({
         roomId: hmsRoomId,
         userId,
-        role: 'guest'
+        role: 'speaker'
       });
       
       const participants = await storage.getVoiceParticipants(channel.id);
@@ -1672,7 +1672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (connection.status !== 'accepted') {
               ws.send(JSON.stringify({ 
                 type: 'error', 
-                message: 'Connection must be accepted before initiating voice chat' 
+                message: 'Connection must be accepted before initiating voice channel' 
               }));
               return;
             }
@@ -1924,7 +1924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const roomName = generateRoomName(connectionId);
       const room = await hmsService.createRoom({
         name: roomName,
-        description: `Voice chat for connection ${connectionId}`,
+        description: `Voice channel for connection ${connectionId}`,
       });
 
       const voiceChannel = await storage.getOrCreateVoiceChannel(connectionId, room.id);

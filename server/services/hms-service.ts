@@ -22,7 +22,7 @@ export interface CreateRoomOptions {
 export interface GenerateTokenOptions {
   roomId: string;
   userId: string;
-  role: 'guest' | 'host';
+  role: 'guest' | 'host' | 'speaker';
 }
 
 export interface HMSService {
@@ -44,7 +44,7 @@ export const hmsService: HMSService = {
 
     const room = await hmsClient.rooms.create({
       name,
-      description: description || `Voice chat for ${name}`,
+      description: description || `Voice channel for ${name}`,
       template_id: templateId || HMS_TEMPLATE_ID,
     });
 
