@@ -10,6 +10,7 @@ import {
   real,
   pgEnum,
   boolean,
+  unique,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -275,7 +276,7 @@ export const voiceParticipants = pgTable("voice_participants", {
 }, (table) => [
   index("idx_voice_channel_participants").on(table.voiceChannelId),
   index("idx_user_voice_participants").on(table.userId),
-  index("idx_unique_voice_participant").on(table.voiceChannelId, table.userId), // Composite unique constraint
+  unique("unique_voice_participant").on(table.voiceChannelId, table.userId), // Composite unique constraint
 ]);
 
 // Push Subscriptions table - stores browser push notification subscriptions
