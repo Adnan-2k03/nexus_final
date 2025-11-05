@@ -52,9 +52,11 @@ app.use((req, res, next) => {
   // doesn't interfere with the other routes
   if (app.get("env") === "development") {
     await setupVite(app, server);
-  } else {
+  } else if (process.env.BACKEND_ONLY !== "true") {
+    // Only serve static files if not in backend-only mode (e.g., not on Railway)
     serveStatic(app);
   }
+  // If BACKEND_ONLY=true, skip static file serving (API-only mode for Railway)
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
   // Other ports are firewalled. Default to 5000 if not specified.
