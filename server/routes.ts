@@ -1939,58 +1939,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/voice/join', authMiddleware, async (req: any, res) => {
-    try {
-      if (!hmsService.isConfigured()) {
-        return res.status(503).json({ message: "Voice service not configured" });
-      }
-
-      const userId = req.user.id;
-      const { voiceChannelId, role = 'guest' } = req.body;
-
-      if (!voiceChannelId) {
-        return res.status(400).json({ message: "Voice channel ID required" });
-      }
-
-      const voiceChannel = await storage.getVoiceChannel(voiceChannelId);
-      if (!voiceChannel) {
-        return res.status(404).json({ message: "Voice channel not found" });
-      }
-
-      const roomName = generateRoomName(voiceChannel.id);
-      
-      await storage.joinVoiceChannel(voiceChannelId, userId);
-
-      const token = await hmsService.generateAuthToken({
-        roomId: roomName,
-        userId,
-        role: role as 'guest' | 'host',
-      });
-
-      res.json({ token });
-    } catch (error) {
-      console.error("Error joining voice channel:", error);
-      res.status(500).json({ message: "Failed to join voice channel" });
-    }
-  });
-
-  app.post('/api/voice/leave', authMiddleware, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const { voiceChannelId } = req.body;
-
-      if (!voiceChannelId) {
-        return res.status(400).json({ message: "Voice channel ID required" });
-      }
-
-      await storage.leaveVoiceChannel(voiceChannelId, userId);
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error("Error leaving voice channel:", error);
-      res.status(500).json({ message: "Failed to leave voice channel" });
-    }
-  });
 
   app.get('/api/voice/:voiceChannelId/participants', authMiddleware, async (req: any, res) => {
     try {

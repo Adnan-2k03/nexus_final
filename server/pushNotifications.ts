@@ -10,12 +10,9 @@ const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:support@gamematch.app
 
 // Generate VAPID keys if not set
 if (!VAPID_PUBLIC_KEY || !VAPID_PRIVATE_KEY) {
-  console.log('\n⚠️  VAPID keys not found. Generating new keys...');
   const vapidKeys = webpush.generateVAPIDKeys();
-  console.log('\n📧 Add these to your secrets (Settings > Secrets):');
-  console.log(`VAPID_PUBLIC_KEY=${vapidKeys.publicKey}`);
-  console.log(`VAPID_PRIVATE_KEY=${vapidKeys.privateKey}`);
-  console.log('VAPID_SUBJECT=mailto:support@gamematch.app\n');
+  console.log('\n⚠️  VAPID keys not configured. Using temporary keys for this session.');
+  console.log('📧 To persist keys, add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT to your environment secrets.\n');
   
   // Use generated keys for this session
   VAPID_PUBLIC_KEY = vapidKeys.publicKey;
