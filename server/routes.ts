@@ -1282,6 +1282,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!connectionId) {
         return res.status(400).json({ message: "connectionId is required" });
       }
+
+      if (!hmsService.isConfigured()) {
+        return res.status(503).json({ message: "Voice service is not configured" });
+      }
       
       // Verify user is part of this connection
       const userConnections = await storage.getUserConnections(userId);
@@ -1300,11 +1304,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.leaveVoiceChannel(existingChannel.id, userId);
       }
       
-      // Get or create voice channel for this connection
-      const channel = await storage.getOrCreateVoiceChannel(connectionId);
+      // Get existing channel or create new one
+      const existingVoiceChannel = await storage.getVoiceChannel(connectionId);
+      
+      let hmsRoomId: string;
+      
+      if (existingVoiceChannel && existingVoiceChannel.hmsRoomId) {
+        // Reuse existing HMS room
+        hmsRoomId = existingVoiceChannel.hmsRoomId;
+      } else {
+        // Create new HMS room
+        const room = await hmsService.createRoom({
+          name: generateRoomName(connectionId),
+          description: 'Voice channel for connection'
+        });
+        hmsRoomId = room?.id || room?.data?.id;
+        
+        if (!hmsRoomId) {
+          console.error('HMS room ID not found in response:', room);
+          throw new Error('Failed to get room ID from HMS');
+        }
+      }
+      
+      // Get or create voice channel with HMS room ID
+      const channel = await storage.getOrCreateVoiceChannel(connectionId, hmsRoomId);
       
       // Join the channel
       const participant = await storage.joinVoiceChannel(channel.id, userId);
+      
+      // Generate HMS auth token
+      const token = await hmsService.generateAuthToken({
+        roomId: hmsRoomId,
+        userId,
+        role: 'guest'
+      });
+      
       const participants = await storage.getVoiceParticipants(channel.id);
       
       // Broadcast to other participants
@@ -1320,7 +1354,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      res.json({ channel, participant, participants });
+      res.json({ token, roomId: hmsRoomId });
     } catch (error) {
       console.error("Error joining voice channel:", error);
       res.status(500).json({ message: "Failed to join voice channel" });
