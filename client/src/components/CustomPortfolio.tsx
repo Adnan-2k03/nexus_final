@@ -46,6 +46,7 @@ interface TitleEntry {
   id: string;
   title: string;
   description: string;
+  link: string;
 }
 
 const hobbyCategories = [
@@ -78,7 +79,7 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
   const [isAddingHobby, setIsAddingHobby] = useState(false);
   const [editingHobby, setEditingHobby] = useState<Hobby | null>(null);
   const [titleEntries, setTitleEntries] = useState<TitleEntry[]>([
-    { id: '1', title: '', description: '' }
+    { id: '1', title: '', description: '', link: '' }
   ]);
 
   const { data: hobbies = [], isLoading } = useQuery<Hobby[]>({
@@ -147,13 +148,13 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
             category: data.category,
             title: entry.title.trim(),
             description: entry.description.trim() || undefined,
-            link: data.link,
+            link: entry.link.trim() || undefined,
           });
         }
         
         queryClient.invalidateQueries({ queryKey: ['/api/users', userId, 'hobbies'] });
         form.reset();
-        setTitleEntries([{ id: '1', title: '', description: '' }]);
+        setTitleEntries([{ id: '1', title: '', description: '', link: '' }]);
         setIsAddingHobby(false);
       } catch (error) {
         console.error('Error creating hobbies:', error);
@@ -164,7 +165,7 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
   const addTitleEntry = () => {
     setTitleEntries([
       ...titleEntries,
-      { id: Date.now().toString(), title: '', description: '' }
+      { id: Date.now().toString(), title: '', description: '', link: '' }
     ]);
   };
 
@@ -174,7 +175,7 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
     }
   };
 
-  const updateTitleEntry = (id: string, field: 'title' | 'description', value: string) => {
+  const updateTitleEntry = (id: string, field: 'title' | 'description' | 'link', value: string) => {
     setTitleEntries(titleEntries.map(entry =>
       entry.id === id ? { ...entry, [field]: value } : entry
     ));
@@ -200,7 +201,7 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
     form.reset();
     setEditingHobby(null);
     setIsAddingHobby(false);
-    setTitleEntries([{ id: '1', title: '', description: '' }]);
+    setTitleEntries([{ id: '1', title: '', description: '', link: '' }]);
   };
 
   const handleAddToCategory = (categoryValue: string) => {
@@ -387,6 +388,17 @@ export function CustomPortfolio({ userId, isOwn = false }: CustomPortfolioProps)
                                     value={entry.description}
                                     onChange={(e) => updateTitleEntry(entry.id, 'description', e.target.value)}
                                     data-testid={`input-description-${index}`}
+                                    className="mt-2"
+                                  />
+                                </div>
+                                <div>
+                                  <FormLabel>Link (Optional)</FormLabel>
+                                  <Input
+                                    type="url"
+                                    placeholder="https://example.com/your-content"
+                                    value={entry.link}
+                                    onChange={(e) => updateTitleEntry(entry.id, 'link', e.target.value)}
+                                    data-testid={`input-link-${index}`}
                                     className="mt-2"
                                   />
                                 </div>
