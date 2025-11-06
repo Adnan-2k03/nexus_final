@@ -6,7 +6,19 @@ GameMatch is a social gaming web application designed for real-time matchmaking 
 
 ## Recent Changes
 
-### November 5, 2025 (Current Session - Voice Channel Fixes & Terminology Standardization)
+### November 6, 2025 (Current Session - AWS SNS Phone Authentication)
+- **Phone Authentication System**: Complete phone number verification using AWS SNS for SMS OTP codes
+  - Database schema updated with `phoneNumber`, `phoneVerified` fields and dedicated `phone_verification_codes` table
+  - SMS service module created with AWS SDK integration for sending verification codes
+  - Storage layer methods for creating, verifying, and managing phone verification codes with hashing
+  - Backend API routes with built-in rate limiting (3 SMS per hour per phone number) to prevent abuse
+  - Multi-step frontend UI with country code selector, code verification, and profile completion
+  - Security features: 6-digit codes expire after 10 minutes, hashed storage, attempt counter
+  - Cost-effective solution: $0.00645/SMS (40% cheaper than Firebase, 100 free SMS/month with AWS Free Tier)
+  - Production-ready with comprehensive documentation in AWS_SNS_PHONE_AUTH_SETUP.md
+  - Graceful degradation: App functions without AWS credentials but shows clear error messages
+  
+### November 5, 2025 (Previous Session - Voice Channel Fixes & Terminology Standardization)
 - **100ms Voice Channel Role Fix**: Fixed "Invalid role" error by updating HMS service to support 'speaker' role
   - Changed all voice channel joins from 'guest' role to 'speaker' role for proper audio functionality
   - Updated GenerateTokenOptions interface to accept 'guest' | 'host' | 'speaker'
