@@ -15,6 +15,8 @@ import fs from "fs";
 import { sendPushNotification } from "./pushNotifications";
 import { r2Storage, generateFileKey } from "./services/r2-storage";
 import { hmsService, generateRoomName } from "./services/hms-service";
+import { sendSMS, generateVerificationCode, isPhoneAuthConfigured } from "./services/sms-service";
+import { sendPhoneCodeSchema, verifyPhoneCodeSchema, phoneRegisterSchema } from "@shared/schema";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -123,6 +125,178 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error logging in:", error);
+      res.status(500).json({ message: "Failed to log in" });
+    }
+  });
+
+  // Phone authentication endpoints
+  const phoneVerificationRateLimit = new Map<string, { count: number; resetTime: number }>();
+  const MAX_REQUESTS_PER_HOUR = 3;
+  const RATE_LIMIT_WINDOW = 60 * 60 * 1000;
+
+  function checkRateLimit(phoneNumber: string): boolean {
+    const now = Date.now();
+    const record = phoneVerificationRateLimit.get(phoneNumber);
+    
+    if (!record || now > record.resetTime) {
+      phoneVerificationRateLimit.set(phoneNumber, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
+      return true;
+    }
+    
+    if (record.count >= MAX_REQUESTS_PER_HOUR) {
+      return false;
+    }
+    
+    record.count++;
+    return true;
+  }
+
+  app.post('/api/auth/phone/send-code', async (req, res) => {
+    try {
+      if (!isPhoneAuthConfigured()) {
+        return res.status(503).json({ message: "Phone authentication is not configured on the server" });
+      }
+
+      const validatedData = sendPhoneCodeSchema.parse(req.body);
+      const { phoneNumber } = validatedData;
+
+      if (!checkRateLimit(phoneNumber)) {
+        return res.status(429).json({ 
+          message: "Too many verification attempts. Please try again later.",
+          retryAfter: 3600
+        });
+      }
+
+      const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
+      if (existingUser) {
+        return res.status(400).json({ message: "Phone number already registered" });
+      }
+
+      const code = generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      await storage.createPhoneVerificationCode(phoneNumber, code, expiresAt);
+
+      const message = `Your Nexus Match verification code is: ${code}. Valid for 10 minutes.`;
+      const success = await sendSMS(phoneNumber, message);
+
+      if (!success) {
+        return res.status(500).json({ message: "Failed to send verification code" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Verification code sent successfully",
+        expiresIn: 600
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid phone number", errors: error.errors });
+      } else {
+        console.error("Error sending verification code:", error);
+        res.status(500).json({ message: "Failed to send verification code" });
+      }
+    }
+  });
+
+  app.post('/api/auth/phone/verify-code', async (req, res) => {
+    try {
+      const validatedData = verifyPhoneCodeSchema.parse(req.body);
+      const { phoneNumber, code } = validatedData;
+
+      const isValid = await storage.verifyPhoneCode(phoneNumber, code);
+
+      if (!isValid) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
+      }
+
+      res.json({ 
+        success: true, 
+        message: "Phone number verified successfully" 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid request data", errors: error.errors });
+      } else {
+        console.error("Error verifying code:", error);
+        res.status(500).json({ message: "Failed to verify code" });
+      }
+    }
+  });
+
+  app.post('/api/auth/phone/register', async (req: any, res) => {
+    try {
+      const validatedData = phoneRegisterSchema.parse(req.body);
+      const { phoneNumber, verificationCode, gamertag, ...userData } = validatedData;
+
+      const isVerified = await storage.verifyPhoneCode(phoneNumber, verificationCode);
+      if (!isVerified) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
+      }
+
+      const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
+      if (existingUser) {
+        return res.status(400).json({ message: "Phone number already registered" });
+      }
+
+      const existingGamertag = await storage.getUserByGamertag(gamertag);
+      if (existingGamertag) {
+        return res.status(400).json({ message: "Gamertag already taken" });
+      }
+
+      const user = await storage.createPhoneUser({
+        phoneNumber,
+        gamertag,
+        ...userData,
+      });
+
+      await storage.deletePhoneVerificationCode(phoneNumber);
+
+      req.login(user, (err: any) => {
+        if (err) {
+          console.error("Error logging in after registration:", err);
+          return res.status(500).json({ message: "Registration successful but login failed" });
+        }
+        res.status(201).json(user);
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid registration data", errors: error.errors });
+      } else if ((error as any).code === '23505') {
+        res.status(400).json({ message: "Phone number or gamertag already taken" });
+      } else {
+        console.error("Error registering with phone:", error);
+        res.status(500).json({ message: "Failed to register" });
+      }
+    }
+  });
+
+  app.post('/api/auth/phone/login', async (req: any, res) => {
+    try {
+      const { phoneNumber } = req.body;
+
+      if (!phoneNumber) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+
+      const user = await storage.getUserByPhoneNumber(phoneNumber);
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+
+      if (!user.phoneVerified) {
+        return res.status(401).json({ message: "Phone number not verified" });
+      }
+
+      req.login(user, (err: any) => {
+        if (err) {
+          console.error("Error logging in:", err);
+          return res.status(500).json({ message: "Login failed" });
+        }
+        res.json(user);
+      });
+    } catch (error) {
+      console.error("Error logging in with phone:", error);
       res.status(500).json({ message: "Failed to log in" });
     }
   });
