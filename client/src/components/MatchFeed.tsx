@@ -11,6 +11,7 @@ import { useWebSocket } from "@/hooks/useWebSocket";
 import { GameFilters } from "./GameFilters";
 import { RefreshCw, Plus, Wifi, WifiOff, EyeOff, Eye, Users, Target, Clock } from "lucide-react";
 import { useLayout } from "@/contexts/LayoutContext";
+import { getApiUrl } from "@/lib/api";
 
 // Utility function to format time ago
 function formatTimeAgo(date: string | Date | null): string {
@@ -110,7 +111,9 @@ export function MatchFeed({
       params.append('page', currentPage.toString());
       params.append('limit', '10');
       
-      const response = await fetch(`/api/match-requests?${params}`);
+      const response = await fetch(getApiUrl(`/api/match-requests?${params}`), {
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch match requests');
       }
@@ -126,7 +129,9 @@ export function MatchFeed({
   const { data: hiddenMatchIds = [] } = useQuery<string[]>({
     queryKey: ['/api/hidden-matches'],
     queryFn: async () => {
-      const response = await fetch('/api/hidden-matches');
+      const response = await fetch(getApiUrl('/api/hidden-matches'), {
+        credentials: 'include'
+      });
       if (!response.ok) {
         if (response.status === 401) {
           // User not authenticated, return empty array
@@ -143,7 +148,9 @@ export function MatchFeed({
   const { data: userConnections = [] } = useQuery<MatchConnection[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
-      const response = await fetch('/api/user/connections');
+      const response = await fetch(getApiUrl('/api/user/connections'), {
+        credentials: 'include'
+      });
       if (!response.ok) {
         if (response.status === 401) {
           return [];
