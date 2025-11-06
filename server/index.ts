@@ -5,11 +5,16 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
-// CORS configuration
+// CORS configuration for split deployment (Vercel frontend + Railway backend)
 const isDev = process.env.NODE_ENV === 'development';
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || (isDev ? true : ['http://localhost:5173']);
+const defaultOrigins = isDev 
+  ? ['http://localhost:5173', 'http://localhost:5000']
+  : [];
+
+const corsOrigins = process.env.CORS_ORIGIN?.split(',') || defaultOrigins;
+
 app.use(cors({
-  origin: corsOrigins,
+  origin: corsOrigins.length > 0 ? corsOrigins : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
