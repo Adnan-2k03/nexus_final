@@ -244,7 +244,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2" data-testid="heading-voice-channels">
-            <Mic2 className="h-8 w-8 text-primary" />
+            <Mic2 className="h-6 w-6 text-primary" />
             Voice Channels
           </h1>
           <p className="text-muted-foreground">Create and join group voice channels</p>

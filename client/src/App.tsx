@@ -110,8 +110,21 @@ function Router() {
     setShowAuthPage(false);
   };
 
-  const handleLogout = () => {
-    window.location.href = "/api/logout";
+  const handleLogout = async () => {
+    try {
+      // Use fetch with getApiUrl to ensure it hits the backend, even in cross-origin deployments
+      const response = await fetch(getApiUrl("/api/logout"), {
+        method: "GET",
+        credentials: "include",
+      });
+      
+      // Redirect to home page after logout, whether successful or not
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout fails, redirect to home
+      window.location.href = "/";
+    }
   };
 
   const handleCreateMatch = () => {
