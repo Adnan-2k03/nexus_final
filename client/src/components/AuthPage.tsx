@@ -143,6 +143,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     </Label>
                     <Input
                       id="register-gamertag"
+                      name="gamertag"
                       data-testid="input-register-gamertag"
                       placeholder="ProGamer123"
                       value={registerData.gamertag}
@@ -163,6 +164,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                       <Label htmlFor="register-firstname">First Name</Label>
                       <Input
                         id="register-firstname"
+                        name="firstName"
                         data-testid="input-register-firstname"
                         placeholder="John"
                         value={registerData.firstName}
@@ -176,6 +178,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                       <Label htmlFor="register-lastname">Last Name</Label>
                       <Input
                         id="register-lastname"
+                        name="lastName"
                         data-testid="input-register-lastname"
                         placeholder="Doe"
                         value={registerData.lastName}
@@ -190,6 +193,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Label htmlFor="register-email">Email</Label>
                     <Input
                       id="register-email"
+                      name="email"
                       data-testid="input-register-email"
                       type="email"
                       placeholder="you@example.com"
@@ -204,6 +208,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Label htmlFor="register-age">Age</Label>
                     <Input
                       id="register-age"
+                      name="age"
                       data-testid="input-register-age"
                       type="number"
                       placeholder="18"
@@ -246,6 +251,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
                     <Label htmlFor="login-gamertag">Gamertag</Label>
                     <Input
                       id="login-gamertag"
+                      name="gamertag"
                       data-testid="input-login-gamertag"
                       placeholder="ProGamer123"
                       value={loginData.gamertag}
