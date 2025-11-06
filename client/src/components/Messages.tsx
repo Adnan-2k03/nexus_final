@@ -54,26 +54,12 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
 
   const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch } = useQuery<ConnectionRequestWithUser[]>({
     queryKey: ['/api/connection-requests'],
-    queryFn: async () => {
-      const response = await fetch('/api/connection-requests');
-      if (!response.ok) {
-        throw new Error('Failed to fetch connection requests');
-      }
-      return response.json();
-    },
     retry: false,
   });
 
   // Fetch user data for all connected users
   const { data: usersResponse } = useQuery<{ users: User[] }>({
     queryKey: ['/api/users'],
-    queryFn: async () => {
-      const response = await fetch('/api/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      return response.json();
-    },
     retry: false,
   });
 
