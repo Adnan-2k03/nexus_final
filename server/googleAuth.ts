@@ -28,7 +28,10 @@ export function getSession() {
   
   const isProduction = process.env.NODE_ENV === "production";
   const isReplitEnv = !!process.env.REPL_ID;
-  const isSplitDeployment = isProduction && !isReplitEnv;
+  
+  const isCrossOriginDeployment = 
+    isReplitEnv || 
+    (isProduction && !!process.env.FRONTEND_URL && !!process.env.BACKEND_ONLY);
   
   return session({
     secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
@@ -38,7 +41,7 @@ export function getSession() {
     cookie: {
       httpOnly: true,
       secure: isProduction || isReplitEnv,
-      sameSite: (isReplitEnv || isSplitDeployment) ? "none" : "lax",
+      sameSite: isCrossOriginDeployment ? "none" : "lax",
       maxAge: sessionTtl,
     },
   });
