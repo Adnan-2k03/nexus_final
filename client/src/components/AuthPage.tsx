@@ -80,7 +80,7 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
     try {
       const fullPhoneNumber = `${countryCode}${phoneNumber}`;
-      const response = await fetch(getApiUrl("/api/auth/phone/verify-code"), {
+      const verifyResponse = await fetch(getApiUrl("/api/auth/phone/verify-code"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -89,17 +89,31 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         body: JSON.stringify({ phoneNumber: fullPhoneNumber, code: verificationCode }),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
+      if (!verifyResponse.ok) {
+        const error = await verifyResponse.json();
         throw new Error(error.message || "Verification failed");
       }
 
-      const data = await response.json();
+      const data = await verifyResponse.json();
 
       if (data.userExists) {
+        const loginResponse = await fetch(getApiUrl("/api/auth/phone/login"), {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ phoneNumber: fullPhoneNumber, code: verificationCode }),
+        });
+
+        if (!loginResponse.ok) {
+          const error = await loginResponse.json();
+          throw new Error(error.message || "Login failed");
+        }
+
         toast({
           title: "Welcome back!",
-          description: data.message || "You've successfully logged in.",
+          description: "You've successfully logged in.",
         });
         onAuthSuccess();
       } else {

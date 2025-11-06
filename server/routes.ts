@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/phone/verify-code', async (req: any, res) => {
+  app.post('/api/auth/phone/verify-code', async (req, res) => {
     try {
       const validatedData = verifyPhoneCodeSchema.parse(req.body);
       const { phoneNumber, code } = validatedData;
@@ -150,28 +150,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
       
-      if (existingUser) {
-        await storage.deletePhoneVerificationCode(phoneNumber);
-        
-        req.login(existingUser, (err: any) => {
-          if (err) {
-            console.error("Error logging in after verification:", err);
-            return res.status(500).json({ message: "Verification successful but login failed" });
-          }
-          res.json({ 
-            success: true, 
-            userExists: true,
-            message: "Welcome back!",
-            user: existingUser
-          });
-        });
-      } else {
-        res.json({ 
-          success: true, 
-          userExists: false,
-          message: "Phone number verified successfully. Please complete registration." 
-        });
-      }
+      res.json({ 
+        success: true, 
+        userExists: !!existingUser,
+        message: existingUser ? "Phone verified!" : "Phone number verified successfully. Please complete registration." 
+      });
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid request data", errors: error.errors });
@@ -231,10 +214,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/phone/login', async (req: any, res) => {
     try {
-      const { phoneNumber } = req.body;
+      const { phoneNumber, code } = req.body;
 
       if (!phoneNumber) {
         return res.status(400).json({ message: "Phone number is required" });
+      }
+
+      if (!code) {
+        return res.status(400).json({ message: "Verification code is required" });
+      }
+
+      const isVerified = await storage.verifyPhoneCode(phoneNumber, code);
+      if (!isVerified) {
+        return res.status(400).json({ message: "Invalid or expired verification code" });
       }
 
       const user = await storage.getUserByPhoneNumber(phoneNumber);
@@ -245,6 +237,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user.phoneVerified) {
         return res.status(401).json({ message: "Phone number not verified" });
       }
+
+      await storage.deletePhoneVerificationCode(phoneNumber);
 
       req.login(user, (err: any) => {
         if (err) {
