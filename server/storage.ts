@@ -14,6 +14,7 @@ import {
   groupVoiceMembers,
   groupVoiceInvites,
   pushSubscriptions,
+  phoneVerificationCodes,
   type User,
   type UpsertUser,
   type MatchRequest,
@@ -52,6 +53,8 @@ import {
   type InsertGroupVoiceInvite,
   type PushSubscription,
   type InsertPushSubscription,
+  type PhoneVerificationCode,
+  type InsertPhoneVerificationCode,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
@@ -76,13 +79,23 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByGamertag(gamertag: string): Promise<User | undefined>;
+  getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined>;
   getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>;
   getUserCount(): Promise<number>;
   upsertUser(user: UpsertUser): Promise<User>;
   upsertUserByGoogleId(user: { googleId: string; email: string; firstName?: string | null; lastName?: string | null; profileImageUrl?: string | null }): Promise<User>;
   createLocalUser(userData: { gamertag: string; firstName?: string | null; lastName?: string | null; email?: string | null; age?: number | null; gender?: "male" | "female" | "custom" | "prefer_not_to_say" | null; bio?: string | null; location?: string | null; preferredGames?: string[] | null }): Promise<User>;
+  createPhoneUser(userData: { phoneNumber: string; gamertag: string; firstName?: string | null; lastName?: string | null; age?: number | null; gender?: "male" | "female" | "custom" | "prefer_not_to_say" | null; bio?: string | null; location?: string | null; preferredGames?: string[] | null }): Promise<User>;
   updateUserProfile(id: string, profile: Partial<User>): Promise<User>;
   updatePrivacySettings(id: string, settings: { showMutualGames?: string; showMutualFriends?: string; showMutualHobbies?: string }): Promise<User>;
+  
+  // Phone verification operations
+  createPhoneVerificationCode(phoneNumber: string, code: string, expiresAt: Date): Promise<PhoneVerificationCode>;
+  getPhoneVerificationCode(phoneNumber: string): Promise<PhoneVerificationCode | undefined>;
+  verifyPhoneCode(phoneNumber: string, code: string): Promise<boolean>;
+  incrementVerificationAttempts(id: string): Promise<void>;
+  deletePhoneVerificationCode(phoneNumber: string): Promise<void>;
+  cleanupExpiredVerificationCodes(): Promise<void>;
   
   // Match request operations
   getMatchRequests(filters?: { game?: string; mode?: string; region?: string; gender?: string; language?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }>;
@@ -342,6 +355,30 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user || undefined;
+  }
+
+  async createPhoneUser(userData: { phoneNumber: string; gamertag: string; firstName?: string | null; lastName?: string | null; age?: number | null; gender?: "male" | "female" | "custom" | "prefer_not_to_say" | null; bio?: string | null; location?: string | null; preferredGames?: string[] | null }): Promise<User> {
+    const [user] = await db
+      .insert(users)
+      .values({
+        phoneNumber: userData.phoneNumber,
+        phoneVerified: true,
+        gamertag: userData.gamertag,
+        firstName: userData.firstName || null,
+        lastName: userData.lastName || null,
+        age: userData.age || null,
+        gender: userData.gender || null,
+        bio: userData.bio || null,
+        location: userData.location || null,
+        preferredGames: userData.preferredGames || null,
+      })
+      .returning();
+    return user;
+  }
+
   async updateUserProfile(id: string, profile: Partial<User>): Promise<User> {
     // Get current user to check if gamertag is actually changing
     const currentUser = await this.getUser(id);
@@ -380,6 +417,81 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedUser;
+  }
+
+  // Phone verification operations
+  async createPhoneVerificationCode(phoneNumber: string, code: string, expiresAt: Date): Promise<PhoneVerificationCode> {
+    await db.delete(phoneVerificationCodes).where(eq(phoneVerificationCodes.phoneNumber, phoneNumber));
+    
+    const [verificationCode] = await db
+      .insert(phoneVerificationCodes)
+      .values({
+        phoneNumber,
+        code,
+        expiresAt,
+        verified: false,
+        attempts: 0,
+      })
+      .returning();
+    
+    return verificationCode;
+  }
+
+  async getPhoneVerificationCode(phoneNumber: string): Promise<PhoneVerificationCode | undefined> {
+    const [code] = await db
+      .select()
+      .from(phoneVerificationCodes)
+      .where(
+        and(
+          eq(phoneVerificationCodes.phoneNumber, phoneNumber),
+          eq(phoneVerificationCodes.verified, false)
+        )
+      )
+      .orderBy(desc(phoneVerificationCodes.createdAt))
+      .limit(1);
+    
+    return code || undefined;
+  }
+
+  async verifyPhoneCode(phoneNumber: string, code: string): Promise<boolean> {
+    const verificationCode = await this.getPhoneVerificationCode(phoneNumber);
+    
+    if (!verificationCode) {
+      return false;
+    }
+
+    if (new Date() > verificationCode.expiresAt) {
+      return false;
+    }
+
+    if (verificationCode.code !== code) {
+      await this.incrementVerificationAttempts(verificationCode.id);
+      return false;
+    }
+
+    await db
+      .update(phoneVerificationCodes)
+      .set({ verified: true })
+      .where(eq(phoneVerificationCodes.id, verificationCode.id));
+    
+    return true;
+  }
+
+  async incrementVerificationAttempts(id: string): Promise<void> {
+    await db
+      .update(phoneVerificationCodes)
+      .set({ attempts: sql`${phoneVerificationCodes.attempts} + 1` })
+      .where(eq(phoneVerificationCodes.id, id));
+  }
+
+  async deletePhoneVerificationCode(phoneNumber: string): Promise<void> {
+    await db.delete(phoneVerificationCodes).where(eq(phoneVerificationCodes.phoneNumber, phoneNumber));
+  }
+
+  async cleanupExpiredVerificationCodes(): Promise<void> {
+    await db
+      .delete(phoneVerificationCodes)
+      .where(sql`${phoneVerificationCodes.expiresAt} < NOW()`);
   }
 
   // Match request operations
