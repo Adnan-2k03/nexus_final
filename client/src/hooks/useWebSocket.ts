@@ -76,9 +76,13 @@ export function useWebSocket() {
       }
     };
 
-    connect();
+    // Add a small delay before initial connection to allow backend to be ready
+    const initialConnectionTimeout = setTimeout(() => {
+      connect();
+    }, 500);
 
     return () => {
+      clearTimeout(initialConnectionTimeout);
       if (wsRef.current) {
         wsRef.current.close();
       }
