@@ -69,63 +69,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Local registration endpoint
-  app.post('/api/auth/register', async (req: any, res) => {
-    try {
-      const validatedData = registerUserSchema.parse(req.body);
-      
-      const existingUser = await storage.getUserByGamertag(validatedData.gamertag);
-      if (existingUser) {
-        return res.status(400).json({ message: "Gamertag already taken" });
-      }
-      
-      const user = await storage.createLocalUser(validatedData);
-      
-      req.login(user, (err: any) => {
-        if (err) {
-          console.error("Error logging in after registration:", err);
-          return res.status(500).json({ message: "Registration successful but login failed" });
+  // SECURITY: Local auth endpoints (passwordless) - ONLY available in DEV mode
+  // In production, users MUST use Google OAuth for security
+  if (DEV_MODE) {
+    // Local registration endpoint (DEV ONLY)
+    app.post('/api/auth/register', async (req: any, res) => {
+      try {
+        const validatedData = registerUserSchema.parse(req.body);
+        
+        const existingUser = await storage.getUserByGamertag(validatedData.gamertag);
+        if (existingUser) {
+          return res.status(400).json({ message: "Gamertag already taken" });
         }
-        res.status(201).json(user);
-      });
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid registration data", errors: error.errors });
-      } else if ((error as any).code === '23505') {
-        res.status(400).json({ message: "Gamertag or email already taken" });
-      } else {
-        console.error("Error registering user:", error);
-        res.status(500).json({ message: "Failed to register user" });
-      }
-    }
-  });
-  
-  // Local login endpoint
-  app.post('/api/auth/login', async (req: any, res) => {
-    try {
-      const { gamertag } = req.body;
-      
-      if (!gamertag) {
-        return res.status(400).json({ message: "Gamertag is required" });
-      }
-      
-      const user = await storage.getUserByGamertag(gamertag);
-      if (!user) {
-        return res.status(401).json({ message: "User not found" });
-      }
-      
-      req.login(user, (err: any) => {
-        if (err) {
-          console.error("Error logging in:", err);
-          return res.status(500).json({ message: "Login failed" });
+        
+        const user = await storage.createLocalUser(validatedData);
+        
+        req.login(user, (err: any) => {
+          if (err) {
+            console.error("Error logging in after registration:", err);
+            return res.status(500).json({ message: "Registration successful but login failed" });
+          }
+          res.status(201).json(user);
+        });
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          res.status(400).json({ message: "Invalid registration data", errors: error.errors });
+        } else if ((error as any).code === '23505') {
+          res.status(400).json({ message: "Gamertag or email already taken" });
+        } else {
+          console.error("Error registering user:", error);
+          res.status(500).json({ message: "Failed to register user" });
         }
-        res.json(user);
+      }
+    });
+    
+    // Local login endpoint (DEV ONLY)
+    app.post('/api/auth/login', async (req: any, res) => {
+      try {
+        const { gamertag } = req.body;
+        
+        if (!gamertag) {
+          return res.status(400).json({ message: "Gamertag is required" });
+        }
+        
+        const user = await storage.getUserByGamertag(gamertag);
+        if (!user) {
+          return res.status(401).json({ message: "User not found" });
+        }
+        
+        req.login(user, (err: any) => {
+          if (err) {
+            console.error("Error logging in:", err);
+            return res.status(500).json({ message: "Login failed" });
+          }
+          res.json(user);
+        });
+      } catch (error) {
+        console.error("Error logging in:", error);
+        res.status(500).json({ message: "Failed to log in" });
+      }
+    });
+  } else {
+    // In production, block these insecure endpoints
+    app.post('/api/auth/register', (req, res) => {
+      res.status(403).json({ 
+        message: "Local registration is disabled in production. Please use Google OAuth to sign in." 
       });
-    } catch (error) {
-      console.error("Error logging in:", error);
-      res.status(500).json({ message: "Failed to log in" });
-    }
-  });
+    });
+    
+    app.post('/api/auth/login', (req, res) => {
+      res.status(403).json({ 
+        message: "Local login is disabled in production. Please use Google OAuth to sign in." 
+      });
+    });
+  }
 
   // User discovery routes
   app.get('/api/users', async (req, res) => {
