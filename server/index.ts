@@ -6,7 +6,8 @@ import { setupVite, serveStatic, log } from "./vite";
 const app = express();
 
 // CORS configuration
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'];
+const isDev = process.env.NODE_ENV === 'development';
+const corsOrigins = process.env.CORS_ORIGIN?.split(',') || (isDev ? true : ['http://localhost:5173']);
 app.use(cors({
   origin: corsOrigins,
   credentials: true,
