@@ -53,8 +53,8 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         description: "You've successfully logged in.",
       });
 
-      // Reload the page to fetch updated auth state
-      window.location.reload();
+      // Trigger auth success callback to refetch user data
+      onAuthSuccess();
     } catch (error) {
       toast({
         title: "Login failed",
@@ -95,8 +95,8 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         description: "Welcome to GameMatch!",
       });
 
-      // Reload the page to fetch updated auth state
-      window.location.reload();
+      // Trigger auth success callback to refetch user data
+      onAuthSuccess();
     } catch (error) {
       toast({
         title: "Registration failed",

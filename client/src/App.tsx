@@ -53,7 +53,7 @@ function mapUserForComponents(user: User) {
 
 function Router() {
   // Real authentication using useAuth hook
-  const { user, isLoading, isAuthenticated } = useAuth();
+  const { user, isLoading, isFetching, isAuthenticated } = useAuth();
   const { getContainerClass } = useLayout();
 
   // ALL hooks must be called before any early returns
@@ -83,8 +83,8 @@ function Router() {
     }
   }, [isAuthenticated, user, currentPage]);
 
-  // Show loading while authentication is being checked - MUST come after ALL hooks
-  if (isLoading) {
+  // Show loading while authentication is being checked or refetched - MUST come after ALL hooks
+  if (isLoading || (isFetching && !isAuthenticated)) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -100,8 +100,9 @@ function Router() {
   };
 
   const handleAuthSuccess = () => {
-    // Reload to fetch updated auth state
-    window.location.reload();
+    // Invalidate auth query to refetch user data without page reload
+    queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    setShowAuthPage(false);
   };
 
   const handleBackToLanding = () => {
@@ -360,7 +361,7 @@ function Router() {
 
   return (
     <Switch>
-      {!isAuthenticated ? (
+      {!isAuthenticated && !isLoading ? (
         <Route
           path="/"
           component={() => 
@@ -371,7 +372,7 @@ function Router() {
             )
           }
         />
-      ) : (
+      ) : isAuthenticated ? (
         <>
           <Route path="/connections">
             {() => {
@@ -469,7 +470,7 @@ function Router() {
             )}
           </Route>
         </>
-      )}
+      ) : null}
       <Route component={NotFound} />
     </Switch>
   );
