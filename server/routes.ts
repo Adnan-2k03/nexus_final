@@ -1457,12 +1457,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Extract hostname from origin using URL parsing for robustness
         const originHost = new URL(origin).host;
         
-        // Require exact host match to prevent cross-site hijacking
+        // Allow same-origin connections
         if (originHost === host) {
           return true;
         }
         
-        console.log(`WebSocket connection rejected: Origin ${origin} (${originHost}) does not match host ${host}`);
+        // Allow configured CORS origins (for split deployments like Vercel + Railway)
+        const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || [];
+        const frontendUrl = process.env.FRONTEND_URL;
+        
+        // Check if origin matches CORS_ORIGIN or FRONTEND_URL
+        if (frontendUrl) {
+          try {
+            const frontendHost = new URL(frontendUrl).host;
+            if (originHost === frontendHost) {
+              console.log(`WebSocket connection allowed from configured frontend: ${origin}`);
+              return true;
+            }
+          } catch (e) {
+            // Invalid FRONTEND_URL, ignore
+          }
+        }
+        
+        // Check if origin is in CORS_ORIGIN list
+        if (allowedOrigins.some(allowed => {
+          try {
+            return new URL(allowed).host === originHost;
+          } catch {
+            return allowed === origin;
+          }
+        })) {
+          console.log(`WebSocket connection allowed from CORS origin: ${origin}`);
+          return true;
+        }
+        
+        console.log(`WebSocket connection rejected: Origin ${origin} (${originHost}) does not match host ${host} or allowed origins`);
         return false;
       } catch (error) {
         console.log(`WebSocket connection rejected: Invalid origin URL ${origin}`);

@@ -2,19 +2,30 @@
 
 ## What Was Wrong
 
+Your app had **TWO critical bugs**:
+
+### Bug #1: Hardcoded API URLs (405 Errors)
 Your code had **hardcoded relative URLs** like `fetch('/api/match-requests')` instead of using the `getApiUrl()` helper function. This meant:
 - When deployed to Vercel, ALL requests went to Vercel (no backend there → 405 errors)
-- WebSocket tried to connect to Vercel instead of Railway
 - Environment variable `VITE_API_URL` was ignored
+
+### Bug #2: WebSocket Origin Validation (Connection Refused)
+The WebSocket server only accepted same-origin connections. When Vercel tried to connect to Railway:
+- Origin: `nexus-final-tau.vercel.app` (Vercel)
+- Host: `nexusfinal-production.up.railway.app` (Railway)
+- Result: **Connection rejected** (1006 error)
 
 ## Files Fixed
 
-### Critical Fixes (Match Requests Now Work!)
+### Critical Fixes (Everything Now Works!)
 1. ✅ **client/src/App.tsx** - Fixed all POST/DELETE requests for match operations
 2. ✅ **client/src/components/MatchFeed.tsx** - Fixed GET requests for match feed
 3. ✅ **client/src/hooks/useWebSocket.ts** - Fixed WebSocket connection URL
+4. ✅ **server/routes.ts** - Fixed WebSocket origin validation to allow cross-origin connections
 
 ### What Changed
+
+**Fix #1: API URLs**
 
 **Before (BROKEN):**
 ```typescript
