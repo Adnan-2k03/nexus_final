@@ -17,6 +17,7 @@
     "@100mslive/react-sdk": "^0.10.39",
     "@100mslive/server-sdk": "^0.3.0",
     "@aws-sdk/client-s3": "^3.922.0",
+    "@aws-sdk/client-sns": "^3.925.0",
     "@aws-sdk/s3-request-presigner": "^3.922.0",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",

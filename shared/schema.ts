@@ -48,6 +48,8 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   googleId: varchar("google_id").unique(),
   email: varchar("email").unique(),
+  phoneNumber: varchar("phone_number").unique(),
+  phoneVerified: boolean("phone_verified").default(false),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -71,6 +73,7 @@ export const users = pgTable("users", {
   index("idx_users_gender").on(table.gender),
   index("idx_users_language").on(table.language),
   index("idx_users_created_at").on(table.createdAt),
+  index("idx_users_phone_number").on(table.phoneNumber),
 ]);
 
 // Match requests table
@@ -291,6 +294,20 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   index("idx_user_push_subscriptions").on(table.userId),
 ]);
 
+// Phone Verification Codes table - stores OTP codes for phone verification
+export const phoneVerificationCodes = pgTable("phone_verification_codes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  phoneNumber: varchar("phone_number").notNull(),
+  code: varchar("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  verified: boolean("verified").notNull().default(false),
+  attempts: integer("attempts").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_phone_verification_phone").on(table.phoneNumber),
+  index("idx_phone_verification_expires").on(table.expiresAt),
+]);
+
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertMatchRequest = typeof matchRequests.$inferInsert;
@@ -323,6 +340,8 @@ export type InsertVoiceParticipant = typeof voiceParticipants.$inferInsert;
 export type VoiceParticipant = typeof voiceParticipants.$inferSelect;
 export type InsertPushSubscription = typeof pushSubscriptions.$inferInsert;
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type InsertPhoneVerificationCode = typeof phoneVerificationCodes.$inferInsert;
+export type PhoneVerificationCode = typeof phoneVerificationCodes.$inferSelect;
 
 // Enhanced match request type that includes user profile data
 export type MatchRequestWithUser = MatchRequest & {
@@ -394,6 +413,7 @@ export const registerUserSchema = z.object({
   firstName: z.string().optional(),
   lastName: z.string().optional(),
   email: z.string().email().optional(),
+  phoneNumber: z.string().optional(),
   age: z.number().min(13, "You must be at least 13 years old").max(120).optional(),
   gender: z.enum(["male", "female", "custom", "prefer_not_to_say"]).optional(),
   bio: z.string().max(500).optional(),
@@ -402,6 +422,21 @@ export const registerUserSchema = z.object({
 });
 
 export type RegisterUser = z.infer<typeof registerUserSchema>;
+
+// Phone verification schemas
+export const sendPhoneCodeSchema = z.object({
+  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits").max(15, "Phone number must be at most 15 digits"),
+});
+
+export const verifyPhoneCodeSchema = z.object({
+  phoneNumber: z.string().min(10).max(15),
+  code: z.string().length(6, "Verification code must be 6 digits"),
+});
+
+export const phoneRegisterSchema = registerUserSchema.extend({
+  phoneNumber: z.string().min(10).max(15),
+  verificationCode: z.string().length(6),
+});
 
 export const insertMatchRequestSchema = createInsertSchema(matchRequests).omit({ id: true, userId: true, createdAt: true, updatedAt: true }).required({ matchType: true, duration: true });
 export const insertConnectionRequestSchema = createInsertSchema(connectionRequests).omit({ id: true, createdAt: true, updatedAt: true });
