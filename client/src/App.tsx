@@ -100,7 +100,8 @@ function Router() {
   };
 
   const handleAuthSuccess = () => {
-    window.location.href = "/";
+    // Reload to fetch updated auth state
+    window.location.reload();
   };
 
   const handleBackToLanding = () => {
