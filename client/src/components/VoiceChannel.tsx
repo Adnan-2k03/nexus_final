@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Mic, MicOff, Phone, PhoneOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { getApiUrl } from "@/lib/api";
 
 interface VoiceChannelProps {
   connectionId: string;
@@ -101,8 +102,9 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     setIsJoining(true);
     try {
       console.log('[HMS] Requesting auth token for voice channel...');
-      const response = await fetch('/api/voice/join', {
+      const response = await fetch(getApiUrl('/api/voice/join'), {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -149,8 +151,9 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       await hmsActions.leave();
       
       // Notify backend
-      await fetch('/api/voice/leave', {
+      await fetch(getApiUrl('/api/voice/leave'), {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },

@@ -12,6 +12,7 @@ import { Search, MapPin, Users, MessageCircle, Loader2, RefreshCw, Filter } from
 import { UserProfile } from "./UserProfile";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/api";
 import type { User } from "@shared/schema";
 import { useLayout } from "@/contexts/LayoutContext";
 
@@ -136,7 +137,9 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const { data: connectionRequests = [] } = useQuery({
     queryKey: ['/api/connection-requests'],
     queryFn: async () => {
-      const response = await fetch('/api/connection-requests');
+      const response = await fetch(getApiUrl('/api/connection-requests'), {
+        credentials: 'include',
+      });
       if (!response.ok) {
         if (response.status === 401) return [];
         throw new Error('Failed to fetch connection requests');
@@ -150,7 +153,9 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const { data: userConnections = [] } = useQuery({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
-      const response = await fetch('/api/user/connections');
+      const response = await fetch(getApiUrl('/api/user/connections'), {
+        credentials: 'include',
+      });
       if (!response.ok) {
         if (response.status === 401) return [];
         throw new Error('Failed to fetch connections');
