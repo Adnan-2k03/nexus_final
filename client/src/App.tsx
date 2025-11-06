@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 
 // Hooks
 import { useAuth } from "@/hooks/useAuth";
+import { getApiUrl } from "@/lib/api";
 
 // Components
 import { LandingPage } from "@/components/LandingPage";
@@ -123,11 +124,12 @@ function Router() {
 
   const handleSubmitMatch = async (data: any) => {
     try {
-      const response = await fetch("/api/match-requests", {
+      const response = await fetch(getApiUrl("/api/match-requests"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(data),
       });
 
@@ -149,7 +151,9 @@ function Router() {
   const handleAcceptMatch = async (matchId: string) => {
     try {
       // First, get the match request details to find the accepter (owner)
-      const matchResponse = await fetch("/api/match-requests");
+      const matchResponse = await fetch(getApiUrl("/api/match-requests"), {
+        credentials: "include"
+      });
       if (!matchResponse.ok) {
         throw new Error("Failed to fetch match requests");
       }
@@ -162,11 +166,12 @@ function Router() {
       }
 
       // Create a match connection between current user (requester) and match owner (accepter)
-      const response = await fetch("/api/match-connections", {
+      const response = await fetch(getApiUrl("/api/match-connections"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           requestId: matchId,
           accepterId: targetMatch.userId, // Owner of the match request
@@ -190,11 +195,12 @@ function Router() {
 
   const handleDeclineMatch = async (matchId: string) => {
     try {
-      const response = await fetch("/api/hidden-matches", {
+      const response = await fetch(getApiUrl("/api/hidden-matches"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           matchRequestId: matchId,
         }),
@@ -218,8 +224,9 @@ function Router() {
 
   const handleDeleteMatch = async (matchId: string) => {
     try {
-      const response = await fetch(`/api/match-requests/${matchId}`, {
+      const response = await fetch(getApiUrl(`/api/match-requests/${matchId}`), {
         method: "DELETE",
+        credentials: "include",
       });
 
       if (!response.ok) {
