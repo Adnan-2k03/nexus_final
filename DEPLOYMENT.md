@@ -224,7 +224,9 @@ VITE_WS_URL=wss://backend-production-xxxx.up.railway.app
 
 ---
 
-## Part 5: Configure CORS on Backend
+## Part 5: Configure CORS and CSP
+
+### Backend CORS Configuration
 
 **IMPORTANT**: Your backend is already configured to handle CORS properly for split deployments.
 
@@ -243,9 +245,21 @@ NODE_ENV=production
 - In production (Railway), you MUST set `CORS_ORIGIN` to your Vercel URLs
 - Setting `BACKEND_ONLY=true` ensures Railway only serves the API (no static files)
 
+### Frontend CSP Configuration
+
+**IMPORTANT**: The Content Security Policy in `client/index.html` has been configured to allow Railway backend connections.
+
+The CSP `connect-src` directive includes:
+```
+connect-src 'self' ... https://*.railway.app wss://*.railway.app ...
+```
+
+This allows your Vercel frontend to make API calls to your Railway backend.
+
 **Common CORS Issues:**
 - ❌ **405 Method Not Allowed**: Your Vercel URL is not in `CORS_ORIGIN`
 - ❌ **No 'Access-Control-Allow-Origin' header**: Same issue, add your domain to `CORS_ORIGIN`
+- ❌ **CSP violations (Refused to connect)**: Railway URL is not in CSP `connect-src` (already fixed)
 - ✅ **Solution**: Always include both your production and preview Vercel URLs in `CORS_ORIGIN`
 
 ---
