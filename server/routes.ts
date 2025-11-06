@@ -107,7 +107,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/auth/phone/register', async (req: any, res) => {
     try {
-      const { firebaseToken, gamertag, ...userData } = req.body;
+      const { firebaseToken, ...registrationData } = req.body;
 
       if (!firebaseToken) {
         return res.status(400).json({ message: "Firebase token is required" });
@@ -118,7 +118,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid or expired token" });
       }
 
-      const phoneNumber = verifiedUser.phoneNumber;
+      const validatedData = phoneRegisterSchema.parse({
+        ...registrationData,
+        phoneNumber: verifiedUser.phoneNumber,
+        verificationCode: "firebase-verified"
+      });
+
+      const { phoneNumber, verificationCode, gamertag, ...userData } = validatedData;
 
       const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
       if (existingUser) {
