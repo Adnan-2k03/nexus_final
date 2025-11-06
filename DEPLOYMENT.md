@@ -137,8 +137,7 @@ DATABASE_URL=${{Postgres.DATABASE_URL}}
 # Session Secret (generate a random string)
 SESSION_SECRET=your-super-secret-random-string-here
 
-# ⚠️ SECURITY CRITICAL: Google OAuth (REQUIRED for production)
-# DO NOT set AUTH_DISABLED in production - it allows anyone to impersonate any user!
+# Google OAuth (if using)
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
@@ -167,10 +166,6 @@ BACKEND_ONLY=true
 # CORS - CRITICAL for Vercel frontend
 # Add your Vercel domain(s) - comma-separated
 CORS_ORIGIN=https://your-project.vercel.app,https://your-project-git-main.vercel.app
-
-# ⚠️ SECURITY WARNING: DO NOT SET AUTH_DISABLED IN PRODUCTION
-# AUTH_DISABLED=true allows passwordless login - ONLY use in development!
-# In production, Google OAuth is REQUIRED for secure authentication.
 ```
 
 ### Step 6: Generate Public Domain
