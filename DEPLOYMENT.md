@@ -1,5 +1,33 @@
 # Deployment Guide: Railway + Vercel + Cloudflare R2 + 100ms
 
+## 🚨 CRITICAL FIX FOR 401 ERRORS (SPLIT DEPLOYMENT)
+
+**If you're seeing 401 Unauthorized errors on your Vercel frontend connecting to Railway backend, this has been fixed!**
+
+### What was the problem?
+Session cookies had `sameSite: "lax"` which blocks cross-origin cookie sharing between Vercel and Railway.
+
+### The Fix (Already Applied)
+Updated `server/googleAuth.ts` to detect split deployments and set `sameSite: "none"` + `secure: true` for cross-origin cookies.
+
+### What You Need to Do on Railway:
+
+**1. Add these CRITICAL environment variables:**
+```bash
+CORS_ORIGIN=https://nexus-final.vercel.app
+FRONTEND_URL=https://nexus-final.vercel.app
+BACKEND_ONLY=true
+NODE_ENV=production
+```
+
+**2. Redeploy your Railway backend** (to apply the code fix)
+
+**3. Clear browser cookies** and test again
+
+That's it! Your authentication should now work across domains. See Part 3 below for full Railway setup.
+
+---
+
 This guide walks you through deploying your GameMatch app using the optimal architecture:
 - **Frontend**: Vercel (free 100GB bandwidth)
 - **Backend + Database**: Railway ($5-20/month)

@@ -25,6 +25,11 @@ export function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
+  
+  const isProduction = process.env.NODE_ENV === "production";
+  const isReplitEnv = !!process.env.REPL_ID;
+  const isSplitDeployment = isProduction && !isReplitEnv;
+  
   return session({
     secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
     store: sessionStore,
@@ -32,8 +37,8 @@ export function getSession() {
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production" || !!process.env.REPL_ID,
-      sameSite: !!process.env.REPL_ID ? "none" : "lax",
+      secure: isProduction || isReplitEnv,
+      sameSite: (isReplitEnv || isSplitDeployment) ? "none" : "lax",
       maxAge: sessionTtl,
     },
   });
