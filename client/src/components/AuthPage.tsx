@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gamepad2, Phone, Shield } from "lucide-react";
+import { SiGoogle } from "react-icons/si";
 import { useToast } from "@/hooks/use-toast";
 import type { RegisterUser } from "@shared/schema";
 import { getApiUrl } from "@/lib/api";
@@ -16,18 +17,6 @@ interface AuthPageProps {
 export function AuthPage({ onAuthSuccess }: AuthPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
-  const [loginData, setLoginData] = useState({
-    gamertag: "",
-  });
-
-  const [registerData, setRegisterData] = useState<RegisterUser>({
-    gamertag: "",
-    firstName: "",
-    lastName: "",
-    email: "",
-    age: undefined,
-  });
 
   const [phoneStep, setPhoneStep] = useState<"phone" | "code" | "register">("phone");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -42,83 +31,8 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
     age: undefined,
   });
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(getApiUrl("/api/auth/login"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(loginData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Login failed");
-      }
-
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in.",
-      });
-
-      // Trigger auth success callback to refetch user data
-      onAuthSuccess();
-    } catch (error) {
-      toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      const payload = {
-        ...registerData,
-        age: registerData.age || undefined,
-      };
-
-      const response = await fetch(getApiUrl("/api/auth/register"), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(payload),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Registration failed");
-      }
-
-      toast({
-        title: "Account created!",
-        description: "Welcome to GameMatch!",
-      });
-
-      // Trigger auth success callback to refetch user data
-      onAuthSuccess();
-    } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = getApiUrl("/api/auth/google");
   };
 
   const handleSendCode = async (e: React.FormEvent) => {
@@ -249,19 +163,21 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
             <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center">
               <Gamepad2 className="h-7 w-7 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold text-foreground">GameMatch</h1>
+            <h1 className="text-3xl font-bold text-foreground">Nexus Match</h1>
           </div>
-          <p className="text-muted-foreground">Find your perfect gaming squad</p>
+          <p className="text-muted-foreground">Find your perfect gaming partner</p>
         </div>
 
         <Tabs defaultValue="phone" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="phone" data-testid="tab-phone">
               <Phone className="h-4 w-4 mr-1" />
               Phone
             </TabsTrigger>
-            <TabsTrigger value="register" data-testid="tab-register">Register</TabsTrigger>
-            <TabsTrigger value="login" data-testid="tab-login">Login</TabsTrigger>
+            <TabsTrigger value="google" data-testid="tab-google">
+              <SiGoogle className="h-4 w-4 mr-1" />
+              Google
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="phone">
@@ -480,150 +396,27 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
             )}
           </TabsContent>
 
-          <TabsContent value="register">
+          <TabsContent value="google">
             <Card>
               <CardHeader>
-                <CardTitle>Create Account</CardTitle>
+                <CardTitle>Sign in with Google</CardTitle>
                 <CardDescription>
-                  Choose your gamertag to get started
+                  Quick and secure authentication with your Google account
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-gamertag">
-                      Gamertag <span className="text-destructive">*</span>
-                    </Label>
-                    <Input
-                      id="register-gamertag"
-                      name="gamertag"
-                      data-testid="input-register-gamertag"
-                      placeholder="ProGamer123"
-                      value={registerData.gamertag}
-                      onChange={(e) =>
-                        setRegisterData({ ...registerData, gamertag: e.target.value })
-                      }
-                      required
-                      minLength={3}
-                      maxLength={20}
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      3-20 characters, must be unique
-                    </p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="register-firstname">First Name</Label>
-                      <Input
-                        id="register-firstname"
-                        name="firstName"
-                        data-testid="input-register-firstname"
-                        placeholder="John"
-                        value={registerData.firstName}
-                        onChange={(e) =>
-                          setRegisterData({ ...registerData, firstName: e.target.value })
-                        }
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="register-lastname">Last Name</Label>
-                      <Input
-                        id="register-lastname"
-                        name="lastName"
-                        data-testid="input-register-lastname"
-                        placeholder="Doe"
-                        value={registerData.lastName}
-                        onChange={(e) =>
-                          setRegisterData({ ...registerData, lastName: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <Input
-                      id="register-email"
-                      name="email"
-                      data-testid="input-register-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={registerData.email}
-                      onChange={(e) =>
-                        setRegisterData({ ...registerData, email: e.target.value })
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="register-age">Age</Label>
-                    <Input
-                      id="register-age"
-                      name="age"
-                      data-testid="input-register-age"
-                      type="number"
-                      placeholder="18"
-                      min="13"
-                      max="120"
-                      value={registerData.age || ""}
-                      onChange={(e) =>
-                        setRegisterData({
-                          ...registerData,
-                          age: e.target.value ? parseInt(e.target.value) : undefined,
-                        })
-                      }
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                    data-testid="button-register-submit"
-                  >
-                    {isLoading ? "Creating Account..." : "Create Account"}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="login">
-            <Card>
-              <CardHeader>
-                <CardTitle>Welcome Back</CardTitle>
-                <CardDescription>
-                  Enter your gamertag to continue
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-gamertag">Gamertag</Label>
-                    <Input
-                      id="login-gamertag"
-                      name="gamertag"
-                      data-testid="input-login-gamertag"
-                      placeholder="ProGamer123"
-                      value={loginData.gamertag}
-                      onChange={(e) =>
-                        setLoginData({ ...loginData, gamertag: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isLoading}
-                    data-testid="button-login-submit"
-                  >
-                    {isLoading ? "Logging in..." : "Login"}
-                  </Button>
-                </form>
+                <Button
+                  onClick={handleGoogleLogin}
+                  variant="outline"
+                  className="w-full h-12 text-base"
+                  data-testid="button-google-login"
+                >
+                  <SiGoogle className="h-5 w-5 mr-2" />
+                  Continue with Google
+                </Button>
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  We'll never post anything without your permission
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
