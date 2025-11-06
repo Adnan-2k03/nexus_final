@@ -228,7 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // First check if the match request exists and verify ownership
       const existingRequest = await storage.getMatchRequests();
-      const requestToUpdate = existingRequest.find(r => r.id === id);
+      const requestToUpdate = existingRequest.matchRequests.find((r: any) => r.id === id);
       
       if (!requestToUpdate) {
         return res.status(404).json({ message: "Match request not found" });
@@ -260,7 +260,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       
       const matchRequests = await storage.getMatchRequests();
-      const matchRequest = matchRequests.find(r => r.id === id);
+      const matchRequest = matchRequests.matchRequests.find((r: any) => r.id === id);
       
       if (!matchRequest) {
         return res.status(404).json({ message: "Match request not found" });
@@ -280,7 +280,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // First check if the match request exists and verify ownership
       const existingRequest = await storage.getMatchRequests();
-      const requestToDelete = existingRequest.find(r => r.id === id);
+      const requestToDelete = existingRequest.matchRequests.find((r: any) => r.id === id);
       
       if (!requestToDelete) {
         return res.status(404).json({ message: "Match request not found" });
@@ -324,7 +324,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Verify the match request exists
       const matchRequests = await storage.getMatchRequests();
-      const matchRequest = matchRequests.find(r => r.id === requestId);
+      const matchRequest = matchRequests.matchRequests.find((r: any) => r.id === requestId);
       
       if (!matchRequest) {
         return res.status(404).json({ message: "Match request not found" });
