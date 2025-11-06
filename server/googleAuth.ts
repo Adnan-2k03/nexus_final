@@ -33,17 +33,35 @@ export function getSession() {
     isReplitEnv || 
     (isProduction && !!process.env.FRONTEND_URL && !!process.env.BACKEND_ONLY);
   
+  const cookieConfig = {
+    httpOnly: true,
+    secure: isProduction || isReplitEnv,
+    sameSite: isCrossOriginDeployment ? "none" : "lax",
+    maxAge: sessionTtl,
+  } as const;
+
+  console.log("🍪 [Session Config]");
+  console.log(`   Environment: ${isProduction ? 'production' : 'development'}`);
+  console.log(`   Cross-Origin: ${isCrossOriginDeployment ? 'YES' : 'NO'}`);
+  console.log(`   Cookie sameSite: ${cookieConfig.sameSite}`);
+  console.log(`   Cookie secure: ${cookieConfig.secure}`);
+  if (!isCrossOriginDeployment && isProduction) {
+    console.warn("⚠️  Cross-origin deployment NOT detected!");
+    console.warn("   For split deployment (e.g., Vercel frontend + Railway backend):");
+    console.warn("   Set these environment variables on your BACKEND (Railway):");
+    console.warn("   - FRONTEND_URL=<your-actual-vercel-url> (must use HTTPS)");
+    console.warn("   - BACKEND_ONLY=true");
+    console.warn("   - CORS_ORIGIN=<your-actual-vercel-url>");
+    console.warn("   - NODE_ENV=production");
+    console.warn("   This enables sameSite=none cookies for cross-origin authentication.");
+  }
+  
   return session({
     secret: process.env.SESSION_SECRET || "dev-secret-change-in-production",
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: isProduction || isReplitEnv,
-      sameSite: isCrossOriginDeployment ? "none" : "lax",
-      maxAge: sessionTtl,
-    },
+    cookie: cookieConfig as any,
   });
 }
 
