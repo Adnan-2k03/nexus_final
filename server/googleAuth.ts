@@ -72,14 +72,18 @@ export async function setupAuth(app: Express) {
   app.use(passport.session());
 
   if (hasGoogleAuth) {
+    const backendUrl = process.env.BACKEND_URL || process.env.RAILWAY_PUBLIC_DOMAIN 
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+      : undefined;
+      
     const callbackURL = process.env.NODE_ENV === "production" 
-      ? `${process.env.FRONTEND_URL}/api/auth/google/callback`
+      ? `${backendUrl}/api/auth/google/callback`
       : process.env.REPLIT_DEV_DOMAIN
         ? `https://${process.env.REPLIT_DEV_DOMAIN}/api/auth/google/callback`
         : `http://localhost:5000/api/auth/google/callback`;
     
-    if (process.env.NODE_ENV === "production" && !process.env.FRONTEND_URL) {
-      throw new Error("FRONTEND_URL must be set in production for Google OAuth callback");
+    if (process.env.NODE_ENV === "production" && !backendUrl) {
+      throw new Error("BACKEND_URL or RAILWAY_PUBLIC_DOMAIN must be set in production for Google OAuth callback");
     }
 
     console.log(`[OAuth Debug] Callback URL: ${callbackURL}`);
@@ -134,19 +138,6 @@ export async function setupAuth(app: Express) {
         done(error);
       }
     });
-  } else {
-    passport.serializeUser((user: any, done) => {
-      done(null, user.id);
-    });
-
-    passport.deserializeUser(async (id: string, done) => {
-      try {
-        const user = await storage.getUser(id);
-        done(null, user);
-      } catch (error) {
-        done(error);
-      }
-    });
 
     app.get("/api/auth/google", 
       passport.authenticate("google", { 
@@ -172,18 +163,31 @@ export async function setupAuth(app: Express) {
             });
           }
           if (!user) {
-            return res.redirect("/");
+            return res.redirect(process.env.FRONTEND_URL || "/");
           }
           req.login(user, (loginErr) => {
             if (loginErr) {
               console.error("[OAuth Error] Login error:", loginErr);
               return next(loginErr);
             }
-            return res.redirect("/");
+            return res.redirect(process.env.FRONTEND_URL || "/");
           });
         })(req, res, next);
       }
     );
+  } else {
+    passport.serializeUser((user: any, done) => {
+      done(null, user.id);
+    });
+
+    passport.deserializeUser(async (id: string, done) => {
+      try {
+        const user = await storage.getUser(id);
+        done(null, user);
+      } catch (error) {
+        done(error);
+      }
+    });
   }
 
   app.get("/api/logout", (req, res) => {
