@@ -161,6 +161,11 @@ VAPID_SUBJECT=mailto:support@yourdomain.com
 
 # Node Environment
 NODE_ENV=production
+BACKEND_ONLY=true
+
+# CORS - CRITICAL for Vercel frontend
+# Add your Vercel domain(s) - comma-separated
+CORS_ORIGIN=https://your-project.vercel.app,https://your-project-git-main.vercel.app
 ```
 
 ### Step 6: Generate Public Domain
@@ -221,21 +226,27 @@ VITE_WS_URL=wss://backend-production-xxxx.up.railway.app
 
 ## Part 5: Configure CORS on Backend
 
-Update your Railway backend environment variables to allow Vercel domain:
+**IMPORTANT**: Your backend is already configured to handle CORS properly for split deployments.
+
+Update your Railway backend environment variables to allow your Vercel domain:
 
 ```bash
-# In Railway → Variables
-CORS_ORIGIN=https://your-project.vercel.app,http://localhost:5173
+# In Railway → Variables → Add these:
+CORS_ORIGIN=https://your-project.vercel.app,https://your-project-git-main.vercel.app
+BACKEND_ONLY=true
+NODE_ENV=production
 ```
 
-Then update your `server/index.ts` to use this:
+**How it works:**
+- The backend automatically allows the origins specified in `CORS_ORIGIN` (comma-separated)
+- In development (Replit), it allows `localhost:5173` and `localhost:5000` by default
+- In production (Railway), you MUST set `CORS_ORIGIN` to your Vercel URLs
+- Setting `BACKEND_ONLY=true` ensures Railway only serves the API (no static files)
 
-```typescript
-app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || 'http://localhost:5173',
-  credentials: true,
-}));
-```
+**Common CORS Issues:**
+- ❌ **405 Method Not Allowed**: Your Vercel URL is not in `CORS_ORIGIN`
+- ❌ **No 'Access-Control-Allow-Origin' header**: Same issue, add your domain to `CORS_ORIGIN`
+- ✅ **Solution**: Always include both your production and preview Vercel URLs in `CORS_ORIGIN`
 
 ---
 
