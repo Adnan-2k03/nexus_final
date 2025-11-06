@@ -10,6 +10,7 @@ import { Send, Loader2, Users, Mic, MicOff } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { queryClient } from "@/lib/queryClient";
 import type { ChatMessageWithSender, VoiceParticipantWithUser } from "@shared/schema";
+import { getApiUrl } from "@/lib/api";
 
 interface ChatProps {
   connectionId: string;
@@ -27,7 +28,9 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   const { data: messages = [], isLoading } = useQuery<ChatMessageWithSender[]>({
     queryKey: ['/api/messages', connectionId],
     queryFn: async () => {
-      const response = await fetch(`/api/messages/${connectionId}`);
+      const response = await fetch(getApiUrl(`/api/messages/${connectionId}`), {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch messages');
       }
@@ -40,7 +43,9 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   const { data: voiceChannelData } = useQuery({
     queryKey: ['/api/voice/channel', connectionId],
     queryFn: async () => {
-      const response = await fetch(`/api/voice/channel/${connectionId}`);
+      const response = await fetch(getApiUrl(`/api/voice/channel/${connectionId}`), {
+        credentials: "include",
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch voice channel');
       }
@@ -53,11 +58,12 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (messageText: string) => {
-      const response = await fetch('/api/messages', {
+      const response = await fetch(getApiUrl('/api/messages'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({
           connectionId,
           receiverId: otherUserId,

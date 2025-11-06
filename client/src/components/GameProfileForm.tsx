@@ -45,6 +45,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/api";
 import { Plus, X, Trophy, Star, Award, Play, Trash2, Upload } from "lucide-react";
 import type { GameProfile } from "@shared/schema";
 import { insertGameProfileSchema } from "@shared/schema";
@@ -198,8 +199,9 @@ export function GameProfileForm({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload-photo', {
+      const response = await fetch(getApiUrl('/api/upload-photo'), {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 
@@ -243,8 +245,9 @@ export function GameProfileForm({
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload-photo', {
+      const response = await fetch(getApiUrl('/api/upload-photo'), {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 
@@ -945,8 +948,9 @@ function CustomSectionFields({ form, sectionIndex, uploadingPhoto, setUploadingP
       const formData = new FormData();
       formData.append('file', file);
 
-      const response = await fetch('/api/upload-photo', {
+      const response = await fetch(getApiUrl('/api/upload-photo'), {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
 

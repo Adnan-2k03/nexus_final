@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Gamepad2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { RegisterUser } from "@shared/schema";
+import { getApiUrl } from "@/lib/api";
 
 interface AuthPageProps {
   onAuthSuccess: () => void;
@@ -33,11 +34,12 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const response = await fetch(getApiUrl("/api/auth/login"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(loginData),
       });
 
@@ -73,11 +75,12 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         age: registerData.age || undefined,
       };
 
-      const response = await fetch("/api/auth/register", {
+      const response = await fetch(getApiUrl("/api/auth/register"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
