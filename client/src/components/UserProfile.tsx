@@ -19,6 +19,7 @@ import { GameProfileForm } from "./GameProfileForm";
 import { CustomPortfolio } from "./CustomPortfolio";
 import { Mutuals } from "./Mutuals";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useLayout } from "@/contexts/LayoutContext";
 
@@ -79,8 +80,9 @@ export function UserProfile({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      const response = await fetch('/api/upload-photo', {
+      const response = await fetch(getApiUrl('/api/upload-photo'), {
         method: 'POST',
+        credentials: 'include',
         body: formData,
       });
       if (!response.ok) {

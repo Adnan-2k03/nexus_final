@@ -4,6 +4,7 @@ import { PrivacySettings } from "./PrivacySettings";
 import { PushNotificationToggle } from "./PushNotificationPrompt";
 import { Users as UsersIcon, Layout, Check, Sparkles, Zap, Square, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { getApiUrl } from "@/lib/api";
 import type { User } from "@shared/schema";
 import { useLayout, type LayoutWidth } from "@/contexts/LayoutContext";
 import { useBackground } from "./BackgroundProvider";
@@ -21,7 +22,9 @@ export function Settings({ user }: SettingsProps) {
   const { data: userCount, isLoading: isLoadingCount } = useQuery<number>({
     queryKey: ['/api/users/count'],
     queryFn: async () => {
-      const response = await fetch('/api/users/count');
+      const response = await fetch(getApiUrl('/api/users/count'), {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch user count');
       }

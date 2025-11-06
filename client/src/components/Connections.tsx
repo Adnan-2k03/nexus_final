@@ -15,6 +15,7 @@ import { MessageCircle, Calendar, Users, Trophy, Phone, CheckCircle, X, RefreshC
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useEffect, useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/api";
 import type { MatchConnectionWithUser, ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
@@ -60,7 +61,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
-      const response = await fetch('/api/user/connections');
+      const response = await fetch(getApiUrl('/api/user/connections'), {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch connections');
       }
@@ -75,7 +78,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     queryKey: ['/api/users', viewProfileUserId],
     queryFn: async () => {
       if (!viewProfileUserId) throw new Error('No user ID');
-      const response = await fetch(`/api/users/${viewProfileUserId}`);
+      const response = await fetch(getApiUrl(`/api/users/${viewProfileUserId}`), {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch user');
       return response.json();
     },
@@ -87,7 +92,9 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     queryKey: ['/api/match-requests', viewMatchDetailsId],
     queryFn: async () => {
       if (!viewMatchDetailsId) throw new Error('No match ID');
-      const response = await fetch(`/api/match-requests/${viewMatchDetailsId}`);
+      const response = await fetch(getApiUrl(`/api/match-requests/${viewMatchDetailsId}`), {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch match request');
       return response.json();
     },

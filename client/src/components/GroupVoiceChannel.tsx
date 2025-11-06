@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/api";
 import type { GroupVoiceChannelWithDetails, GroupVoiceMemberWithUser } from "@shared/schema";
 
 interface GroupVoiceChannelProps {
@@ -58,7 +59,9 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
     queryKey: ["/api/users", profileDialogUserId],
     queryFn: async () => {
       if (!profileDialogUserId) throw new Error("No user ID");
-      const response = await fetch(`/api/users/${profileDialogUserId}`);
+      const response = await fetch(getApiUrl(`/api/users/${profileDialogUserId}`), {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error("Failed to fetch user");
       return response.json();
     },
@@ -124,7 +127,9 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
 
   const fetchMembers = async () => {
     try {
-      const response = await fetch(`/api/group-voice/${channel.id}/members`);
+      const response = await fetch(getApiUrl(`/api/group-voice/${channel.id}/members`), {
+        credentials: "include",
+      });
       if (response.ok) {
         const data = await response.json();
         setMembers(data);

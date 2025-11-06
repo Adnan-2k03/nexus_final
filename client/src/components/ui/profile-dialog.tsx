@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, UserMinus, UserPlus } from "lucide-react";
 import { UserProfile } from "../UserProfile";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { getApiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@shared/schema";
 
@@ -35,7 +36,9 @@ export function ProfileDialog({
   const { data: userProfile, isLoading } = useQuery<User>({
     queryKey: ['/api/users', userId],
     queryFn: async () => {
-      const response = await fetch(`/api/users/${userId}`);
+      const response = await fetch(getApiUrl(`/api/users/${userId}`), {
+        credentials: 'include',
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch user profile');
       }
@@ -48,7 +51,9 @@ export function ProfileDialog({
   const { data: connectionRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/connection-requests'],
     queryFn: async () => {
-      const response = await fetch('/api/connection-requests');
+      const response = await fetch(getApiUrl('/api/connection-requests'), {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch connection requests');
       return response.json();
     },

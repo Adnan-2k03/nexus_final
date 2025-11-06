@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
+import { getApiUrl } from '@/lib/api';
 import { useToast } from './use-toast';
 
 export function usePushNotifications() {
@@ -44,7 +45,9 @@ export function usePushNotifications() {
       const registration = await navigator.serviceWorker.ready;
 
       // Get VAPID public key from server
-      const response = await fetch('/api/push/vapid-public-key');
+      const response = await fetch(getApiUrl('/api/push/vapid-public-key'), {
+        credentials: 'include',
+      });
       const { publicKey } = await response.json();
 
       // Subscribe to push notifications
