@@ -1,79 +1,37 @@
-# Social Gaming Matchmaking Platform
+# GameMatch - Social Gaming Matchmaking Platform
 
 ## Overview
 
-GameMatch is a social gaming web application for real-time matchmaking, enabling users to create and browse match requests, find teammates, and form gaming groups across various popular games. The platform features a mobile-first design, instant notifications, and real-time updates to facilitate seamless gaming coordination and enhance the social gaming experience. Its primary purpose is to connect gamers efficiently, foster community building, and provide a robust platform for playing together.
+GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting gamers instantly for LFG (Looking for Group) and LFO (Looking for Opponent) matches. Features include match requests, user profiles, game portfolios, direct messaging, voice channels, and real-time notifications.
+
+**Status**: Fully functional MVP with all core features implemented
+
+## Key Documentation
+
+- **DOCUMENTATION.md** - Complete feature documentation, tech stack, database schema
+- **DEPLOYMENT.md** - Deployment guides for Replit, Railway, Vercel, Docker
 
 ## User Preferences
 
-- **Communication Style**: Simple, everyday language
-- **Development Mode**: Authentication is **DISABLED** by default during development.
-- **Authentication**: Dual authentication system supporting Google OAuth 2.0 and Phone Number verification (AWS SNS). Do not use or suggest alternative authentication methods (Replit Auth, email/password, casual gamertag login, etc.).
+- Simple, everyday language
+- Authentication optional for development (Google OAuth supported)
+- Mobile-first design with dark mode
 
 ## System Architecture
 
-### Frontend Architecture
-- **Framework**: React with TypeScript, using Vite for development.
-- **Routing**: Wouter for client-side routing.
-- **State Management**: TanStack Query for server state management and caching.
-- **UI Components**: Radix UI primitives with shadcn/ui.
-- **Styling**: Tailwind CSS with a dark-mode-first, gaming-focused design system inspired by Discord, Steam, and Twitch.
-- **UI/UX Decisions**: Mobile-first design with bottom tab bar for mobile and sidebar for desktop. Consistent search bar styling, contextual sub-headings, and a unified theme/background selector. Supports animated (Canvas 2D, WebGL) and solid dark backgrounds with adjustable UI opacity for visibility.
-- **PWA**: Full Progressive Web App implementation with manifest, service worker, and offline support.
+## Tech Stack
 
-### Backend Architecture
-- **Runtime**: Node.js with Express.js server.
-- **Database ORM**: Drizzle ORM for type-safe database operations.
-- **Real-time Communication**: WebSocket integration for live updates.
-- **Session Management**: Express sessions with PostgreSQL session store.
-- **API Design**: RESTful endpoints supplemented by WebSockets.
+**Frontend**: React 18 + TypeScript + Vite + Wouter + TanStack Query + Shadcn/UI + Tailwind CSS
+**Backend**: Node.js + Express + TypeScript + Drizzle ORM + WebSockets + Passport.js
+**Database**: PostgreSQL (Neon)
+**Optional**: Google OAuth, 100ms (voice), Firebase (phone auth), web-push (notifications)
 
-### Authentication System
-- **Providers**: Dual authentication supporting Google OAuth 2.0 and Phone Number verification (AWS SNS).
-- **Session Storage**: PostgreSQL-backed session store (`connect-pg-simple`).
-- **Authorization**: Session-based authentication using Passport.js.
-- **User Management**: Automatic user profile creation via Google OAuth; OTP verification required for phone number registration and login. Both authentication paths enforce proper verification before session creation.
+## Core Features
 
-### Database Design
-- **Primary Database**: PostgreSQL via Neon serverless hosting.
-- **Schema Management**: Drizzle Kit for migrations.
-- **Core Tables**: Users, match requests, match connections, and session storage.
-
-### Core Features
-- **Matchmaking System**: Create, browse, accept, decline, and hide match requests. Supports LFG/LFO.
-- **User Profiles**: Customizable profiles including gamertags, bios, location, age, gender, language, preferred games, and game-specific portfolios (ranks, achievements, custom fields with text, photo, and link types). Profile photo upload functionality.
-- **Communication**: Direct messaging and real-time notifications via WebSockets.
-- **Discovery**: Search and filter players and match requests.
-- **Voice Channels**: Integrated voice channels using 100ms, with 'speaker' role for audio functionality.
-- **Push Notifications**: Browser push notifications for match applications, acceptances, declines, connection requests, and acceptances/declines, managed via web-push library.
-
-## External Dependencies
-
-### Database Services
-- **Neon PostgreSQL**: Serverless PostgreSQL.
-- **Drizzle ORM**: Type-safe ORM.
-- **connect-pg-simple**: PostgreSQL session store.
-
-### Authentication
-- **Google OAuth 2.0**: For social authentication.
-- **AWS SNS**: For SMS-based OTP verification.
-- **Passport.js**: Authentication middleware.
-- **Express Session**: Session management.
-
-### UI and Styling
-- **Radix UI**: Headless components.
-- **Tailwind CSS**: Utility-first CSS framework.
-- **Lucide React**: Icon library.
-- **Google Fonts**: Inter and Outfit.
-- **shadcn/ui**: UI component library.
-
-### Real-time Infrastructure
-- **WebSocket (`ws` package)**: For real-time communication.
-- **TanStack Query**: Data fetching, caching, and synchronization.
-- **100ms**: For voice channel functionality.
-- **web-push**: For browser push notifications.
-
-### Development Tools
-- **TypeScript**: For type safety.
-- **Vite**: Fast development server.
-- **ESBuild**: Production bundling.
+- Matchmaking (LFG/LFO with filters)
+- User profiles with game portfolios
+- Direct messaging and voice channels
+- Real-time updates via WebSockets
+- Push notifications (PWA)
+- Discover page for finding gamers
+- Hobbies and interests

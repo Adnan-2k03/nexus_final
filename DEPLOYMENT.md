@@ -1,438 +1,278 @@
-# Deployment Guide: Railway + Vercel + Cloudflare R2 + 100ms
+# Deployment Guide
 
-## 🚨 CRITICAL FIX FOR 401 ERRORS (SPLIT DEPLOYMENT)
+## Replit Deployment (Recommended)
 
-**If you're seeing 401 Unauthorized errors on your Vercel frontend connecting to Railway backend, this has been fixed!**
+This project is configured for seamless deployment on Replit using Autoscale.
 
-### What was the problem?
-Session cookies had `sameSite: "lax"` which blocks cross-origin cookie sharing between Vercel and Railway.
+### Deployment Configuration
+- **Type**: Autoscale (stateless web application)
+- **Build**: `npm run build`
+- **Start**: `npm run start`
+- **Port**: 5000
 
-### The Fix (Already Applied)
-Updated `server/googleAuth.ts` to detect split deployments and set `sameSite: "none"` + `secure: true` for cross-origin cookies.
+### Steps to Deploy on Replit
+1. Click the "Publish" button in your Replit workspace
+2. Configure your secrets (see below)
+3. The application will automatically build and deploy
+4. Your app will be available at your Replit deployment URL
 
-### What You Need to Do on Railway:
+### Required Secrets
+Configure these in Replit Secrets:
 
-**1. Add these CRITICAL environment variables:**
-```bash
-CORS_ORIGIN=https://nexus-final.vercel.app
-FRONTEND_URL=https://nexus-final.vercel.app
-BACKEND_ONLY=true
-NODE_ENV=production
+#### Essential (for production)
+```
+SESSION_SECRET=<generate-with-openssl-rand-base64-32>
+DATABASE_URL=<automatically-provided-by-replit-postgresql>
 ```
 
-**2. Redeploy your Railway backend** (to apply the code fix)
-
-**3. Clear browser cookies** and test again
-
-That's it! Your authentication should now work across domains. See Part 3 below for full Railway setup.
-
----
-
-This guide walks you through deploying your GameMatch app using the optimal architecture:
-- **Frontend**: Vercel (free 100GB bandwidth)
-- **Backend + Database**: Railway ($5-20/month)
-- **File Storage**: Cloudflare R2 ($0.75 for 50GB)
-- **Voice/Video**: 100ms (10,000 free minutes/month)
-
-## Architecture Overview
-
+#### Optional Features
 ```
-┌──────────────┐
-│   Vercel     │ → React Frontend (Global CDN)
-│   (Free)     │ → 100GB bandwidth
-└──────┬───────┘
-       │
-       ↓ HTTPS API calls
-┌──────────────┐
-│   Railway    │ → Express Backend
-│  ($5-20/mo)  │ → PostgreSQL Database
-│              │ → WebSocket Server
-└──────────────┘
-       │
-       ├──→ Cloudflare R2 (file uploads)
-       └──→ 100ms (voice/video calls)
-```
-
----
-
-## Part 1: Setup Cloudflare R2 (File Storage)
-
-### Step 1: Create R2 Bucket
-
-1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com) → R2
-2. Click **Create bucket**
-3. Name it: `gamematch-uploads` (or your choice)
-4. Click **Create bucket**
-
-### Step 2: Get R2 Credentials
-
-1. Go to R2 → Manage R2 API Tokens
-2. Click **Create API token**
-3. Select **Edit permissions**:
-   - Object Read & Write
-4. Apply to specific bucket: `gamematch-uploads`
-5. Click **Create API token**
-6. **Save these values** (you'll need them for Railway):
-   - Access Key ID
-   - Secret Access Key
-   - Account ID (in R2 overview page)
-
-### Step 3: (Optional) Enable Public Access
-
-If you want files to be publicly accessible via URL:
-
-1. Go to your bucket → Settings
-2. Enable **Public Access**
-3. Note your **Public Bucket URL**: `https://pub-[hash].r2.dev`
-
----
-
-## Part 2: Setup 100ms (Voice/Video)
-
-### Step 1: Create 100ms Account
-
-1. Go to [100ms.live](https://www.100ms.live/)
-2. Sign up for free account
-3. Create a new app
-
-### Step 2: Get Credentials
-
-1. Go to your app → Developer Section
-2. Copy these values:
-   - **App Access Key**
-   - **App Secret**
-3. Create a template for your rooms:
-   - Go to Templates → Create Template
-   - Set room type: **Video Conferencing** or **Audio Room**
-   - Note the **Template ID**
-
----
-
-## Part 3: Deploy Backend to Railway
-
-### Step 1: Prepare Your Code
-
-1. Make sure your code is pushed to GitHub
-2. Ensure `package.json` has these scripts:
-```json
-{
-  "scripts": {
-    "build": "tsc",
-    "start": "NODE_ENV=production node dist/index.js",
-    "db:push": "drizzle-kit push"
-  }
-}
-```
-
-### Step 2: Create Railway Project
-
-1. Go to [Railway.app](https://railway.app)
-2. Sign up/login with GitHub
-3. Click **New Project**
-4. Select **Deploy from GitHub repo**
-5. Choose your repository
-6. Railway will auto-detect Node.js and start deploying
-
-### Step 3: Add PostgreSQL Database
-
-1. In your Railway project, click **+ New**
-2. Select **Database** → **Add PostgreSQL**
-3. Railway automatically creates `DATABASE_URL` environment variable
-
-### Step 4: Push Database Schema
-
-Railway will run your build command, but you need to push the schema:
-
-1. In Railway project → your service → Settings
-2. Add custom **Build Command**:
-```bash
-npm install && npm run db:push --force && npm run build
-```
-
-**Important**: This will create all database tables and indexes automatically from your Drizzle schema, including:
-- All tables with proper foreign keys and constraints
-- All indexes for optimal query performance
-- New `hms_room_id` field in voice_channels table for 100ms integration
-
-### Step 5: Add Environment Variables
-
-In Railway project → your service → Variables, add:
-
-```bash
-# Database (auto-generated by Railway)
-DATABASE_URL=${{Postgres.DATABASE_URL}}
-
-# Session Secret (generate a random string)
-SESSION_SECRET=your-super-secret-random-string-here
-
-# Google OAuth (if using)
+# Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
 
-# Cloudflare R2
-R2_ACCOUNT_ID=your-r2-account-id
-R2_ACCESS_KEY_ID=your-r2-access-key
-R2_SECRET_ACCESS_KEY=your-r2-secret-key
-R2_BUCKET_NAME=gamematch-uploads
-R2_PUBLIC_URL=https://pub-[hash].r2.dev
-
-# 100ms
+# 100ms Voice Channels
 HMS_APP_ACCESS_KEY=your-100ms-access-key
 HMS_APP_SECRET=your-100ms-secret
-HMS_TEMPLATE_ID=your-template-id
+HMS_TEMPLATE_ID=your-100ms-template-id
 
-# VAPID (for push notifications - generated on first run)
-# These will be logged on first deployment, add them here after
-VAPID_PUBLIC_KEY=
-VAPID_PRIVATE_KEY=
-VAPID_SUBJECT=mailto:support@yourdomain.com
+# Firebase Phone Auth
+FIREBASE_PROJECT_ID=your-project-id
+FIREBASE_PRIVATE_KEY=your-private-key
+FIREBASE_CLIENT_EMAIL=your-client-email
 
-# Node Environment
+# Push Notifications (auto-generated if not set)
+VAPID_PUBLIC_KEY=your-vapid-public-key
+VAPID_PRIVATE_KEY=your-vapid-private-key
+VAPID_SUBJECT=mailto:your-email@example.com
+```
+
+---
+
+## Alternative Deployments
+
+### Railway (Full Stack)
+
+Deploy both frontend and backend together on Railway.
+
+**Steps:**
+1. Connect your GitHub repository to Railway
+2. Set environment variables:
+```
+NODE_ENV=production
+SESSION_SECRET=<secure-random-string>
+DATABASE_URL=<railway-postgresql-url>
+# Add optional secrets as needed
+```
+3. Railway will automatically detect the build and start commands
+4. Your app will be available at `https://your-app.railway.app`
+
+---
+
+### Vercel (Frontend) + Railway (Backend)
+
+Split deployment with frontend on Vercel and backend on Railway.
+
+#### Backend (Railway)
+1. Deploy to Railway with these environment variables:
+```
 NODE_ENV=production
 BACKEND_ONLY=true
-
-# CORS - CRITICAL for Vercel frontend
-# Add your Vercel domain(s) - comma-separated
-CORS_ORIGIN=https://your-project.vercel.app,https://your-project-git-main.vercel.app
+FRONTEND_URL=https://your-vercel-app.vercel.app
+CORS_ORIGIN=https://your-vercel-app.vercel.app
+SESSION_SECRET=<secure-random-string>
+DATABASE_URL=<railway-postgresql-url>
+# Add optional secrets
 ```
 
-### Step 6: Generate Public Domain
+2. Note your Railway backend URL (e.g., `https://your-app.railway.app`)
 
-1. Go to your service → Settings → Networking
-2. Click **Generate Domain**
-3. Copy the URL (e.g., `https://backend-production-xxxx.up.railway.app`)
-4. **Save this URL** - you'll need it for Vercel
+#### Frontend (Vercel)
+1. Deploy to Vercel
+2. Add environment variable:
+```
+VITE_API_URL=https://your-railway-backend-url.railway.app
+```
+3. Redeploy to apply changes
 
-### Step 7: Verify Deployment
+**Configuration:**
+- Session cookies automatically use `sameSite: "none"` for cross-domain
+- CORS is automatically configured based on `CORS_ORIGIN`
+- WebSocket connects to Railway backend
 
-1. Click on **Deployments** tab
-2. Check logs for successful startup
-3. Test your API: `https://your-backend.up.railway.app/api/health`
+**Testing:**
+- No 405 or CORS errors
+- WebSocket connects successfully
+- API requests route to Railway
 
 ---
 
-## Part 4: Deploy Frontend to Vercel
+### Docker Deployment
 
-### Step 1: Update Frontend Environment
+Use the included Dockerfile for containerized deployment.
 
-Create `.env.production` in your frontend folder:
-
+**Build:**
 ```bash
-# Replace with your Railway backend URL
-VITE_API_URL=https://backend-production-xxxx.up.railway.app
-VITE_WS_URL=wss://backend-production-xxxx.up.railway.app
+docker build -t gamematch .
 ```
 
-### Step 2: Deploy to Vercel
-
-1. Go to [Vercel.com](https://vercel.com)
-2. Sign up/login with GitHub
-3. Click **Add New** → **Project**
-4. Import your GitHub repository
-5. Configure build settings:
-   - **Framework Preset**: Vite
-   - **Root Directory**: `./` (or `./client` if in monorepo)
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-
-### Step 3: Add Environment Variables
-
-In Vercel project → Settings → Environment Variables:
-
+**Run:**
 ```bash
-VITE_API_URL=https://backend-production-xxxx.up.railway.app
-VITE_WS_URL=wss://backend-production-xxxx.up.railway.app
+docker run -p 5000:5000 \
+  -e DATABASE_URL=your-database-url \
+  -e SESSION_SECRET=your-session-secret \
+  gamematch
 ```
 
-### Step 4: Deploy
-
-1. Click **Deploy**
-2. Wait for build to complete (~2 minutes)
-3. Your site will be live at: `https://your-project.vercel.app`
+**Docker Compose:**
+```yaml
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://...
+      - SESSION_SECRET=your-secret
+    restart: unless-stopped
+```
 
 ---
 
-## Part 5: Configure CORS and CSP
+## Environment Variables Reference
 
-### Backend CORS Configuration
+### Required
+- `DATABASE_URL` - PostgreSQL connection string
+- `SESSION_SECRET` - Secure random string for session encryption
 
-**IMPORTANT**: Your backend is already configured to handle CORS properly for split deployments.
+### Optional Features
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `HMS_APP_ACCESS_KEY` - 100ms app access key
+- `HMS_APP_SECRET` - 100ms app secret
+- `HMS_TEMPLATE_ID` - 100ms template ID for voice rooms
+- `FIREBASE_PROJECT_ID` - Firebase project ID
+- `FIREBASE_PRIVATE_KEY` - Firebase service account private key
+- `FIREBASE_CLIENT_EMAIL` - Firebase service account email
+- `VAPID_PUBLIC_KEY` - VAPID public key for push notifications
+- `VAPID_PRIVATE_KEY` - VAPID private key
+- `VAPID_SUBJECT` - VAPID subject (mailto: email)
 
-Update your Railway backend environment variables to allow your Vercel domain:
+### Split Deployment (Vercel + Railway)
+- `BACKEND_ONLY` - Set to `true` on backend to skip serving static files
+- `FRONTEND_URL` - Frontend URL for OAuth callbacks
+- `CORS_ORIGIN` - Allowed CORS origin
+- `VITE_API_URL` - Backend URL (frontend environment variable)
 
+---
+
+## Database Setup
+
+The application uses PostgreSQL with Drizzle ORM.
+
+### Automatic Migration
+On startup, the application runs:
 ```bash
-# In Railway → Variables → Add these:
-CORS_ORIGIN=https://your-project.vercel.app,https://your-project-git-main.vercel.app
-BACKEND_ONLY=true
-NODE_ENV=production
+npm run db:push
 ```
+This syncs the schema with your database.
 
-**How it works:**
-- The backend automatically allows the origins specified in `CORS_ORIGIN` (comma-separated)
-- In development (Replit), it allows `localhost:5173` and `localhost:5000` by default
-- In production (Railway), you MUST set `CORS_ORIGIN` to your Vercel URLs
-- Setting `BACKEND_ONLY=true` ensures Railway only serves the API (no static files)
-
-### Frontend CSP Configuration
-
-**IMPORTANT**: The Content Security Policy in `client/index.html` has been configured to allow Railway backend connections.
-
-The CSP `connect-src` directive includes:
-```
-connect-src 'self' ... https://*.railway.app wss://*.railway.app ...
-```
-
-This allows your Vercel frontend to make API calls to your Railway backend.
-
-**Common CORS Issues:**
-- ❌ **405 Method Not Allowed**: Your Vercel URL is not in `CORS_ORIGIN`
-- ❌ **No 'Access-Control-Allow-Origin' header**: Same issue, add your domain to `CORS_ORIGIN`
-- ❌ **CSP violations (Refused to connect)**: Railway URL is not in CSP `connect-src` (already fixed)
-- ✅ **Solution**: Always include both your production and preview Vercel URLs in `CORS_ORIGIN`
-
----
-
-## Part 6: Testing
-
-### Test Checklist:
-
-- [ ] Frontend loads on Vercel URL
-- [ ] Can create account / login
-- [ ] API calls work (check browser console)
-- [ ] Database operations work
-- [ ] File upload works (profile image)
-- [ ] Voice channel creation works
-- [ ] WebSocket connection works
-
-### Common Issues:
-
-**1. CORS Errors**
-- Solution: Verify `CORS_ORIGIN` includes your Vercel URL
-
-**2. API calls fail with 404**
-- Solution: Check `VITE_API_URL` includes `https://` protocol
-
-**3. WebSocket connection fails**
-- Solution: Use `wss://` (not `ws://`) for production
-
-**4. Database connection errors**
-- Solution: Check `DATABASE_URL` is set correctly in Railway
-
-**5. File uploads fail**
-- Solution: Verify all R2 credentials are set correctly
-
----
-
-## Cost Breakdown
-
-### Monthly Costs:
-
-| Service | Cost | What You Get |
-|---------|------|--------------|
-| **Vercel** | **$0** | 100GB bandwidth, unlimited requests |
-| **Railway** | **$5-20** | Backend + PostgreSQL (pay per usage) |
-| **Cloudflare R2** | **$0.75** | 50GB storage, 1M reads, 1M writes |
-| **100ms** | **$0** | 10,000 minutes/month free |
-| **TOTAL** | **~$6-21/month** | Full production stack |
-
-### Railway Usage Estimate:
-- 1 backend service (512MB RAM, 0.5 CPU): ~$10/mo
-- 1 PostgreSQL database (1GB storage): ~$5/mo
-- **Typical total**: $15-20/month for moderate traffic
-
----
-
-## Scaling Tips
-
-### When to Upgrade:
-
-**Vercel**:
-- Free tier is generous for most MVPs
-- Upgrade to Pro ($20/mo) only if you exceed 100GB bandwidth
-
-**Railway**:
-- Monitor usage in dashboard
-- Auto-scales compute based on traffic
-- Add more database storage as needed
-
-**Cloudflare R2**:
-- First 10GB free per month
-- After that: $0.015/GB/month (very cheap)
-
-**100ms**:
-- First 10,000 minutes free
-- After: $0.0099/minute (~$99 for 10,000 more minutes)
-
----
-
-## Maintenance
-
-### Database Backups (Railway):
-- Railway provides automatic daily backups
-- Can restore from any backup in dashboard
-
-### Monitoring:
-- Railway: Built-in metrics and logs
-- Vercel: Analytics dashboard shows traffic
-- 100ms: Dashboard shows usage and active sessions
-
-### Updates:
-- Push to GitHub → Auto-deploys to Railway & Vercel
-- Database migrations: Run `npm run db:push` locally, then deploy
-
----
-
-## Advanced: Custom Domain
-
-### Add Custom Domain to Vercel:
-
-1. Go to Vercel project → Settings → Domains
-2. Add your domain (e.g., `gamematch.app`)
-3. Update DNS records as instructed
-4. SSL certificate auto-generated
-
-### Update Railway CORS:
-
+### Manual Migration
+If needed:
 ```bash
-CORS_ORIGIN=https://gamematch.app,https://www.gamematch.app
+npm run db:push --force
 ```
+
+---
+
+## Monitoring & Logs
+
+### Replit
+- Check deployment logs in the Replit Deployments tab
+- View real-time logs in the Console
+
+### Railway
+- View logs in the Railway dashboard
+- Set up log drains for external monitoring
+
+### Docker
+```bash
+docker logs <container-id>
+```
+
+---
+
+## Troubleshooting
+
+### WebSocket Connection Failed
+- Ensure WebSocket is enabled on your hosting platform
+- Check that port 5000 is exposed
+- Verify CORS settings for cross-domain deployments
+
+### 401 Unauthorized
+- Check `SESSION_SECRET` is set
+- Verify database connection
+- Ensure session store is properly configured
+
+### 405 Method Not Allowed (Vercel + Railway)
+- Verify `VITE_API_URL` is set in Vercel
+- Check Railway backend is running
+- Ensure CORS is configured correctly
+
+### Database Connection Issues
+- Verify `DATABASE_URL` is correct
+- Check database is accessible from deployment environment
+- Ensure SSL is properly configured for cloud databases
+
+### OAuth Redirect Issues
+- Add deployment URL to Google OAuth allowed redirect URIs
+- Verify `FRONTEND_URL` matches your actual domain
+- Check callback URLs are correct
+
+---
+
+## Performance Optimization
+
+### Production Build
+The build process:
+1. Pushes database schema
+2. Builds frontend with Vite
+3. Bundles backend with esbuild
+4. Outputs to `dist/` directory
+
+### Caching
+- React Query caches API responses
+- Static assets cached by CDN
+- Database queries optimized with indexes
+
+### Scaling
+- Replit Autoscale automatically handles traffic spikes
+- Railway scales based on resource usage
+- Consider adding Redis for session storage at scale
+
+---
+
+## Security Checklist
+
+- [ ] Set strong `SESSION_SECRET`
+- [ ] Use HTTPS in production
+- [ ] Configure proper CORS origins
+- [ ] Validate all user inputs
+- [ ] Use environment variables for secrets
+- [ ] Enable rate limiting (if deploying to production)
+- [ ] Keep dependencies updated
+- [ ] Review database permissions
+- [ ] Enable secure cookies (`sameSite`, `secure`)
+- [ ] Sanitize user-generated content
 
 ---
 
 ## Support
 
-### Documentation:
-- [Railway Docs](https://docs.railway.app)
-- [Vercel Docs](https://vercel.com/docs)
-- [Cloudflare R2 Docs](https://developers.cloudflare.com/r2/)
-- [100ms Docs](https://www.100ms.live/docs)
-
-### Community:
-- Railway Discord
-- Vercel Discord
-- 100ms Discord
-
----
-
-## Quick Deploy Commands
-
-```bash
-# Deploy backend changes
-git push origin main  # Auto-deploys to Railway
-
-# Deploy frontend changes  
-git push origin main  # Auto-deploys to Vercel
-
-# Update database schema
-npm run db:push --force  # Run locally, Railway will sync on next deploy
-
-# View Railway logs
-railway logs
-
-# View Vercel logs
-vercel logs
-```
-
----
-
-🎉 **You're all set!** Your app is now running on production infrastructure for ~$6-21/month.
+For issues and questions:
+- Check console logs for error messages
+- Verify all environment variables are set correctly
+- Ensure database is connected and schema is up to date
+- Review the DOCUMENTATION.md for feature details
