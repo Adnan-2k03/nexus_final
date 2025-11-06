@@ -5,7 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, getSession } from "./googleAuth";
 import { devAuthMiddleware, ensureDevUser } from "./devAuth";
-import { insertMatchRequestSchema, registerUserSchema, type RegisterUser } from "@shared/schema";
+import { insertMatchRequestSchema } from "@shared/schema";
 import { z } from "zod";
 import multer from "multer";
 import path from "path";
@@ -110,11 +110,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
-      if (existingUser) {
-        return res.status(400).json({ message: "Phone number already registered" });
-      }
-
       const code = generateVerificationCode();
       const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -142,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/auth/phone/verify-code', async (req, res) => {
+  app.post('/api/auth/phone/verify-code', async (req: any, res) => {
     try {
       const validatedData = verifyPhoneCodeSchema.parse(req.body);
       const { phoneNumber, code } = validatedData;
@@ -153,10 +148,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid or expired verification code" });
       }
 
-      res.json({ 
-        success: true, 
-        message: "Phone number verified successfully" 
-      });
+      const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
+      
+      if (existingUser) {
+        await storage.deletePhoneVerificationCode(phoneNumber);
+        
+        req.login(existingUser, (err: any) => {
+          if (err) {
+            console.error("Error logging in after verification:", err);
+            return res.status(500).json({ message: "Verification successful but login failed" });
+          }
+          res.json({ 
+            success: true, 
+            userExists: true,
+            message: "Welcome back!",
+            user: existingUser
+          });
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          userExists: false,
+          message: "Phone number verified successfully. Please complete registration." 
+        });
+      }
     } catch (error) {
       if (error instanceof z.ZodError) {
         res.status(400).json({ message: "Invalid request data", errors: error.errors });

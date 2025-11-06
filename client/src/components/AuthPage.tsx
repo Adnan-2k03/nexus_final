@@ -94,12 +94,21 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         throw new Error(error.message || "Verification failed");
       }
 
-      setPhoneStep("register");
+      const data = await response.json();
 
-      toast({
-        title: "Phone verified!",
-        description: "Now complete your profile to continue.",
-      });
+      if (data.userExists) {
+        toast({
+          title: "Welcome back!",
+          description: data.message || "You've successfully logged in.",
+        });
+        onAuthSuccess();
+      } else {
+        setPhoneStep("register");
+        toast({
+          title: "Phone verified!",
+          description: "Now complete your profile to continue.",
+        });
+      }
     } catch (error) {
       toast({
         title: "Verification failed",
