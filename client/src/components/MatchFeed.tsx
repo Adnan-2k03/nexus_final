@@ -40,7 +40,7 @@ interface MatchRequestDisplay extends Omit<MatchRequestWithUser, 'gamertag' | 'p
 
 interface MatchFeedProps {
   onCreateMatch: () => void;
-  onAcceptMatch: (id: string) => void;
+  onAcceptMatch: (matchId: string, accepterId: string) => void;
   onDeclineMatch: (id: string) => void;
   onDeleteMatch: (id: string) => void;
   currentUserId?: string;
@@ -452,7 +452,7 @@ export function MatchFeed({
                         timeAgo={match.timeAgo}
                         isOwn={true}
                         currentUserId={currentUserId}
-                        onAccept={() => onAcceptMatch(match.id)}
+                        onAccept={() => onAcceptMatch(match.id, match.userId)}
                         onDecline={() => onDeclineMatch(match.id)}
                         onDelete={() => onDeleteMatch(match.id)}
                       />
@@ -485,7 +485,7 @@ export function MatchFeed({
                         timeAgo={match.timeAgo}
                         isOwn={false}
                         currentUserId={currentUserId}
-                        onAccept={() => onAcceptMatch(match.id)}
+                        onAccept={() => onAcceptMatch(match.id, match.userId)}
                         onDecline={() => onDeclineMatch(match.id)}
                         onDelete={() => onDeleteMatch(match.id)}
                       />
@@ -544,7 +544,7 @@ export function MatchFeed({
                         timeAgo={match.timeAgo}
                         isOwn={true}
                         currentUserId={currentUserId}
-                        onAccept={() => onAcceptMatch(match.id)}
+                        onAccept={() => onAcceptMatch(match.id, match.userId)}
                         onDecline={() => onDeclineMatch(match.id)}
                         onDelete={() => onDeleteMatch(match.id)}
                       />
@@ -577,7 +577,7 @@ export function MatchFeed({
                         timeAgo={match.timeAgo}
                         isOwn={false}
                         currentUserId={currentUserId}
-                        onAccept={() => onAcceptMatch(match.id)}
+                        onAccept={() => onAcceptMatch(match.id, match.userId)}
                         onDecline={() => onDeclineMatch(match.id)}
                         onDelete={() => onDeleteMatch(match.id)}
                       />

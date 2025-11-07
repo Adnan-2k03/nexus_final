@@ -189,9 +189,9 @@ function Router() {
     }
   };
 
-  const handleAcceptMatch = async (matchId: string) => {
+  const handleAcceptMatch = async (matchId: string, accepterId: string) => {
     try {
-      // Create a match connection - backend will handle finding the accepter
+      // Create a match connection
       const response = await fetch(getApiUrl("/api/match-connections"), {
         method: "POST",
         headers: {
@@ -200,6 +200,7 @@ function Router() {
         credentials: "include",
         body: JSON.stringify({
           requestId: matchId,
+          accepterId: accepterId,
         }),
       });
 
