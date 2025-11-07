@@ -476,11 +476,22 @@ function Router() {
               );
             }}
           </Route>
+          <Route path="/profile-setup">
+            {() => {
+              if (currentPage !== "profile-setup") {
+                setCurrentPage("profile-setup");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
           <Route path="/">
             {() => {
-              if (currentPage !== "home") {
-                setCurrentPage("home");
-              }
               return (
                 <div className="min-h-screen relative">
                   {user && user.gamertag && (
