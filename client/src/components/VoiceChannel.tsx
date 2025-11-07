@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Mic, MicOff, Phone, PhoneOff, MonitorUp, MonitorOff, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getApiUrl } from "@/lib/api";
+import { useHMSContext } from "@/contexts/HMSContext";
 
 interface VoiceChannelProps {
   connectionId: string;
@@ -30,6 +31,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
   const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
   const hmsMessages = useHMSStore(selectHMSMessages);
+  const { setVoiceChannelActive } = useHMSContext();
   
   const [isJoining, setIsJoining] = useState(false);
   const [fullscreenPeerId, setFullscreenPeerId] = useState<string | null>(null);
@@ -46,6 +48,15 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     hmsActions.setLogLevel(4);
     console.log('[HMS] Verbose logging enabled for voice channel');
   }, [hmsActions]);
+
+  // Auto-reconnect if user was in this voice channel before navigating away
+  useEffect(() => {
+    const savedConnectionId = sessionStorage.getItem('activeVoiceChannelId');
+    if (savedConnectionId === connectionId && !isConnected && !isJoining) {
+      console.log('[HMS] Auto-reconnecting to voice channel after navigation');
+      joinChannel();
+    }
+  }, []);
 
   // Handle connection success
   useEffect(() => {
@@ -127,6 +138,9 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
 
       console.log('[HMS] Join request sent successfully');
       
+      // Set active voice channel in context
+      setVoiceChannelActive(connectionId);
+      
       toast({
         title: "Connecting...",
         description: "Joining voice channel",
@@ -146,6 +160,9 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const leaveChannel = async () => {
     try {
       await hmsActions.leave();
+      
+      // Clear active voice channel from context
+      setVoiceChannelActive(null);
       
       // Notify backend
       await fetch(getApiUrl('/api/voice/leave'), {

@@ -329,6 +329,7 @@ export function UserProfile({
                 onClick={handleRefresh}
                 disabled={isRefreshing}
                 data-testid="button-refresh-profiles"
+                className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>

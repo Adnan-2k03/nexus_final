@@ -286,6 +286,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
             onClick={handleRefresh}
             disabled={isRefreshing}
             data-testid="button-refresh-channels"
+            className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
