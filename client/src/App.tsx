@@ -163,22 +163,7 @@ function Router() {
 
   const handleAcceptMatch = async (matchId: string) => {
     try {
-      // First, get the match request details to find the accepter (owner)
-      const matchResponse = await fetch(getApiUrl("/api/match-requests"), {
-        credentials: "include"
-      });
-      if (!matchResponse.ok) {
-        throw new Error("Failed to fetch match requests");
-      }
-
-      const matches = await matchResponse.json();
-      const targetMatch = matches.find((m: any) => m.id === matchId);
-
-      if (!targetMatch) {
-        throw new Error("Match request not found");
-      }
-
-      // Create a match connection between current user (requester) and match owner (accepter)
+      // Create a match connection - backend will handle finding the accepter
       const response = await fetch(getApiUrl("/api/match-connections"), {
         method: "POST",
         headers: {
@@ -187,21 +172,24 @@ function Router() {
         credentials: "include",
         body: JSON.stringify({
           requestId: matchId,
-          accepterId: targetMatch.userId, // Owner of the match request
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to accept match request");
+        throw new Error(errorData.message || "Failed to apply to match");
       }
 
       const connection = await response.json();
-      console.log("Match request accepted successfully:", connection);
+      console.log("Match application sent successfully:", connection);
+
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ["/api/match-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/connections"] });
 
       // The WebSocket will handle real-time updates
     } catch (error) {
-      console.error("Error accepting match request:", error);
+      console.error("Error applying to match:", error);
       // TODO: Show error message to user
     }
   };

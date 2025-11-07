@@ -1,12 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PrivacySettings } from "./PrivacySettings";
 import { PushNotificationToggle } from "./PushNotificationPrompt";
-import { Users as UsersIcon, Layout, Check, Sparkles, Zap, Square, Palette } from "lucide-react";
+import { Check, Sparkles, Zap, Square, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getApiUrl } from "@/lib/api";
 import type { User } from "@shared/schema";
-import { useLayout, type LayoutWidth } from "@/contexts/LayoutContext";
+import { useLayout } from "@/contexts/LayoutContext";
 import { useBackground } from "./BackgroundProvider";
 import { UnifiedThemeSelector } from "./UnifiedThemeSelector";
 
@@ -18,43 +16,11 @@ export function Settings({ user }: SettingsProps) {
   const { layoutWidth, setLayoutWidth, getContainerClass } = useLayout();
   const { background, setBackground } = useBackground();
 
-  // Fetch total user count
-  const { data: userCount, isLoading: isLoadingCount } = useQuery<number>({
-    queryKey: ['/api/users/count'],
-    queryFn: async () => {
-      const response = await fetch(getApiUrl('/api/users/count'), {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        throw new Error('Failed to fetch user count');
-      }
-      return response.json();
-    },
-    retry: false,
-  });
-
   return (
     <div className={`${getContainerClass()} mx-auto`}>
       <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
       
       <div className="space-y-6">
-        {/* User Count */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UsersIcon className="h-5 w-5" />
-              Platform Statistics
-            </CardTitle>
-            <CardDescription>Total active users on GameMatch</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-primary" data-testid="text-user-count">
-              {isLoadingCount ? "..." : userCount?.toLocaleString() || "0"}
-            </div>
-            <p className="text-sm text-muted-foreground mt-1">Total users</p>
-          </CardContent>
-        </Card>
-
         {/* Privacy Settings */}
         {user && <PrivacySettings userId={user.id} />}
 
