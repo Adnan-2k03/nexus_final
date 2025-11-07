@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus, Camera, Loader2 } from "lucide-react";
+import { MapPin, Calendar, User, Gamepad2, Edit, MessageCircle, Trophy, Clock, Star, Award, Play, Plus, Camera, Loader2, RefreshCw } from "lucide-react";
 import type { GameProfile } from "@shared/schema";
 import { GameProfileForm } from "./GameProfileForm";
 import { CustomPortfolio } from "./CustomPortfolio";
@@ -67,11 +67,12 @@ export function UserProfile({
   const [gameProfileFormOpen, setGameProfileFormOpen] = useState(false);
   const [editingProfile, setEditingProfile] = useState<GameProfile | undefined>(undefined);
   const [showCustomSections, setShowCustomSections] = useState<{[key: string]: boolean}>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
 
-  const { data: gameProfiles = [], isLoading: isLoadingProfiles } = useQuery<GameProfile[]>({
+  const { data: gameProfiles = [], isLoading: isLoadingProfiles, refetch } = useQuery<GameProfile[]>({
     queryKey: ['/api/users', id, 'game-profiles'],
     enabled: !!id,
   });
@@ -150,6 +151,12 @@ export function UserProfile({
       ...prev,
       [profileId]: !prev[profileId]
     }));
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   return (
@@ -283,10 +290,21 @@ export function UserProfile({
       ) : (
         <Card>
           <CardHeader>
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <Gamepad2 className="h-5 w-5 text-primary" />
-              Gaming Profiles ({gameProfiles.length})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <Gamepad2 className="h-5 w-5 text-primary" />
+                Gaming Profiles ({gameProfiles.length})
+              </h2>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                data-testid="button-refresh-profiles"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Accordion type="single" collapsible className="w-full">
