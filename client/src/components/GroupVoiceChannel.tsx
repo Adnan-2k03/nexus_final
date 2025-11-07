@@ -404,7 +404,9 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
 
             <div>
               <p className="text-sm font-medium mb-2">
-                Participants ({peers.length}) {otherPeers.length > 0 ? `• ${otherPeers.length} other${otherPeers.length !== 1 ? 's' : ''}` : '• You are alone'}
+                {otherPeers.length === 0 
+                  ? 'You are alone in this channel' 
+                  : `You + ${otherPeers.length} other${otherPeers.length !== 1 ? 's' : ''}`}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {peers.map((peer) => {
