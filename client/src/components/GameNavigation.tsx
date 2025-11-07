@@ -92,7 +92,7 @@ export function GameNavigation({
             {!isMobile && <span className="text-xs mt-1">{item.label}</span>}
           </>
         )}
-        {item.badge && item.badge > 0 && (
+        {(item.badge ?? 0) > 0 && (
           <Badge 
             variant="destructive" 
             className={cn(
@@ -100,7 +100,7 @@ export function GameNavigation({
               isMobile ? "-top-1 -right-1" : "-top-2 -right-2"
             )}
           >
-            {item.badge > 99 ? "99+" : item.badge}
+            {(item.badge ?? 0) > 99 ? "99+" : item.badge}
           </Badge>
         )}
       </Button>
@@ -264,12 +264,12 @@ export function GameNavigation({
                 <Icon className="h-5 w-5" />
               )}
               <span className="text-xs mt-1">{item.label}</span>
-              {item.badge && item.badge > 0 && (
+              {(item.badge ?? 0) > 0 && (
                 <Badge 
                   variant="destructive" 
                   className="absolute -top-1 -right-1 text-xs px-1 py-0 min-w-[16px] h-4"
                 >
-                  {item.badge > 99 ? "99+" : item.badge}
+                  {(item.badge ?? 0) > 99 ? "99+" : item.badge}
                 </Badge>
               )}
             </Button>

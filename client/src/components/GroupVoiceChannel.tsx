@@ -36,10 +36,12 @@ import type { GroupVoiceChannelWithDetails, GroupVoiceMemberWithUser } from "@sh
 interface GroupVoiceChannelProps {
   channel: GroupVoiceChannelWithDetails;
   currentUserId: string;
+  isActiveChannel: boolean;
+  onJoin?: () => void;
   onLeave?: () => void;
 }
 
-export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoiceChannelProps) {
+export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJoin, onLeave }: GroupVoiceChannelProps) {
   const hmsActions = useHMSActions();
   const isConnected = useHMSStore(selectIsConnectedToRoom);
   const peers = useHMSStore(selectPeers);
@@ -83,12 +85,13 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
     if (isConnected && isJoining) {
       console.log('[HMS] Successfully connected to room!');
       setIsJoining(false);
+      if (onJoin) onJoin();
       toast({
         title: "Joined voice channel",
         description: `You're now in ${channel.name}`,
       });
     }
-  }, [isConnected, isJoining, channel.name, toast]);
+  }, [isConnected, isJoining, channel.name, toast, onJoin]);
 
   useEffect(() => {
     if (hmsMessages && hmsMessages.length > 0) {
@@ -256,7 +259,7 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
 
   return (
     <div className="space-y-4">
-      {!isConnected ? (
+      {!isActiveChannel ? (
         <Card data-testid="card-join-channel">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

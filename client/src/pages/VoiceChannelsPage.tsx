@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { selectIsConnectedToRoom, useHMSStore } from "@100mslive/react-sdk";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -24,8 +25,31 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const [channelName, setChannelName] = useState("");
   const [selectedChannel, setSelectedChannel] = useState<GroupVoiceChannelWithDetails | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeChannelId, setActiveChannelId] = useState<string | null>(() => {
+    return localStorage.getItem('activeGroupVoiceChannelId');
+  });
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
+  const isConnected = useHMSStore(selectIsConnectedToRoom);
+
+  useEffect(() => {
+    if (!isConnected && activeChannelId) {
+      setActiveChannelId(null);
+      localStorage.removeItem('activeGroupVoiceChannelId');
+    }
+  }, [isConnected, activeChannelId]);
+
+  const handleJoinChannel = (channelId: string) => {
+    setActiveChannelId(channelId);
+    localStorage.setItem('activeGroupVoiceChannelId', channelId);
+  };
+
+  const handleLeaveChannel = () => {
+    setActiveChannelId(null);
+    localStorage.removeItem('activeGroupVoiceChannelId');
+    queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
+  };
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
@@ -226,13 +250,19 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     );
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
-    queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
-    toast({
-      title: "Refreshed",
-      description: "Voice channels updated",
-    });
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] }),
+      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] })
+    ]);
+    setTimeout(() => {
+      setIsRefreshing(false);
+      toast({
+        title: "Refreshed",
+        description: "Voice channels updated",
+      });
+    }, 500);
   };
 
   if (isLoading) {
@@ -254,9 +284,10 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
             variant="outline"
             size="icon"
             onClick={handleRefresh}
+            disabled={isRefreshing}
             data-testid="button-refresh-channels"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -465,7 +496,9 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                     <GroupVoiceChannel
                       channel={channel}
                       currentUserId={currentUserId}
-                      onLeave={() => queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] })}
+                      isActiveChannel={activeChannelId === channel.id}
+                      onJoin={() => handleJoinChannel(channel.id)}
+                      onLeave={handleLeaveChannel}
                     />
                   </CardContent>
                 </Card>
