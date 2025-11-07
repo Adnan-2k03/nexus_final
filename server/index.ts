@@ -12,7 +12,7 @@ const defaultOrigins = isDev
   ? ['http://localhost:5173', 'http://localhost:5000']
   : [];
 
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || defaultOrigins;
+const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || defaultOrigins;
 
 app.use(cors({
   origin: corsOrigins.length > 0 ? corsOrigins : true,

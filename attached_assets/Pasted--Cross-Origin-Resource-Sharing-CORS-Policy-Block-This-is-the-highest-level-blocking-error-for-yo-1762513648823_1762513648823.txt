@@ -1,0 +1,41 @@
+🛑 Cross-Origin Resource Sharing (CORS) Policy Block
+This is the highest-level blocking error for your API call:
+
+"Access to fetch at 'https://nexusfinal-production.up.railway.app/api/auth/user' from origin 'https://nexus-final-tau.vercel.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+
+Explanation 💡
+Your frontend (Vercel) is trying to talk to your backend (Railway). Since these are different domains (origins), the browser blocks the request unless the Railway server explicitly grants permission using the Access-Control-Allow-Origin header in its response. It's missing this header.
+
+Fix 🛠️
+You must configure your backend application (deployed on Railway) to send the Access-Control-Allow-Origin header.
+
+Action: In your Railway backend code (e.g., in Express.js, Flask, or your server framework):
+
+Set the Access-Control-Allow-Origin header to your Vercel frontend's origin: https://nexus-final-tau.vercel.app
+
+Content Security Policy (CSP) Violation
+This recurring error prevents Firebase App Check from working:
+
+"Refused to connect to 'https://content-firebaseappcheck.googleapis.com...' because it violates the following Content Security Policy directive: "connect-src 'self'...""
+
+Explanation 💡
+Your frontend security policy (in vercel.json) doesn't trust the necessary Google domain used by Firebase App Check to exchange the reCAPTCHA score for a security token.
+
+Fix 🛠️
+You must update the connect-src directive in your vercel.json file and redeploy your Vercel frontend.
+
+Action: Add the following domain to the list of allowed sources in the connect-src directive:
+
+https://content-firebaseappcheck.googleapis.com
+
+
+🔑 Underlying 401 Error (Code Logic)
+The CORS block currently hides the previous 401 Unauthorized error. You must address this logic error once the CORS block is removed.
+
+Explanation 💡
+The previous logs showed your frontend was trying to access the /api/auth/user endpoint without providing a valid Firebase ID Token in the Authorization: Bearer <token> header.
+
+Fix 🛠️
+Action: Ensure your frontend code uses the onAuthStateChanged pattern to wait for the authenticated user and retrieve their ID token, which must be manually included in the headers of the fetch request.
+
+Next Immediate Step: Focus entirely on Fix #1: CORS. You cannot troubleshoot the authentication or the CSP-related failures until your Vercel client is allowed to talk to your Railway backend.
