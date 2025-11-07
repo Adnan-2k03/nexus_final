@@ -79,31 +79,61 @@ Split deployment with frontend on Vercel and backend on Railway.
 NODE_ENV=production
 BACKEND_ONLY=true
 FRONTEND_URL=https://your-vercel-app.vercel.app
-CORS_ORIGIN=https://your-vercel-app.vercel.app
+ALLOWED_ORIGINS=https://your-vercel-app.vercel.app
 SESSION_SECRET=<secure-random-string>
 DATABASE_URL=<railway-postgresql-url>
-# Add optional secrets
+# Add optional secrets (Google OAuth, 100ms, Firebase, etc.)
 ```
 
-2. Note your Railway backend URL (e.g., `https://your-app.railway.app`)
+2. Note your Railway backend URL (e.g., `https://your-app.up.railway.app`)
+
+**Important Railway Configuration:**
+- Make sure WebSocket connections are enabled
+- Railway automatically handles port binding - the app listens on the PORT environment variable
+- Ensure your backend is publicly accessible (not private networking only)
 
 #### Frontend (Vercel)
 1. Deploy to Vercel
 2. Add environment variable:
 ```
-VITE_API_URL=https://your-railway-backend-url.railway.app
+VITE_API_URL=https://your-railway-backend-url.up.railway.app
 ```
-3. Redeploy to apply changes
+3. **Important:** After adding/changing environment variables, you MUST trigger a new deployment for changes to take effect (Vercel embeds env vars at build time)
 
 **Configuration:**
-- Session cookies automatically use `sameSite: "none"` for cross-domain
-- CORS is automatically configured based on `CORS_ORIGIN`
-- WebSocket connects to Railway backend
+- Session cookies automatically use `sameSite: "none"` and `secure: true` for cross-domain
+- CORS is automatically configured based on `ALLOWED_ORIGINS`
+- WebSocket connects to Railway backend using `wss://` protocol
 
 **Testing:**
-- No 405 or CORS errors
-- WebSocket connects successfully
-- API requests route to Railway
+- [ ] Frontend loads on Vercel URL
+- [ ] No 405 or CORS errors in browser console
+- [ ] WebSocket connects successfully (check browser DevTools console)
+- [ ] API requests route to Railway backend
+- [ ] Navigation between pages works (URL changes when clicking nav buttons)
+- [ ] Authentication works (if configured)
+
+**Common Issues:**
+
+*WebSocket Disconnects Repeatedly (1005 error)*
+- **Cause**: `VITE_API_URL` not set in Vercel or incorrect
+- **Fix**: Set `VITE_API_URL` to your Railway URL and redeploy
+- **Verify**: Check browser console - should see "WebSocket connected" without immediate disconnect
+
+*Navigation Doesn't Change URL*
+- **Cause**: Old code was using state-only navigation
+- **Fix**: This has been fixed in the latest code - navigation now properly uses wouter routing
+- **Verify**: Click nav buttons and watch the URL bar - it should change from `/` to `/messages`, `/connections`, etc.
+
+*API Calls Return 401 or 403*
+- **Cause**: CORS or session cookie issues
+- **Fix**: Verify `ALLOWED_ORIGINS` in Railway matches your Vercel domain exactly
+- **Verify**: Check Network tab in DevTools - cookies should be sent with requests
+
+*OAuth Redirect Fails*
+- **Cause**: Google OAuth redirect URIs don't include Vercel domain
+- **Fix**: Add `https://your-app.vercel.app` to Google OAuth Console allowed redirect URIs
+- **Callback URL**: `https://your-railway-backend.up.railway.app/api/auth/google/callback`
 
 ---
 

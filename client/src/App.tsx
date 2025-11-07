@@ -56,6 +56,7 @@ function Router() {
   // Real authentication using useAuth hook
   const { user, isLoading, isFetching, isAuthenticated } = useAuth();
   const { getContainerClass } = useLayout();
+  const [location, setLocation] = useLocation();
 
   // ALL hooks must be called before any early returns
   const [currentPage, setCurrentPage] = useState<
@@ -71,6 +72,31 @@ function Router() {
   >("home");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAuthPage, setShowAuthPage] = useState(false);
+
+  // Helper function to map page names to URLs and navigate
+  const handleNavigation = (page: string) => {
+    const pageToUrl: { [key: string]: string } = {
+      "home": "/",
+      "connections": "/connections",
+      "messages": "/messages",
+      "voice-channels": "/voice-channels",
+      "profile-setup": "/profile-setup",
+      "search": "/",
+      "profile": "/",
+      "settings": "/",
+      "create": "/"
+    };
+
+    // Navigate to the URL
+    const url = pageToUrl[page] || "/";
+    if (location !== url) {
+      setLocation(url);
+    }
+    
+    // Update state for pages that don't have separate routes
+    setCurrentPage(page as any);
+    setShowCreateForm(false);
+  };
 
   // Auto-redirect authenticated users without gamertag to profile setup
   useEffect(() => {
@@ -282,7 +308,7 @@ function Router() {
                 <UserProfile
                   {...mapUserForComponents(user)}
                   isOwn={true}
-                  onEdit={() => setCurrentPage("profile-setup")}
+                  onEdit={() => handleNavigation("profile-setup")}
                 />
               )}
               {user && !user.gamertag && (
@@ -293,7 +319,7 @@ function Router() {
                     matchmaking system.
                   </p>
                   <button
-                    onClick={() => setCurrentPage("profile-setup")}
+                    onClick={() => handleNavigation("profile-setup")}
                     className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90"
                     data-testid="button-setup-profile"
                   >
@@ -321,7 +347,7 @@ function Router() {
           <div className="md:ml-20 pt-16 md:pt-6 pb-16 md:pb-6 px-4">
             <Messages 
               currentUserId={user?.id}
-              onNavigateToVoiceChannels={() => setCurrentPage("voice-channels")}
+              onNavigateToVoiceChannels={() => handleNavigation("voice-channels")}
             />
           </div>
         );
@@ -343,11 +369,11 @@ function Router() {
             <ProfileSetup
               user={user}
               onComplete={() => {
-                setCurrentPage("profile");
+                handleNavigation("profile");
                 // Trigger a refresh of user data
               }}
               onCancel={() => {
-                setCurrentPage(user?.gamertag ? "profile" : "home");
+                handleNavigation(user?.gamertag ? "profile" : "home");
               }}
             />
           </div>
@@ -392,10 +418,7 @@ function Router() {
                   {user && user.gamertag && (
                     <GameNavigation
                       currentPage={currentPage}
-                      onNavigate={(page) => {
-                        setCurrentPage(page as any);
-                        setShowCreateForm(false);
-                      }}
+                      onNavigate={handleNavigation}
                       user={mapUserForComponents(user)}
                       onLogout={handleLogout}
                     />
@@ -417,10 +440,7 @@ function Router() {
                   {user && user.gamertag && (
                     <GameNavigation
                       currentPage={currentPage}
-                      onNavigate={(page) => {
-                        setCurrentPage(page as any);
-                        setShowCreateForm(false);
-                      }}
+                      onNavigate={handleNavigation}
                       user={mapUserForComponents(user)}
                       onLogout={handleLogout}
                     />
@@ -442,10 +462,7 @@ function Router() {
                   {user && user.gamertag && (
                     <GameNavigation
                       currentPage={currentPage}
-                      onNavigate={(page) => {
-                        setCurrentPage(page as any);
-                        setShowCreateForm(false);
-                      }}
+                      onNavigate={handleNavigation}
                       user={mapUserForComponents(user)}
                       onLogout={handleLogout}
                     />
@@ -467,10 +484,7 @@ function Router() {
                   {user && user.gamertag && (
                     <GameNavigation
                       currentPage={currentPage}
-                      onNavigate={(page) => {
-                        setCurrentPage(page as any);
-                        setShowCreateForm(false);
-                      }}
+                      onNavigate={handleNavigation}
                       user={mapUserForComponents(user)}
                       onLogout={handleLogout}
                     />

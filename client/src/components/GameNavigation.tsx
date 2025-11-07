@@ -40,11 +40,16 @@ export function GameNavigation({
 }: GameNavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const navigationItems = [
+  const navigationItems: Array<{
+    id: string;
+    label: string;
+    icon: typeof Home;
+    badge?: number;
+  }> = [
     { id: "home", label: "Feed", icon: Home },
     { id: "search", label: "Discover", icon: Search },
     { id: "connections", label: "Matches", icon: Users },
-    { id: "messages", label: "Messages", icon: MessageCircle },
+    { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages },
     { id: "voice-channels", label: "Voice", icon: Mic },
     { id: "profile", label: "Profile", icon: User },
   ];
