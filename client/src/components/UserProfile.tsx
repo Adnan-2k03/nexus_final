@@ -22,6 +22,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getApiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useLocation } from "wouter";
 
 interface UserProfileProps {
   id: string;
@@ -36,6 +37,7 @@ interface UserProfileProps {
   age?: number;
   preferredGames?: string[];
   isOwn?: boolean;
+  currentUserId?: string;
   onEdit?: () => void;
   onMessage?: () => void;
   onAddGame?: () => void;
@@ -54,6 +56,7 @@ export function UserProfile({
   age,
   preferredGames = [],
   isOwn = false,
+  currentUserId,
   onEdit,
   onMessage,
   onAddGame,
@@ -71,6 +74,20 @@ export function UserProfile({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
+  const [, setLocation] = useLocation();
+
+  // Check if users are connected (only if not viewing own profile)
+  const { data: connectionRequests = [] } = useQuery({
+    queryKey: ['/api/connection-requests'],
+    enabled: !isOwn && !!currentUserId,
+    retry: false,
+  });
+
+  const isConnected = !isOwn && connectionRequests.some((req: any) => 
+    req.status === 'accepted' && 
+    ((req.senderId === currentUserId && req.receiverId === id) ||
+     (req.receiverId === currentUserId && req.senderId === id))
+  );
 
   const { data: gameProfiles = [], isLoading: isLoadingProfiles, refetch } = useQuery<GameProfile[]>({
     queryKey: ['/api/users', id, 'game-profiles'],
@@ -155,8 +172,19 @@ export function UserProfile({
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
+    try {
+      await refetch();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
+
+  const handleMessage = () => {
+    if (onMessage) {
+      onMessage();
+    } else {
+      setLocation('/messages');
+    }
   };
 
   return (
@@ -246,12 +274,12 @@ export function UserProfile({
                       Add Game
                     </Button>
                   </>
-                ) : (
-                  <Button size="sm" onClick={onMessage} data-testid="button-message-user">
+                ) : isConnected ? (
+                  <Button size="sm" onClick={handleMessage} data-testid="button-message-user">
                     <MessageCircle className="h-4 w-4 mr-2" />
                     Message
                   </Button>
-                )}
+                ) : null}
               </div>
               <CustomPortfolio userId={id} isOwn={isOwn} />
             </div>

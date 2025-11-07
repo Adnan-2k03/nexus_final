@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   selectIsConnectedToRoom,
   useHMSActions,
   useHMSStore,
   selectPeers,
   selectIsLocalAudioEnabled,
+  selectIsLocalScreenShared,
   selectHMSMessages,
   HMSNotificationTypes,
 } from "@100mslive/react-sdk";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Mic, MicOff, Phone, PhoneOff } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Mic, MicOff, Phone, PhoneOff, MonitorUp, MonitorOff, Maximize2, Minimize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getApiUrl } from "@/lib/api";
 
@@ -26,9 +28,14 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const isConnected = useHMSStore(selectIsConnectedToRoom);
   const peers = useHMSStore(selectPeers);
   const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
+  const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
   const hmsMessages = useHMSStore(selectHMSMessages);
   
   const [isJoining, setIsJoining] = useState(false);
+  const [fullscreenPeerId, setFullscreenPeerId] = useState<string | null>(null);
+  const [minimizedPeerId, setMinimizedPeerId] = useState<string | null>(null);
+  const screenShareVideoRef = useRef<HTMLVideoElement>(null);
+  const minimizedVideoRef = useRef<HTMLVideoElement>(null);
   const { toast } = useToast();
 
   const otherPeers = peers.filter(peer => !peer.isLocal);
@@ -163,6 +170,59 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
   };
 
+  const toggleScreenShare = async () => {
+    try {
+      if (!isLocalScreenShared) {
+        await hmsActions.setScreenShareEnabled(true);
+        toast({
+          title: "Screen sharing started",
+          description: "Your screen is now visible",
+        });
+      } else {
+        await hmsActions.setScreenShareEnabled(false);
+        toast({
+          title: "Screen sharing stopped",
+        });
+      }
+    } catch (error) {
+      console.error("Error toggling screen share:", error);
+      toast({
+        title: "Screen share error",
+        description: "Failed to start screen sharing",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const screenSharePeers = peers.filter(peer => peer.auxiliaryTracks.length > 0);
+  
+  // Attach screen share video tracks
+  useEffect(() => {
+    const fullscreenPeer = peers.find(p => p.id === fullscreenPeerId);
+    if (fullscreenPeer && screenShareVideoRef.current) {
+      const screenTrack = fullscreenPeer.auxiliaryTracks[0];
+      if (screenTrack) {
+        hmsActions.attachVideo(screenTrack.id, screenShareVideoRef.current);
+        return () => {
+          hmsActions.detachVideo(screenTrack.id, screenShareVideoRef.current!);
+        };
+      }
+    }
+  }, [fullscreenPeerId, peers, hmsActions]);
+
+  useEffect(() => {
+    const minimizedPeer = peers.find(p => p.id === minimizedPeerId);
+    if (minimizedPeer && minimizedVideoRef.current) {
+      const screenTrack = minimizedPeer.auxiliaryTracks[0];
+      if (screenTrack) {
+        hmsActions.attachVideo(screenTrack.id, minimizedVideoRef.current);
+        return () => {
+          hmsActions.detachVideo(screenTrack.id, minimizedVideoRef.current!);
+        };
+      }
+    }
+  }, [minimizedPeerId, peers, hmsActions]);
+
   return (
     <div className="space-y-4">
       {!isConnected ? (
@@ -238,6 +298,25 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                   </>
                 )}
               </Button>
+              <Button
+                size="sm"
+                variant={isLocalScreenShared ? "default" : "secondary"}
+                onClick={toggleScreenShare}
+                className="flex-1"
+                data-testid="button-toggle-screenshare"
+              >
+                {isLocalScreenShared ? (
+                  <>
+                    <MonitorOff className="h-4 w-4 mr-1" />
+                    Stop Sharing
+                  </>
+                ) : (
+                  <>
+                    <MonitorUp className="h-4 w-4 mr-1" />
+                    Share Screen
+                  </>
+                )}
+              </Button>
             </div>
             
             {!hasOtherUser ? (
@@ -274,8 +353,104 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                 Voice channels use 100ms for reliable, high-quality voice communication.
               </p>
             </div>
+
+            {screenSharePeers.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Screen Shares</p>
+                {screenSharePeers.map((peer) => (
+                  <div
+                    key={peer.id}
+                    className="bg-black rounded-lg overflow-hidden aspect-video relative group"
+                    data-testid={`screenshare-${peer.id}`}
+                  >
+                    <video
+                      ref={(videoEl) => {
+                        if (videoEl && peer.auxiliaryTracks[0]) {
+                          hmsActions.attachVideo(peer.auxiliaryTracks[0].id, videoEl);
+                        }
+                      }}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="w-full h-full object-contain"
+                    />
+                    <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
+                      <p className="text-xs text-white">{peer.name}'s screen</p>
+                    </div>
+                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setFullscreenPeerId(peer.id)}
+                        data-testid={`button-fullscreen-${peer.id}`}
+                      >
+                        <Maximize2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() => setMinimizedPeerId(peer.id)}
+                        data-testid={`button-minimize-${peer.id}`}
+                      >
+                        <Minimize2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
+      )}
+
+      {/* Fullscreen Screen Share Dialog */}
+      <Dialog open={fullscreenPeerId !== null} onOpenChange={(open) => !open && setFullscreenPeerId(null)}>
+        <DialogContent className="max-w-[95vw] h-[95vh]">
+          <DialogHeader>
+            <DialogTitle>
+              {peers.find(p => p.id === fullscreenPeerId)?.name}'s Screen Share
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 bg-black rounded-lg overflow-hidden">
+            <video
+              ref={screenShareVideoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Minimized Pop-out Screen Share */}
+      {minimizedPeerId && (
+        <div className="fixed bottom-4 right-4 w-80 bg-background border-2 border-primary rounded-lg shadow-2xl z-50"
+          data-testid="minimized-screenshare">
+          <div className="flex items-center justify-between p-2 bg-primary text-primary-foreground">
+            <span className="text-sm font-medium">
+              {peers.find(p => p.id === minimizedPeerId)?.name}'s Screen
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setMinimizedPeerId(null)}
+              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
+              data-testid="button-close-minimized"
+            >
+              ✕
+            </Button>
+          </div>
+          <div className="aspect-video bg-black">
+            <video
+              ref={minimizedVideoRef}
+              autoPlay
+              muted
+              playsInline
+              className="w-full h-full object-contain"
+            />
+          </div>
+        </div>
       )}
     </div>
   );

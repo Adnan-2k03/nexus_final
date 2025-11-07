@@ -51,6 +51,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
 
@@ -101,8 +102,13 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     enabled: !!viewMatchDetailsId,
   });
 
-  const handleRefresh = () => {
-    refetch();
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   // Handle real-time WebSocket updates for connections
@@ -245,10 +251,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoading}
+              disabled={isLoading || isRefreshing}
               data-testid="button-refresh-connections"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
@@ -478,10 +484,10 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoading}
+              disabled={isLoading || isRefreshing}
               data-testid="button-refresh-connections"
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>

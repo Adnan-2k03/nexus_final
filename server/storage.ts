@@ -57,7 +57,7 @@ import {
   type InsertPhoneVerificationCode,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
+import { eq, and, or, ilike, desc, sql, ne, notInArray } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { randomUUID } from "crypto";
 
@@ -198,11 +198,21 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }> {
+  async getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number; excludeUserId?: string; excludeUserIds?: string[] }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }> {
     const conditions = [];
     const page = filters?.page || 1;
     const limit = filters?.limit || 10;
     const offset = (page - 1) * limit;
+    
+    // Exclude current user
+    if (filters?.excludeUserId) {
+      conditions.push(ne(users.id, filters.excludeUserId));
+    }
+    
+    // Exclude connected users
+    if (filters?.excludeUserIds && filters.excludeUserIds.length > 0) {
+      conditions.push(notInArray(users.id, filters.excludeUserIds));
+    }
     
     // Search filter (by name or gamertag)
     if (filters?.search) {

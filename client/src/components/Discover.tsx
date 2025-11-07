@@ -76,6 +76,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [connectingUserId, setConnectingUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
   
@@ -191,22 +192,8 @@ export function Discover({ currentUserId }: DiscoverProps) {
     },
   });
 
-  const filteredUsers = users.filter(user => {
-    if (user.id === currentUserId) return false;
-    
-    // Only filter out users with accepted direct connection requests (friend connections)
-    // Users with match connections should still be visible in discover
-    const hasDirectConnection = connectionRequests.some(
-      (req: any) => 
-        req.status === 'accepted' &&
-        ((req.senderId === currentUserId && req.receiverId === user.id) ||
-        (req.receiverId === currentUserId && req.senderId === user.id))
-    );
-    
-    if (hasDirectConnection) return false;
-    
-    return true;
-  });
+  // Filtering is now done on the backend, so we can use users directly
+  const filteredUsers = users;
 
   const handleClearFilters = () => {
     setSearchTerm("");
@@ -217,8 +204,13 @@ export function Discover({ currentUserId }: DiscoverProps) {
     setCurrentPage(1);
   };
 
-  const handleRefresh = () => {
-    refetch();
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
   };
 
   const handleConnectUser = (userId: string) => {
@@ -263,10 +255,10 @@ export function Discover({ currentUserId }: DiscoverProps) {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
-          disabled={isLoadingUsers}
+          disabled={isLoadingUsers || isRefreshing}
           data-testid="button-refresh-discover"
         >
-          <RefreshCw className={`h-4 w-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${isLoadingUsers || isRefreshing ? 'animate-spin' : ''}`} />
         </Button>
       </div>
 
@@ -582,6 +574,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
                 firstName={selectedUser.firstName ?? undefined}
                 lastName={selectedUser.lastName ?? undefined}
                 profileImageUrl={selectedUser.profileImageUrl ?? undefined}
+                currentUserId={currentUserId}
                 bio={selectedUser.bio ?? undefined}
                 location={selectedUser.location ?? undefined}
                 latitude={selectedUser.latitude ?? undefined}

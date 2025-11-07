@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User discovery routes
-  app.get('/api/users', async (req, res) => {
+  app.get('/api/users', async (req: any, res) => {
     try {
       const { search, gender, language, game, rank, latitude, longitude, maxDistance, page, limit } = req.query as Record<string, string>;
       const filters: any = { search, gender, language, game, rank };
@@ -208,6 +208,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Parse pagination
       if (page) filters.page = parseInt(page, 10);
       if (limit) filters.limit = parseInt(limit, 10);
+      
+      // Exclude current user and connected users
+      if (req.user?.id) {
+        filters.excludeUserId = req.user.id;
+        
+        // Get all accepted connection requests for this user
+        const connectionRequests = await storage.getConnectionRequests(req.user.id);
+        const connectedUserIds = connectionRequests
+          .filter((request: any) => request.status === 'accepted')
+          .map((request: any) => request.senderId === filters.excludeUserId ? request.receiverId : request.senderId);
+        
+        if (connectedUserIds.length > 0) {
+          filters.excludeUserIds = connectedUserIds;
+        }
+      }
       
       const result = await storage.getAllUsers(filters);
       res.json(result);
