@@ -1,0 +1,76 @@
+The screenshot shows the code in the Sources tab, specifically the file index-D-f-lHd5.js, which contains the fetch call that is failing with the 401 Unauthorized error.
+
+The code snippet reveals that the failing call is an await fetch that is part of a function, and the call does not explicitly include an Authorization: Bearer <TOKEN> header.
+
+JavaScript
+
+, s = await fetch(r, {
+    method: e,
+    headers: n ? {
+        "Content-Type": "application/json"
+    } : {}, // <-- Authorization header is missing here
+    body: n ? JSON.stringify(n) : void 0,
+    credentials: "include"
+});
+🎯 The Problem
+Missing Authorization Header: The headers object only includes "Content-Type": "application/json". For a protected endpoint to return the user's data, it must receive a valid Firebase ID Token in the Authorization header.
+
+credentials: "include": This only ensures that standard credentials like cookies are sent, but it does not handle the Firebase ID Token, which must be manually retrieved and included in the header.
+
+🛠️ The Solution: The onAuthStateChanged Pattern
+Since your protected API call (user endpoint) is failing with a 401, you must modify your frontend code to wait for the user's authentication state and inject the token into the request header before fetching the protected resource.
+
+Here is the conceptual change required in your source code (you'll need to find the equivalent part in your actual development files, as the screenshot shows minified code):
+
+Required Frontend Logic
+The fetch call must be wrapped inside a function that ensures two things:
+
+The Firebase user is loaded (onAuthStateChanged).
+
+The ID token is retrieved (getIdToken()).
+
+JavaScript
+
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+// A function to fetch your protected resource
+const fetchUserProtected = async () => {
+    const auth = getAuth();
+
+    // 1. Wait for the user state to be known
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // 2. Get the current, valid ID token
+            const idToken = await user.getIdToken();
+
+            // 3. Make the protected fetch request with the token
+            const response = await fetch('/auth/user', {
+                method: 'GET', // or whatever method is used
+                headers: {
+                    'Content-Type': 'application/json',
+                    // THIS IS THE CRUCIAL LINE
+                    'Authorization': `Bearer ${idToken}` 
+                },
+                credentials: 'include'
+            });
+
+            if (response.status === 200) {
+                // Handle successful response
+                const userData = await response.json();
+                // ... update state with user data
+            } else if (response.status === 401) {
+                // Token verification failed on the backend
+                console.error("Token verification failed on backend.");
+            }
+        } else {
+            // User is signed out, don't fetch protected data, redirect to login
+            // ...
+        }
+    });
+};
+
+// Call this function once the app loads
+fetchUserProtected();
+Your next step is to locate the original, unminified version of this fetch function in your project files and modify it to include the Firebase ID Token in the Authorization header.
+
+Would you like me to help you search for the best practices on integrating the Firebase ID Token with a standard fetch call in React/Next.js?
