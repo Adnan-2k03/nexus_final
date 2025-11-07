@@ -5,7 +5,7 @@ export function useAuth() {
   const { data: user, isLoading, isFetching } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
     retry: false,
-    queryFn: async () => {
+       queryFn: async () => {
       try {
         const response = await fetch("/api/auth/user", {
           credentials: "include",
@@ -16,10 +16,16 @@ export function useAuth() {
         }
         
         if (!response.ok) {
-          throw new Error(`Failed to fetch user: ${response.statusText}`);
+          return null;
         }
         
-        return await response.json();
+       const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          return await response.json();
+        } else {
+          console.warn("Auth endpoint returned non-JSON response, treating as unauthenticated");
+          return null;
+        }
       } catch (error) {
         console.error("Auth check failed:", error);
         return null;
