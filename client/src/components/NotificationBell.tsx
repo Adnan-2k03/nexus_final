@@ -1,15 +1,15 @@
-import { Bell } from "lucide-react";
+import { Bell, Check, Trash2, CheckCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuLabel,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -21,7 +21,7 @@ import type { Notification } from "@shared/schema";
 export function NotificationBell() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // Set up WebSocket connection for real-time notifications
   useEffect(() => {
@@ -116,13 +116,34 @@ export function NotificationBell() {
     },
   });
 
+  const markAllAsReadMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("PATCH", "/api/notifications/read-all");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+      toast({
+        title: "Success",
+        description: "All notifications marked as read",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to mark all as read",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleNotificationClick = (notification: Notification) => {
     if (notification.isRead === false) {
       markAsReadMutation.mutate(notification.id);
     }
     
-    // Close the dropdown menu
-    setDropdownOpen(false);
+    // Close the dialog
+    setDialogOpen(false);
     
     // Handle specific notification types with proper navigation
     switch (notification.type) {
@@ -181,94 +202,138 @@ export function NotificationBell() {
   };
 
   return (
-    <>
-      <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative"
-            data-testid="button-notification-bell"
-          >
-            <Bell className="h-5 w-5" />
+    <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          data-testid="button-notification-bell"
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              data-testid="badge-unread-count"
+            >
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </Badge>
+          )}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl max-h-[80vh]">
+        <DialogHeader>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Notifications
+              {unreadCount > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {unreadCount} unread
+                </Badge>
+              )}
+            </DialogTitle>
             {unreadCount > 0 && (
-              <Badge
-                variant="destructive"
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                data-testid="badge-unread-count"
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => markAllAsReadMutation.mutate()}
+                disabled={markAllAsReadMutation.isPending}
+                className="gap-2"
+                data-testid="button-mark-all-read"
               >
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </Badge>
+                <CheckCheck className="h-4 w-4" />
+                Mark All Read
+              </Button>
             )}
-          </Button>
-        </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <ScrollArea className="h-[400px]">
+          </div>
+        </DialogHeader>
+        <Separator />
+        <ScrollArea className="h-[500px] pr-4">
           {isLoading ? (
-            <div className="p-4 text-sm text-center text-muted-foreground">
+            <div className="p-8 text-center text-muted-foreground">
               Loading notifications...
             </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-sm text-center text-muted-foreground">
-              No notifications yet
+            <div className="p-8 text-center">
+              <Bell className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
+              <p className="text-muted-foreground">No notifications yet</p>
             </div>
           ) : (
-            notifications.map((notification) => (
-              <DropdownMenuItem
-                key={notification.id}
-                className={`flex flex-col items-start p-4 cursor-pointer ${
-                  notification.isRead === false
-                    ? "bg-blue-50 dark:bg-blue-950"
-                    : ""
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-                data-testid={`notification-item-${notification.id}`}
-              >
-                <div className="flex items-start gap-3 w-full">
-                  <span className="text-2xl flex-shrink-0">
-                    {getNotificationIcon(notification.type)}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-semibold text-sm">
-                        {notification.title}
-                      </h4>
-                      {notification.isRead === false && (
-                        <div className="w-2 h-2 bg-blue-600 rounded-full flex-shrink-0" />
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {notification.message}
-                    </p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(notification.createdAt || new Date()), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 text-xs"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteMutation.mutate(notification.id);
-                        }}
-                        data-testid={`button-delete-notification-${notification.id}`}
-                      >
-                        Delete
-                      </Button>
+            <div className="space-y-2">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
+                    notification.isRead === false
+                      ? "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900"
+                      : "bg-card border-border"
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                  data-testid={`notification-item-${notification.id}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl flex-shrink-0">
+                      {getNotificationIcon(notification.type)}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-1">
+                        <h4 className="font-semibold text-base">
+                          {notification.title}
+                        </h4>
+                        {notification.isRead === false && (
+                          <div className="w-2.5 h-2.5 bg-blue-600 rounded-full flex-shrink-0 mt-1" />
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        {notification.message}
+                      </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(notification.createdAt || new Date()), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {notification.isRead === false && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                markAsReadMutation.mutate(notification.id);
+                              }}
+                              data-testid={`button-mark-read-${notification.id}`}
+                            >
+                              <Check className="h-3 w-3" />
+                              Mark Read
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 gap-1 text-xs text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteMutation.mutate(notification.id);
+                            }}
+                            data-testid={`button-delete-notification-${notification.id}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                            Delete
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </DropdownMenuItem>
-            ))
+              ))}
+            </div>
           )}
         </ScrollArea>
-      </DropdownMenuContent>
-    </DropdownMenu>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }

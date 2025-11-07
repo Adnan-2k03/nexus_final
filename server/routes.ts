@@ -854,25 +854,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Photo upload route
-  // Create uploads directory if it doesn't exist
+  // Photo upload route - uses R2 cloud storage if configured, falls back to local storage
   const uploadsDir = path.join(__dirname, '../uploads');
   if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
   }
 
-  const storage_multer = multer.diskStorage({
-    destination: (req: any, file: any, cb: any) => {
-      cb(null, uploadsDir);
-    },
-    filename: (req: any, file: any, cb: any) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-  });
-
   const upload = multer({
-    storage: storage_multer,
+    storage: multer.memoryStorage(),
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: (req: any, file: any, cb: any) => {
       const allowedTypes = /jpeg|jpg|png|gif|webp/;
@@ -886,7 +875,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Serve uploaded files statically
+  // Serve uploaded files statically (for local fallback)
   app.use('/uploads', express.static(uploadsDir));
 
   app.post('/api/upload-photo', authMiddleware, upload.single('file'), async (req: any, res) => {
@@ -895,8 +884,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'No file uploaded' });
       }
 
-      const fileUrl = `/uploads/${req.file.filename}`;
-      res.json({ url: fileUrl });
+      const userId = req.user.id;
+      const fileExtension = path.extname(req.file.originalname);
+
+      // Try R2 first, fallback to local storage
+      if (r2Storage.isConfigured()) {
+        const fileKey = generateFileKey('profile-photos', userId, fileExtension);
+        const fileUrl = await r2Storage.uploadFile({
+          key: fileKey,
+          buffer: req.file.buffer,
+          contentType: req.file.mimetype,
+        });
+        res.json({ url: fileUrl });
+      } else {
+        // Fallback to local storage
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const filename = uniqueSuffix + fileExtension;
+        const filepath = path.join(uploadsDir, filename);
+        
+        fs.writeFileSync(filepath, req.file.buffer);
+        const fileUrl = `/uploads/${filename}`;
+        res.json({ url: fileUrl });
+      }
     } catch (error: any) {
       console.error('Error uploading photo:', error);
       res.status(500).json({ message: error.message || 'Failed to upload photo' });
@@ -1241,6 +1250,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/notifications/read-all', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      await storage.markAllNotificationsAsRead(userId);
+      res.json({ message: "All notifications marked as read" });
+    } catch (error) {
+      console.error("Error marking all notifications as read:", error);
+      res.status(500).json({ message: "Failed to mark all notifications as read" });
+    }
+  });
+
   app.delete('/api/notifications/:id', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -1407,11 +1427,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const participants = await storage.getVoiceParticipants(channel.id);
+      const currentUser = await storage.getUser(userId);
       
       // Broadcast to other participants
       const otherUserIds = participants
         .filter(p => p.userId !== userId)
         .map(p => p.userId);
+      
+      // Only send notification if this is the first user joining (channel was empty)
+      const wasChannelEmpty = participants.length === 1; // Only includes current user after join
       
       if (otherUserIds.length > 0) {
         (app as any).broadcast?.toUsers(otherUserIds, {
@@ -1419,6 +1443,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
           data: { connectionId, participant, participants },
           message: 'User joined voice channel'
         });
+      }
+      
+      // Create notification only when joining an empty channel (someone is now waiting)
+      if (wasChannelEmpty && otherUserIds.length === 0) {
+        // Get the other user in this connection to notify them
+        const userConnections = await storage.getUserConnections(userId);
+        const connectionRequests = await storage.getConnectionRequests(userId);
+        
+        const matchConnection = userConnections.find(c => c.id === connectionId);
+        const requestConnection = connectionRequests.find(c => c.id === connectionId);
+        const connection = matchConnection || requestConnection;
+        
+        if (connection) {
+          const otherUserId = connection.userId === userId ? connection.matchUserId : connection.userId;
+          
+          // Check for recent duplicate notifications (within last 5 minutes)
+          const recentNotifications = await storage.getUserNotifications(otherUserId, false);
+          const hasDuplicateRecent = recentNotifications.some(n => 
+            n.type === 'voice_call_waiting' && 
+            n.createdAt && 
+            Date.now() - new Date(n.createdAt).getTime() < 5 * 60 * 1000
+          );
+          
+          if (!hasDuplicateRecent) {
+            await storage.createNotification({
+              userId: otherUserId,
+              type: 'voice_call_waiting',
+              title: 'Voice Call Waiting',
+              message: `${currentUser?.gamertag || 'A friend'} is waiting in your personal voice channel`,
+              actionUrl: '/connections',
+              isRead: false,
+            });
+            
+            // Broadcast notification event
+            (app as any).broadcast?.toUsers([otherUserId], {
+              type: 'new_notification',
+              message: 'New notification'
+            });
+          }
+        }
       }
       
       res.json({ token, roomId: hmsRoomId });

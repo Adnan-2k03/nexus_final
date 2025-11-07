@@ -88,16 +88,6 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     }
   }, [hmsMessages, isJoining, toast]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (isConnected) {
-        console.log('[HMS] Component unmounting, leaving room');
-        hmsActions.leave();
-      }
-    };
-  }, [isConnected, hmsActions]);
-
   const joinChannel = async () => {
     setIsJoining(true);
     try {

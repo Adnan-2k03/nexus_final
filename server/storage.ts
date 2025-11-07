@@ -129,6 +129,7 @@ export interface IStorage {
   createNotification(notification: InsertNotification): Promise<Notification>;
   getUserNotifications(userId: string, unreadOnly?: boolean): Promise<Notification[]>;
   markNotificationAsRead(id: string, userId: string): Promise<Notification>;
+  markAllNotificationsAsRead(userId: string): Promise<void>;
   deleteNotification(id: string, userId: string): Promise<void>;
   getUnreadNotificationCount(userId: string): Promise<number>;
   
@@ -238,14 +239,19 @@ export class DatabaseStorage implements IStorage {
       countQuery = countQuery.where(and(...conditions)) as any;
     }
     
+    // Determine if we need distance filtering
+    const hasDistanceFilter = filters?.latitude != null && filters?.longitude != null && filters?.maxDistance != null;
+    
     // Fetch users with pagination
+    // If distance filtering is needed, fetch more users to ensure we have enough after filtering
+    const fetchLimit = hasDistanceFilter ? limit * 5 : limit;
     let fetchedUsers = await baseQuery
       .orderBy(desc(users.createdAt))
-      .limit(limit)
+      .limit(fetchLimit)
       .offset(offset);
     
     // Apply distance filter if coordinates are provided (post-query filtering)
-    if (filters?.latitude != null && filters?.longitude != null && filters?.maxDistance != null) {
+    if (hasDistanceFilter) {
       fetchedUsers = fetchedUsers.filter(user => {
         if (user.latitude == null || user.longitude == null) return false;
         const distance = calculateDistance(
@@ -256,11 +262,32 @@ export class DatabaseStorage implements IStorage {
         );
         return distance <= filters.maxDistance!;
       });
+      
+      // Limit to exact page size after filtering
+      fetchedUsers = fetchedUsers.slice(0, limit);
     }
     
     // Get total count
     const [countResult] = await countQuery;
-    const total = countResult?.count || 0;
+    let total = countResult?.count || 0;
+    
+    // If distance filtering is applied, adjust total to reflect filtered count
+    if (hasDistanceFilter) {
+      // Fetch all users that match other filters to get accurate total
+      const allUsers = await baseQuery.orderBy(desc(users.createdAt));
+      const filteredUsers = allUsers.filter(user => {
+        if (user.latitude == null || user.longitude == null) return false;
+        const distance = calculateDistance(
+          filters.latitude!,
+          filters.longitude!,
+          user.latitude,
+          user.longitude
+        );
+        return distance <= filters.maxDistance!;
+      });
+      total = filteredUsers.length;
+    }
+    
     const totalPages = Math.ceil(total / limit);
     
     return {
@@ -944,6 +971,16 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedNotification;
+  }
+
+  async markAllNotificationsAsRead(userId: string): Promise<void> {
+    await db
+      .update(notifications)
+      .set({ isRead: true })
+      .where(and(
+        eq(notifications.userId, userId),
+        eq(notifications.isRead, false)
+      ));
   }
 
   async deleteNotification(id: string, userId: string): Promise<void> {
