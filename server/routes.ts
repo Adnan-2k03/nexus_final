@@ -16,7 +16,7 @@ import { sendPushNotification } from "./pushNotifications";
 import { r2Storage, generateFileKey } from "./services/r2-storage";
 import { hmsService, generateRoomName } from "./services/hms-service";
 import { verifyFirebaseToken, isPhoneAuthConfigured } from "./services/firebase-admin";
-import { sendPhoneCodeSchema, verifyPhoneCodeSchema, phoneRegisterSchema } from "@shared/schema";
+import { sendPhoneCodeSchema, verifyPhoneCodeSchema, phoneRegisterSchema, registerUserSchema } from "@shared/schema";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -118,13 +118,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid or expired token" });
       }
 
-      const validatedData = phoneRegisterSchema.parse({
+      const validatedData = registerUserSchema.parse({
         ...registrationData,
         phoneNumber: verifiedUser.phoneNumber,
-        verificationCode: "firebase-verified"
       });
 
-      const { phoneNumber, verificationCode, gamertag, ...userData } = validatedData;
+      const { phoneNumber, gamertag, ...userData } = validatedData;
+
+      if (!phoneNumber || !gamertag) {
+        return res.status(400).json({ message: "Phone number and gamertag are required" });
+      }
 
       const existingUser = await storage.getUserByPhoneNumber(phoneNumber);
       if (existingUser) {
