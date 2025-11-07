@@ -76,24 +76,26 @@ function Router() {
   // Helper function to map page names to URLs and navigate
   const handleNavigation = (page: string) => {
     const pageToUrl: { [key: string]: string } = {
-      "home": "/",
       "connections": "/connections",
       "messages": "/messages",
       "voice-channels": "/voice-channels",
       "profile-setup": "/profile-setup",
-      "search": "/",
-      "profile": "/",
-      "settings": "/",
-      "create": "/"
     };
 
-    // Navigate to the URL
-    const url = pageToUrl[page] || "/";
-    if (location !== url) {
-      setLocation(url);
+    // Pages with dedicated routes - navigate to URL
+    if (pageToUrl[page]) {
+      const url = pageToUrl[page];
+      if (location !== url) {
+        setLocation(url);
+      }
+    } else {
+      // Pages without routes (home, search, profile, settings) - navigate to root and use state
+      if (location !== "/") {
+        setLocation("/");
+      }
     }
     
-    // Update state for pages that don't have separate routes
+    // Always update state
     setCurrentPage(page as any);
     setShowCreateForm(false);
   };
