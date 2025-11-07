@@ -73,8 +73,11 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
         throw new Error("Failed to setup reCAPTCHA");
       }
 
+      delete (window as any).phoneConfirmation;
+      
       const confirmation = await signInWithPhoneNumber(auth, fullPhoneNumber, appVerifier);
       setConfirmationResult(confirmation);
+      (window as any).phoneConfirmation = confirmation;
       setPhoneStep("code");
 
       toast({
@@ -101,7 +104,9 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!confirmationResult) {
+    const confirmation = confirmationResult || (window as any).phoneConfirmation;
+    
+    if (!confirmation) {
       toast({
         title: "Error",
         description: "Please request a new code",
@@ -113,7 +118,8 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
     setIsLoading(true);
 
     try {
-      const result = await confirmationResult.confirm(verificationCode);
+      const trimmedCode = verificationCode.trim();
+      const result = await confirmation.confirm(trimmedCode);
       const idToken = await result.user.getIdToken();
       setFirebaseToken(idToken);
 
@@ -133,6 +139,8 @@ export function AuthPage({ onAuthSuccess }: AuthPageProps) {
 
       const data = await verifyResponse.json();
 
+      delete (window as any).phoneConfirmation;
+      
       if (data.userExists) {
         const loginResponse = await fetch(getApiUrl("/api/auth/phone/login"), {
           method: "POST",
