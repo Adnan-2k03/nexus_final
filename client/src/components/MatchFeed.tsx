@@ -363,7 +363,7 @@ export function MatchFeed({
             onClick={handleRefresh}
             disabled={isFetchingMatches}
             data-testid="button-refresh-feed"
-            className="h-8 px-2 sm:px-3"
+            className={`h-8 px-2 sm:px-3 transition-transform ${isFetchingMatches ? 'scale-95' : 'hover:scale-105'}`}
           >
             <RefreshCw className={`h-4 w-4 ${isFetchingMatches ? 'animate-spin' : ''}`} />
           </Button>

@@ -57,22 +57,18 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
     retry: false,
   });
 
-  // Fetch user data for all connected users
-  const { data: usersResponse } = useQuery<{ users: User[] }>({
-    queryKey: ['/api/users'],
-    retry: false,
-  });
-
-  const allUsers = usersResponse?.users || [];
-
-  // Helper function to get user data
-  const getUserData = (userId: string) => {
-    return allUsers.find(u => u.id === userId);
+  // Helper function to get user data from connection request
+  const getUserDataFromRequest = (request: ConnectionRequestWithUser, currentUserId: string) => {
+    const isSender = request.senderId === currentUserId;
+    return {
+      id: isSender ? request.receiverId : request.senderId,
+      gamertag: isSender ? request.receiverGamertag : request.senderGamertag,
+      profileImageUrl: isSender ? request.receiverProfileImageUrl : request.senderProfileImageUrl,
+    };
   };
 
   const handleRefresh = () => {
     refetch();
-    queryClient.invalidateQueries({ queryKey: ['/api/users'] });
   };
 
   // Mutation to accept connection request
@@ -153,10 +149,8 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
   const filterBySearch = (request: ConnectionRequestWithUser) => {
     if (!searchTerm.trim()) return true;
     
-    const isSender = request.senderId === currentUserId;
-    const otherUserId = isSender ? request.receiverId : request.senderId;
-    const otherUser = getUserData(otherUserId);
-    const displayName = (otherUser?.gamertag || otherUser?.firstName || otherUserId).toLowerCase();
+    const userData = getUserDataFromRequest(request, currentUserId);
+    const displayName = (userData.gamertag || userData.id).toLowerCase();
     return displayName.includes(searchTerm.toLowerCase());
   };
 
@@ -212,6 +206,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
             onClick={handleRefresh}
             disabled={isLoadingRequests}
             data-testid="button-refresh-messages"
+            className={`transition-transform ${isLoadingRequests ? 'scale-95' : 'hover:scale-105'}`}
           >
             <RefreshCw className={`h-4 w-4 ${isLoadingRequests ? 'animate-spin' : ''}`} />
           </Button>
@@ -258,11 +253,10 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
           ) : filteredConnections.length > 0 ? (
             <div className="space-y-3">
               {filteredConnections.map((request) => {
-            const isSender = request.senderId === currentUserId;
-            const otherUserId = isSender ? request.receiverId : request.senderId;
-            const otherUser = getUserData(otherUserId);
-            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-            const avatarUrl = otherUser?.profileImageUrl || undefined;
+            const userData = getUserDataFromRequest(request, currentUserId);
+            const displayName = userData.gamertag || userData.id;
+            const avatarUrl = userData.profileImageUrl || undefined;
+            const otherUserId = userData.id;
             const timeAgo = formatTimeAgo(request.updatedAt);
 
             return (
@@ -355,10 +349,10 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                         Incoming ({pendingReceivedRequests.length})
                       </h3>
                       {pendingReceivedRequests.map((request) => {
-                        const otherUserId = request.senderId;
-                        const otherUser = getUserData(otherUserId);
-                        const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-                        const avatarUrl = otherUser?.profileImageUrl || undefined;
+                        const userData = getUserDataFromRequest(request, currentUserId);
+                        const displayName = userData.gamertag || userData.id;
+                        const avatarUrl = userData.profileImageUrl || undefined;
+                        const otherUserId = userData.id;
                         const timeAgo = formatTimeAgo(request.createdAt);
 
                         return (
@@ -418,10 +412,10 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                         Sent ({pendingSentRequests.length})
                       </h3>
                       {pendingSentRequests.map((request) => {
-                        const otherUserId = request.receiverId;
-                        const otherUser = getUserData(otherUserId);
-                        const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
-                        const avatarUrl = otherUser?.profileImageUrl || undefined;
+                        const userData = getUserDataFromRequest(request, currentUserId);
+                        const displayName = userData.gamertag || userData.id;
+                        const avatarUrl = userData.profileImageUrl || undefined;
+                        const otherUserId = userData.id;
                         const timeAgo = formatTimeAgo(request.createdAt);
 
                         return (
@@ -476,10 +470,9 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
       <Dialog open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
         <DialogContent className="max-w-lg h-[600px] flex flex-col p-0">
           {selectedConnection && (() => {
-            const isSender = selectedConnection.senderId === currentUserId;
-            const otherUserId = isSender ? selectedConnection.receiverId : selectedConnection.senderId;
-            const otherUser = getUserData(otherUserId);
-            const displayName = otherUser?.gamertag || otherUser?.firstName || otherUserId;
+            const userData = getUserDataFromRequest(selectedConnection, currentUserId);
+            const displayName = userData.gamertag || userData.id;
+            const otherUserId = userData.id;
 
             return (
               <>

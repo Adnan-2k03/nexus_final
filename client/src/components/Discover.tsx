@@ -122,7 +122,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
     queryParams.append("maxDistance", selectedDistance);
   }
   queryParams.append("page", currentPage.toString());
-  queryParams.append("limit", "10");
+  queryParams.append("limit", "9");
 
   const queryUrl = `/api/users?${queryParams.toString()}`;
   
@@ -257,6 +257,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
           onClick={handleRefresh}
           disabled={isLoadingUsers || isRefreshing}
           data-testid="button-refresh-discover"
+          className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
         >
           <RefreshCw className={`h-4 w-4 ${isLoadingUsers || isRefreshing ? 'animate-spin' : ''}`} />
         </Button>

@@ -253,6 +253,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               onClick={handleRefresh}
               disabled={isLoading || isRefreshing}
               data-testid="button-refresh-connections"
+              className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
             >
               <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -486,6 +487,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               onClick={handleRefresh}
               disabled={isLoading || isRefreshing}
               data-testid="button-refresh-connections"
+              className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
             >
               <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
@@ -582,6 +584,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             onClick={handleRefresh}
             disabled={isLoading}
             data-testid="button-refresh-connections"
+            className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
           </Button>
