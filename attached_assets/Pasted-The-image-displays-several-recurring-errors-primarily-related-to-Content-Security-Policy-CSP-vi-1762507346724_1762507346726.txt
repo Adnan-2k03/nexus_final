@@ -1,0 +1,62 @@
+The image displays several recurring errors, primarily related to **Content Security Policy (CSP) violations** and **Firebase authentication failures**. These issues are preventing your application from securely loading necessary external scripts, especially Google's **reCAPTCHA** service.
+
+-----
+
+## 🛑 Summary of Errors
+
+The problems fall into two main categories:
+
+### 1\. 🌐 Content Security Policy (CSP) Violations
+
+Your application's CSP is too restrictive and blocks critical external resources. This is indicated by messages like:
+
+  * "Refused to **connect to** 'https://identitytoolkit...' because it violates the following Content Security Policy directive: `connect-src 'self' wss://*.100ms.live https://*.100ms.live wss://*.livekit.cloud https://*.livekit.cloud https://*.railway.app wss://*.railway.app ws://localhost:* http://localhost:*`."
+  * "Refused to **load the script** '[https://www.google.com/recaptcha/api.js/](https://www.google.com/search?q=https://www.google.com/recaptcha/api.js/)...' because it violates the following Content Security Policy directive: `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://replit.com`."
+
+The core problem is that you are trying to load resources from **Google's domains** (`identitytoolkit.googleapis.com` and `www.google.com/recaptcha`) that are **not listed** in your CSP's allowed sources.
+
+### 2\. 🔥 Firebase Authentication Failures
+
+The CSP violations lead directly to authentication failures:
+
+  * "Failed to initialize reCAPTCHA Enterprise config."
+  * "Error sending code: **FirebaseError: Firebase: Error (auth/internal-error)**."
+
+**Firebase Authentication** (especially for methods requiring security checks, like phone sign-in) depends on **reCAPTCHA** to protect against abuse. Since the reCAPTCHA script is blocked by the CSP, the Firebase authentication process fails with an "internal-error."
+
+-----
+
+## ✅ Recommended Fixes
+
+To resolve these errors, you must modify the **Content Security Policy** of your web application to explicitly allow the necessary Google domains.
+
+### 1\. Update the `script-src` Directive
+
+You need to allow scripts from Google's reCAPTCHA and Firebase domains.
+
+| Current Directive | Add These Domains |
+| :--- | :--- |
+| `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://replit.com` | `https://www.google.com` (for the script itself) |
+| | `https://www.gstatic.com` (for other static assets) |
+
+### 2\. Update the `connect-src` Directive
+
+You need to allow network connections to the Firebase Authentication backend.
+
+| Current Directive | Add These Domains |
+| :--- | :--- |
+| `connect-src 'self' wss://*.100ms.live ... http://localhost:*` | `https://identitytoolkit.googleapis.com` (for Firebase Auth) |
+| | `https://securetoken.googleapis.com` (also often needed for Firebase Auth) |
+| | `https://*.firebaseio.com` (if you are using the Realtime Database) |
+
+### 💡 Action Item
+
+You need to locate where your application sets its CSP. This is usually done in one of three places:
+
+1.  In your web server's configuration file (e.g., `nginx.conf`, `.htaccess`).
+2.  In your hosting platform's configuration (e.g., a **Replit**, **Railway**, or **Vercel** config file, as these platforms are mentioned in the CSP).
+3.  Directly in the **HTML `<meta>` tag** of your page (less common for complex SPAs).
+
+Once you update the CSP to include the Google domains, the reCAPTCHA script will load, and the Firebase authentication will likely succeed.
+
+Would you like me to search for documentation on how to set or update a Content Security Policy for a common platform like **Replit or Railway**?
