@@ -458,24 +458,29 @@ function Router() {
             }}
           </Route>
           <Route path="/">
-            {() => (
-              <div className="min-h-screen relative">
-                {user && user.gamertag && (
-                  <GameNavigation
-                    currentPage={currentPage}
-                    onNavigate={(page) => {
-                      setCurrentPage(page as any);
-                      setShowCreateForm(false);
-                    }}
-                    user={mapUserForComponents(user)}
-                    onLogout={handleLogout}
-                  />
-                )}
-                <div className="relative z-10">
-                  {renderMainContent()}
+            {() => {
+              if (currentPage !== "home") {
+                setCurrentPage("home");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={(page) => {
+                        setCurrentPage(page as any);
+                        setShowCreateForm(false);
+                      }}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            }}
           </Route>
         </>
       ) : null}

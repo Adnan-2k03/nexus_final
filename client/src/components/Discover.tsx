@@ -488,23 +488,37 @@ export function Discover({ currentUserId }: DiscoverProps) {
                     </div>
                   )}
 
-                  <Button
-                    size="sm"
-                    className="w-full gap-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleConnectUser(user.id);
-                    }}
-                    disabled={connectingUserId === user.id}
-                    data-testid={`button-connect-${user.id}`}
-                  >
-                    {connectingUserId === user.id ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Users className="h-4 w-4" />
-                    )}
-                    Connect
-                  </Button>
+                  {(() => {
+                    const hasPendingRequest = connectionRequests.some(
+                      (req: any) => 
+                        req.status === 'pending' &&
+                        ((req.senderId === currentUserId && req.receiverId === user.id) ||
+                        (req.receiverId === currentUserId && req.senderId === user.id))
+                    );
+                    
+                    return (
+                      <Button
+                        size="sm"
+                        className="w-full gap-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleConnectUser(user.id);
+                        }}
+                        disabled={connectingUserId === user.id || hasPendingRequest}
+                        variant={hasPendingRequest ? "outline" : "default"}
+                        data-testid={`button-connect-${user.id}`}
+                      >
+                        {connectingUserId === user.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : hasPendingRequest ? (
+                          <MessageCircle className="h-4 w-4" />
+                        ) : (
+                          <Users className="h-4 w-4" />
+                        )}
+                        {hasPendingRequest ? "Sent" : "Connect"}
+                      </Button>
+                    );
+                  })()}
                 </div>
               </CardContent>
             </Card>

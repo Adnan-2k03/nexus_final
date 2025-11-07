@@ -252,6 +252,7 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
   };
 
   const screenSharePeers = peers.filter(peer => peer.auxiliaryTracks.length > 0);
+  const otherPeers = peers.filter(peer => !peer.isLocal);
 
   return (
     <div className="space-y-4">
@@ -403,7 +404,7 @@ export function GroupVoiceChannel({ channel, currentUserId, onLeave }: GroupVoic
 
             <div>
               <p className="text-sm font-medium mb-2">
-                Participants ({peers.length})
+                Participants ({peers.length}) {otherPeers.length > 0 ? `• ${otherPeers.length} other${otherPeers.length !== 1 ? 's' : ''}` : '• You are alone'}
               </p>
               <div className="grid grid-cols-2 gap-2">
                 {peers.map((peer) => {
