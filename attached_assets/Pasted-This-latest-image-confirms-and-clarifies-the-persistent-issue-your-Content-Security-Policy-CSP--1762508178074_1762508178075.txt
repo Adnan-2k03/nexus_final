@@ -1,0 +1,66 @@
+This latest image confirms and clarifies the persistent issue: your **Content Security Policy (CSP)** is still incorrectly configured, specifically the **`connect-src`** directive, which is blocking essential Firebase and Google API calls.
+
+The core problem is that the application is trying to make network connections (fetch, XHR, WebSockets) to several Google-owned domains for **reCAPTCHA** and **Firebase Authentication**, but those domains are missing from your `connect-src` whitelist.
+
+-----
+
+## 💥 The Blocking Errors
+
+The log repeatedly shows:
+
+> "Refused to **connect to** '[https://www.google.com/recaptcha/api2/](https://www.google.com/search?q=https://www.google.com/recaptcha/api2/)...' because it violates the following Content Security Policy directive: `connect-src 'self' wss://*.100ms.live https://*.100ms.live wss://*.livekit.cloud https://*.livekit.cloud https://*.railway.app wss://*.railway.app ws://localhost:* http://localhost:* https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseio.com https://apis.google.com`."
+
+### ❌ What is Missing in `connect-src`:
+
+1.  **`https://www.google.com`**: The reCAPTCHA API makes fetch/XHR calls to its own domain for the actual verification check.
+2.  **`https://www.gstatic.com`**: Sometimes used by Google services for connecting to static assets or verification endpoints.
+
+### ✅ What You Already Added (and is likely correct):
+
+  * `https://identitytoolkit.googleapis.com` (Firebase Auth backend)
+  * `https://securetoken.googleapis.com` (Firebase token management)
+  * `https://firebaseio.com` (Firebase Realtime Database/internal Firebase connections)
+  * `https://apis.google.com` (General Google APIs)
+
+-----
+
+## 🎯 Solution: Update `connect-src` in `vercel.json`
+
+You must add the missing Google domains to your **`connect-src`** directive in your Vercel configuration (`vercel.json`).
+
+### 🔧 Required Change
+
+You need to insert `https://www.google.com` and `https://www.gstatic.com` into the long string defining the `connect-src` value.
+
+**Modified `connect-src` Value (Highlighting new additions):**
+
+```
+"connect-src 'self' wss://*.100ms.live https://*.100ms.live wss://*.livekit.cloud https://*.livekit.cloud https://*.railway.app wss://*.railway.app ws://localhost:* http://localhost:* https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseio.com https://apis.google.com **https://www.google.com https://www.gstatic.com**"
+```
+
+### 💡 Full `vercel.json` Snippet (Illustrative):
+
+If you are maintaining the CSP in a similar structure as before, your `vercel.json` should look like this (focusing on the `connect-src` line):
+
+```json
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; " +
+                   "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://replit.com https://www.google.com https://www.gstatic.com; " +
+                   "connect-src 'self' wss://*.100ms.live https://*.100ms.live wss://*.livekit.cloud https://*.livekit.cloud https://*.railway.app wss://*.railway.app ws://localhost:* http://localhost:* https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firebaseio.com https://apis.google.com https://www.google.com https://www.gstatic.com; " +
+                   "frame-src 'self' https://www.google.com https://recaptcha.google.com;" 
+        }
+      ]
+    }
+  ]
+}
+```
+
+Once you **update the `vercel.json`** file with these additional domains and **redeploy to Vercel**, the `connect-src` errors related to reCAPTCHA should disappear, and your Firebase authentication should proceed.
+
+Would you like me to check any other directives (like `img-src` or `style-src`) to ensure all related assets are covered?
