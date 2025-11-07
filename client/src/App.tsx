@@ -58,7 +58,23 @@ function Router() {
   const { getContainerClass } = useLayout();
   const [location, setLocation] = useLocation();
 
+  // Helper to map URL to page name
+  const getPageFromUrl = (url: string): "home" | "search" | "create" | "profile" | "messages" | "voice-channels" | "settings" | "profile-setup" | "connections" => {
+    const urlToPage: { [key: string]: "home" | "search" | "profile" | "messages" | "voice-channels" | "settings" | "profile-setup" | "connections" } = {
+      "/": "home",
+      "/discover": "search",
+      "/connections": "connections",
+      "/messages": "messages",
+      "/voice-channels": "voice-channels",
+      "/profile": "profile",
+      "/settings": "settings",
+      "/profile-setup": "profile-setup",
+    };
+    return urlToPage[url] || "home";
+  };
+
   // ALL hooks must be called before any early returns
+  // Initialize currentPage based on the current URL location
   const [currentPage, setCurrentPage] = useState<
     | "home"
     | "search"
@@ -69,16 +85,20 @@ function Router() {
     | "settings"
     | "profile-setup"
     | "connections"
-  >("home");
+  >(() => getPageFromUrl(location));
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showAuthPage, setShowAuthPage] = useState(false);
 
   // Helper function to map page names to URLs and navigate
   const handleNavigation = (page: string) => {
     const pageToUrl: { [key: string]: string } = {
+      "home": "/",
+      "search": "/discover",
       "connections": "/connections",
       "messages": "/messages",
       "voice-channels": "/voice-channels",
+      "profile": "/profile",
+      "settings": "/settings",
       "profile-setup": "/profile-setup",
     };
 
@@ -88,17 +108,20 @@ function Router() {
       if (location !== url) {
         setLocation(url);
       }
-    } else {
-      // Pages without routes (home, search, profile, settings) - navigate to root and use state
-      if (location !== "/") {
-        setLocation("/");
-      }
     }
     
     // Always update state
     setCurrentPage(page as any);
     setShowCreateForm(false);
   };
+
+  // Sync currentPage state with URL location changes
+  useEffect(() => {
+    const pageFromUrl = getPageFromUrl(location);
+    if (pageFromUrl !== currentPage) {
+      setCurrentPage(pageFromUrl);
+    }
+  }, [location, currentPage]);
 
   // Auto-redirect authenticated users without gamertag to profile setup
   useEffect(() => {
@@ -108,7 +131,7 @@ function Router() {
       !user.gamertag &&
       currentPage !== "profile-setup"
     ) {
-      setCurrentPage("profile-setup");
+      setLocation("/profile-setup");
     }
   }, [isAuthenticated, user, currentPage]);
 
@@ -491,8 +514,77 @@ function Router() {
               );
             }}
           </Route>
+          <Route path="/discover">
+            {() => {
+              if (currentPage !== "search") {
+                setCurrentPage("search");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={handleNavigation}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
+          <Route path="/profile">
+            {() => {
+              if (currentPage !== "profile") {
+                setCurrentPage("profile");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={handleNavigation}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
+          <Route path="/settings">
+            {() => {
+              if (currentPage !== "settings") {
+                setCurrentPage("settings");
+              }
+              return (
+                <div className="min-h-screen relative">
+                  {user && user.gamertag && (
+                    <GameNavigation
+                      currentPage={currentPage}
+                      onNavigate={handleNavigation}
+                      user={mapUserForComponents(user)}
+                      onLogout={handleLogout}
+                    />
+                  )}
+                  <div className="relative z-10">
+                    {renderMainContent()}
+                  </div>
+                </div>
+              );
+            }}
+          </Route>
           <Route path="/">
             {() => {
+              if (currentPage !== "home") {
+                setCurrentPage("home");
+              }
               return (
                 <div className="min-h-screen relative">
                   {user && user.gamertag && (
