@@ -676,40 +676,54 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
               </CardContent>
             </Card>
           ) : (
-            channels.map((channel) => (
-              <div key={channel.id}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      <span>{channel.name}</span>
-                      {channel.members?.some(m => m.userId === currentUserId) && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedChannel(channel);
-                            setInviteDialogOpen(true);
-                          }}
-                          data-testid={`button-invite-${channel.id}`}
-                        >
-                          <UserPlus className="h-4 w-4 mr-1" />
-                          Invite
-                        </Button>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <GroupVoiceChannel
-                      channel={channel}
-                      currentUserId={currentUserId}
-                      isActiveChannel={activeChannelId === channel.id}
-                      onJoin={() => handleJoinChannel(channel.id)}
-                      onLeave={handleLeaveChannel}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-            ))
+            channels.map((channel) => {
+              const channelHasActiveMembers = channel.members?.some(m => m.isActive) || false;
+              return (
+                <div key={channel.id}>
+                  <Card className={channelHasActiveMembers ? 'border-green-500/50 bg-green-500/5' : ''}>
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="truncate">{channel.name}</span>
+                          {channelHasActiveMembers && (
+                            <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-500/40 rounded-full px-2 py-0.5 shrink-0">
+                              <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                              <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                                {channel.members?.filter(m => m.isActive).length} Active
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                        {channel.members?.some(m => m.userId === currentUserId) && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedChannel(channel);
+                              setInviteDialogOpen(true);
+                            }}
+                            data-testid={`button-invite-${channel.id}`}
+                            className="shrink-0"
+                          >
+                            <UserPlus className="h-4 w-4 mr-1" />
+                            Invite
+                          </Button>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <GroupVoiceChannel
+                        channel={channel}
+                        currentUserId={currentUserId}
+                        isActiveChannel={activeChannelId === channel.id}
+                        onJoin={() => handleJoinChannel(channel.id)}
+                        onLeave={handleLeaveChannel}
+                      />
+                    </CardContent>
+                  </Card>
+                </div>
+              );
+            })
           )}
         </div>
       </div>

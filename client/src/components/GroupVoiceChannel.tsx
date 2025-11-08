@@ -29,6 +29,8 @@ import {
   Check,
   X,
   ChevronDown,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -64,6 +66,8 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
+  const [remotePeerVolumes, setRemotePeerVolumes] = useState<Record<string, number>>({});
+  const [isRemoteAudioMuted, setIsRemoteAudioMuted] = useState(false);
   const { toast} = useToast();
   
   // Check if channel has active members
@@ -121,7 +125,7 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
       console.log('[HMS] Notification:', latestMessage);
       
       if (latestMessage.type === HMSNotificationTypes.ERROR) {
-        const error = latestMessage.data;
+        const error = (latestMessage as any).data;
         console.error('[HMS] Error received:', {
           code: error?.code,
           message: error?.message,
@@ -141,11 +145,11 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
       }
       
       if (latestMessage.type === HMSNotificationTypes.PEER_JOINED) {
-        console.log('[HMS] Peer joined:', latestMessage.data);
+        console.log('[HMS] Peer joined:', (latestMessage as any).data);
       }
       
       if (latestMessage.type === HMSNotificationTypes.PEER_LEFT) {
-        console.log('[HMS] Peer left:', latestMessage.data);
+        console.log('[HMS] Peer left:', (latestMessage as any).data);
       }
     }
   }, [hmsMessages, isJoining, toast]);
@@ -262,6 +266,36 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
     await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
   };
 
+  const toggleRemoteAudioMute = async () => {
+    const newMuteState = !isRemoteAudioMuted;
+    setIsRemoteAudioMuted(newMuteState);
+    
+    // When toggling, apply to all current peers
+    const otherPeers = peers.filter(peer => !peer.isLocal);
+    for (const peer of otherPeers) {
+      if (peer.audioTrack) {
+        if (newMuteState) {
+          // When muting: Save current volume (100 is HMS default) then set to 0
+          setRemotePeerVolumes(prev => {
+            if (!(peer.id in prev)) {
+              return { ...prev, [peer.id]: 100 };
+            }
+            return prev;
+          });
+          await hmsActions.setVolume(0, peer.audioTrack);
+        } else {
+          // When unmuting: Restore to saved volume
+          await hmsActions.setVolume(remotePeerVolumes[peer.id] || 100, peer.audioTrack);
+        }
+      }
+    }
+    
+    toast({
+      title: newMuteState ? "Incoming audio muted" : "Incoming audio unmuted",
+      description: newMuteState ? "You won't hear others in the call" : "You can now hear others in the call",
+    });
+  };
+
   const toggleScreenShare = async () => {
     try {
       if (!isLocalScreenShared) {
@@ -285,6 +319,46 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
       });
     }
   };
+
+  // Apply mute state to peers when they join or when mute state changes
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    const otherPeers = peers.filter(peer => !peer.isLocal);
+    const applyVolumeState = async () => {
+      for (const peer of otherPeers) {
+        if (peer.audioTrack) {
+          if (isRemoteAudioMuted) {
+            // For new peers joining while muted: record baseline volume and mute
+            setRemotePeerVolumes(prev => {
+              if (!(peer.id in prev)) {
+                return { ...prev, [peer.id]: 100 };
+              }
+              return prev;
+            });
+            await hmsActions.setVolume(0, peer.audioTrack);
+          }
+        }
+      }
+    };
+    
+    applyVolumeState();
+  }, [peers.map(p => p.id).join(','), isRemoteAudioMuted, isConnected, hmsActions]);
+
+  // Clean up volumes for peers that have left
+  useEffect(() => {
+    const otherPeers = peers.filter(peer => !peer.isLocal);
+    const currentPeerIds = new Set(otherPeers.map(p => p.id));
+    setRemotePeerVolumes(prev => {
+      const cleaned: Record<string, number> = {};
+      for (const [peerId, volume] of Object.entries(prev)) {
+        if (currentPeerIds.has(peerId)) {
+          cleaned[peerId] = volume;
+        }
+      }
+      return cleaned;
+    });
+  }, [peers.map(p => p.id).join(',')]); 
 
   const copyInviteLink = () => {
     navigator.clipboard.writeText(inviteLink);
@@ -355,6 +429,46 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
               </Button>
             </div>
 
+            {/* Active Members - Always visible when there are active members */}
+            {hasActiveMembers && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">
+                    Active Now ({members.filter(m => m.isActive).length})
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {members.filter(member => member.isActive).map((member) => (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1.5"
+                      data-testid={`active-member-${member.userId}`}
+                    >
+                      <Avatar className="h-6 w-6 ring-2 ring-green-500">
+                        <AvatarImage src={member.profileImageUrl || undefined} />
+                        <AvatarFallback className="text-xs">
+                          {member.gamertag?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span
+                        className="text-sm font-medium cursor-pointer hover:underline"
+                        onClick={() => {
+                          setProfileDialogUserId(member.userId);
+                          setOpenProfileDialog(true);
+                        }}
+                        data-testid={`active-member-name-${member.userId}`}
+                      >
+                        {member.gamertag || "Unknown"}
+                      </span>
+                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid={`active-indicator-${member.userId}`} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* All Members - Collapsible */}
             <Collapsible open={isMembersOpen} onOpenChange={setIsMembersOpen}>
               <div className="space-y-2">
                 <CollapsibleTrigger asChild>
@@ -362,16 +476,10 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                     variant="ghost" 
                     size="sm" 
                     className="w-full flex items-center justify-between p-2 hover:bg-accent"
-                    data-testid="button-toggle-members"
+                    data-testid="button-toggle-all-members"
                   >
                     <span className="text-xs font-medium">
-                      Members ({members.length})
-                      {hasActiveMembers && (
-                        <span className="ml-2 inline-flex items-center gap-1">
-                          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
-                          <span className="text-green-600 dark:text-green-400">Active</span>
-                        </span>
-                      )}
+                      All Members ({members.length})
                     </span>
                     <ChevronDown className={`h-4 w-4 transition-transform ${isMembersOpen ? 'rotate-180' : ''}`} />
                   </Button>
@@ -381,12 +489,14 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                     {members.map((member) => (
                       <div
                         key={member.id}
-                        className="flex items-center gap-2 bg-muted rounded-full px-3 py-1"
+                        className={`flex items-center gap-2 rounded-full px-3 py-1 ${
+                          member.isActive ? 'bg-green-500/10 border border-green-500/30' : 'bg-muted'
+                        }`}
                         data-testid={`member-${member.userId}`}
                       >
-                        <Avatar className="h-5 w-5">
+                        <Avatar className={`h-5 w-5 ${member.isActive ? 'ring-1 ring-green-500' : ''}`}>
                           <AvatarImage src={member.profileImageUrl || undefined} />
-                          <AvatarFallback>
+                          <AvatarFallback className="text-xs">
                             {member.gamertag?.[0]?.toUpperCase() || "?"}
                           </AvatarFallback>
                         </Avatar>
@@ -401,7 +511,7 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                           {member.gamertag || "Unknown"}
                         </span>
                         {member.isActive && (
-                          <div className="h-2 w-2 bg-green-500 rounded-full" data-testid={`active-${member.userId}`} />
+                          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid={`active-${member.userId}`} />
                         )}
                         {channel.creatorId === currentUserId && member.userId !== currentUserId && (
                           <Button
@@ -445,12 +555,11 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Button
                 size="sm"
                 variant={isLocalAudioEnabled ? "secondary" : "destructive"}
                 onClick={toggleAudio}
-                className="flex-1"
                 data-testid="button-toggle-audio"
               >
                 {isLocalAudioEnabled ? (
@@ -467,9 +576,27 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
               </Button>
               <Button
                 size="sm"
+                variant={isRemoteAudioMuted ? "destructive" : "secondary"}
+                onClick={toggleRemoteAudioMute}
+                data-testid="button-toggle-speaker"
+                title={isRemoteAudioMuted ? "Unmute incoming audio" : "Mute incoming audio"}
+              >
+                {isRemoteAudioMuted ? (
+                  <>
+                    <VolumeX className="h-4 w-4 mr-1" />
+                    Speaker Off
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-1" />
+                    Speaker
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
                 variant={isLocalScreenShared ? "default" : "secondary"}
                 onClick={toggleScreenShare}
-                className="flex-1"
                 data-testid="button-toggle-screenshare"
               >
                 {isLocalScreenShared ? (
@@ -548,9 +675,8 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                       <video
                         ref={(videoEl) => {
                           if (videoEl && peer.auxiliaryTracks[0]) {
-                            const trackId = typeof peer.auxiliaryTracks[0] === 'string' 
-                              ? peer.auxiliaryTracks[0] 
-                              : peer.auxiliaryTracks[0].id;
+                            const track = peer.auxiliaryTracks[0] as any;
+                            const trackId = typeof track === 'string' ? track : track.id;
                             hmsActions.attachVideo(trackId, videoEl);
                           }
                         }}

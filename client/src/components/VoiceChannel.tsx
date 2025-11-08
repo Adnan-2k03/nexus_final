@@ -392,32 +392,45 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
 
   const screenSharePeers = peers.filter(peer => peer.auxiliaryTracks.length > 0);
   
-  // Attach screen share video tracks
+  // Attach fullscreen screen share video track with proper cleanup
   useEffect(() => {
     if (hideScreenShare) return;
     
     const fullscreenPeer = peers.find(p => p.id === fullscreenPeerId);
-    if (fullscreenPeer && screenShareVideoRef.current) {
-      const screenTrack = fullscreenPeer.auxiliaryTracks[0] as any;
-      if (screenTrack && screenTrack.id) {
-        hmsActions.attachVideo(screenTrack.id, screenShareVideoRef.current);
+    if (fullscreenPeer && screenShareVideoRef.current && fullscreenPeer.auxiliaryTracks[0]) {
+      const track = fullscreenPeer.auxiliaryTracks[0] as any;
+      const trackId = typeof track === 'string' ? track : track.id;
+      
+      if (trackId) {
+        hmsActions.attachVideo(trackId, screenShareVideoRef.current);
+        
+        // Cleanup function to detach when peer changes or dialog closes
         return () => {
-          hmsActions.detachVideo(screenTrack.id, screenShareVideoRef.current!);
+          if (screenShareVideoRef.current) {
+            hmsActions.detachVideo(trackId, screenShareVideoRef.current);
+          }
         };
       }
     }
   }, [fullscreenPeerId, peers, hmsActions, hideScreenShare]);
 
+  // Attach minimized screen share video track with proper cleanup
   useEffect(() => {
     if (hideScreenShare) return;
     
     const minimizedPeer = peers.find(p => p.id === minimizedPeerId);
-    if (minimizedPeer && minimizedVideoRef.current) {
-      const screenTrack = minimizedPeer.auxiliaryTracks[0] as any;
-      if (screenTrack && screenTrack.id) {
-        hmsActions.attachVideo(screenTrack.id, minimizedVideoRef.current);
+    if (minimizedPeer && minimizedVideoRef.current && minimizedPeer.auxiliaryTracks[0]) {
+      const track = minimizedPeer.auxiliaryTracks[0] as any;
+      const trackId = typeof track === 'string' ? track : track.id;
+      
+      if (trackId) {
+        hmsActions.attachVideo(trackId, minimizedVideoRef.current);
+        
+        // Cleanup function to detach when peer changes or window closes
         return () => {
-          hmsActions.detachVideo(screenTrack.id, minimizedVideoRef.current!);
+          if (minimizedVideoRef.current) {
+            hmsActions.detachVideo(trackId, minimizedVideoRef.current);
+          }
         };
       }
     }
@@ -624,7 +637,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       )}
 
       {/* Fullscreen Screen Share Dialog */}
-      {!hideScreenShare && (
+      {!hideScreenShare && fullscreenPeerId && (
         <Dialog open={fullscreenPeerId !== null} onOpenChange={(open) => !open && setFullscreenPeerId(null)}>
           <DialogContent className="max-w-[95vw] h-[95vh]">
             <DialogHeader>
@@ -639,6 +652,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                 muted
                 playsInline
                 className="w-full h-full object-contain"
+                data-testid="fullscreen-video"
               />
             </div>
           </DialogContent>
@@ -670,6 +684,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
               muted
               playsInline
               className="w-full h-full object-contain"
+              data-testid="minimized-video"
             />
           </div>
         </div>
