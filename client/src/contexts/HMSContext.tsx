@@ -1,42 +1,66 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { HMSRoomProvider } from "@100mslive/react-sdk";
 
+type VoiceChannelType = 'individual' | 'group';
+
+interface ActiveVoiceChannel {
+  id: string;
+  type: VoiceChannelType;
+}
+
 interface HMSContextType {
   isInVoiceChannel: boolean;
   currentConnectionId: string | null;
-  setVoiceChannelActive: (connectionId: string | null) => void;
+  activeVoiceChannel: ActiveVoiceChannel | null;
+  setVoiceChannelActive: (connectionId: string | null, type?: VoiceChannelType) => void;
 }
 
 const HMSContext = createContext<HMSContextType | undefined>(undefined);
 
 export function HMSProvider({ children }: { children: ReactNode }) {
-  const [currentConnectionId, setCurrentConnectionId] = useState<string | null>(null);
+  const [activeVoiceChannel, setActiveVoiceChannel] = useState<ActiveVoiceChannel | null>(null);
   const [isInVoiceChannel, setIsInVoiceChannel] = useState(false);
 
-  const setVoiceChannelActive = (connectionId: string | null) => {
-    setCurrentConnectionId(connectionId);
-    setIsInVoiceChannel(connectionId !== null);
+  const setVoiceChannelActive = (connectionId: string | null, type: VoiceChannelType = 'individual') => {
+    if (connectionId === null) {
+      setActiveVoiceChannel(null);
+      setIsInVoiceChannel(false);
+    } else {
+      setActiveVoiceChannel({ id: connectionId, type });
+      setIsInVoiceChannel(true);
+    }
   };
 
   // Persist voice channel state across page navigation
   useEffect(() => {
-    const savedConnectionId = sessionStorage.getItem('activeVoiceChannelId');
-    if (savedConnectionId) {
-      setCurrentConnectionId(savedConnectionId);
-      setIsInVoiceChannel(true);
+    const savedData = sessionStorage.getItem('activeVoiceChannel');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData) as ActiveVoiceChannel;
+        setActiveVoiceChannel(parsed);
+        setIsInVoiceChannel(true);
+      } catch (e) {
+        console.warn('Failed to parse saved voice channel data');
+        sessionStorage.removeItem('activeVoiceChannel');
+      }
     }
   }, []);
 
   useEffect(() => {
-    if (currentConnectionId) {
-      sessionStorage.setItem('activeVoiceChannelId', currentConnectionId);
+    if (activeVoiceChannel) {
+      sessionStorage.setItem('activeVoiceChannel', JSON.stringify(activeVoiceChannel));
     } else {
-      sessionStorage.removeItem('activeVoiceChannelId');
+      sessionStorage.removeItem('activeVoiceChannel');
     }
-  }, [currentConnectionId]);
+  }, [activeVoiceChannel]);
 
   return (
-    <HMSContext.Provider value={{ isInVoiceChannel, currentConnectionId, setVoiceChannelActive }}>
+    <HMSContext.Provider value={{ 
+      isInVoiceChannel, 
+      currentConnectionId: activeVoiceChannel?.id || null,
+      activeVoiceChannel,
+      setVoiceChannelActive 
+    }}>
       <HMSRoomProvider>
         {children}
       </HMSRoomProvider>
