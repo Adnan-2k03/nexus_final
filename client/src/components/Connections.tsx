@@ -21,6 +21,7 @@ import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
 import { useToast } from "@/hooks/use-toast";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useVoiceCallNotifications } from "@/hooks/useVoiceCallNotifications";
 
 interface ConnectionsProps {
   currentUserId?: string;
@@ -53,6 +54,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
+  const { waitingCallerGamertags } = useVoiceCallNotifications();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -276,18 +278,41 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               gamertag={displayName} 
               profileImageUrl={avatarUrl}
               currentUserId={currentUserId}
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-foreground underline-offset-4 hover:underline">
-                    {displayName}
-                  </h3>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  {isRequester ? "You applied to their match" : "They applied to your post"}
-                </p>
-              </div>
-            </ProfileDialog>
+              trigger={
+                <button 
+                  className="flex items-center gap-3 hover:opacity-80 transition-opacity w-full text-left" 
+                  data-testid={`button-view-profile-${otherUserId}`}
+                >
+                  <div className="relative">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={avatarUrl} alt={displayName} />
+                      <AvatarFallback className="bg-primary text-primary-foreground font-semibold">
+                        {(displayName || 'U').slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {waitingCallerGamertags.includes(displayName) && (
+                      <div 
+                        className="absolute -top-1 -left-1 h-5 w-5 bg-green-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse"
+                        data-testid={`waiting-call-indicator-${otherUserId}`}
+                        title="Waiting in voice call"
+                      >
+                        <Phone className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground underline-offset-4 hover:underline">
+                        {displayName}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {isRequester ? "You applied to their match" : "They applied to your post"}
+                    </p>
+                  </div>
+                </button>
+              }
+            />
             <Badge 
               variant={
                 connection.status === 'accepted' ? 'default' : 'secondary'

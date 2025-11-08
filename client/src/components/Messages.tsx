@@ -15,6 +15,7 @@ import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useVoiceCallNotifications } from "@/hooks/useVoiceCallNotifications";
 import type { ConnectionRequestWithUser, User } from "@shared/schema";
 import { Chat } from "./Chat";
 import { VoiceChannel } from "./VoiceChannel";
@@ -47,6 +48,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
   const { toast } = useToast();
   const { isUserOnline, isUserInVoice } = useOnlineStatus();
   const { getContainerClass } = useLayout();
+  const { waitingCallerGamertags } = useVoiceCallNotifications();
 
   if (!currentUserId) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
@@ -288,6 +290,15 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                           data-testid={`voice-indicator-${otherUserId}`}
                         >
                           <Phone className="h-3 w-3 text-primary-foreground" />
+                        </div>
+                      )}
+                      {waitingCallerGamertags.includes(displayName) && (
+                        <div 
+                          className="absolute -top-1 -left-1 h-5 w-5 bg-green-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse"
+                          data-testid={`waiting-call-indicator-${otherUserId}`}
+                          title="Waiting in voice call"
+                        >
+                          <Phone className="h-3 w-3 text-white" />
                         </div>
                       )}
                     </div>

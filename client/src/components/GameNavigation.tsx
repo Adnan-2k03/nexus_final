@@ -14,11 +14,13 @@ import {
   Users,
   Search,
   MoreVertical,
-  Mic
+  Mic,
+  Phone
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
+import { useVoiceCallNotifications } from "@/hooks/useVoiceCallNotifications";
 
 interface GameNavigationProps {
   currentPage: "home" | "search" | "create" | "profile" | "messages" | "voice-channels" | "settings" | "profile-setup" | "connections";
@@ -39,18 +41,20 @@ export function GameNavigation({
   pendingMessages = 0 
 }: GameNavigationProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { hasWaitingCalls, waitingCallCount } = useVoiceCallNotifications();
 
   const navigationItems: Array<{
     id: string;
     label: string;
     icon: typeof Home;
     badge?: number;
+    hasPhoneIndicator?: boolean;
   }> = [
     { id: "home", label: "Feed", icon: Home },
     { id: "search", label: "Discover", icon: Search },
     { id: "connections", label: "Matches", icon: Users },
-    { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages },
-    { id: "voice-channels", label: "Voice", icon: Mic },
+    { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages, hasPhoneIndicator: hasWaitingCalls },
+    { id: "voice-channels", label: "Voice", icon: Mic, hasPhoneIndicator: hasWaitingCalls },
     { id: "profile", label: "Profile", icon: User },
   ];
 
@@ -102,6 +106,17 @@ export function GameNavigation({
           >
             {(item.badge ?? 0) > 99 ? "99+" : item.badge}
           </Badge>
+        )}
+        {item.hasPhoneIndicator && (
+          <div 
+            className={cn(
+              "absolute bg-green-500 rounded-full p-1 flex items-center justify-center",
+              isMobile ? "bottom-0 right-0" : "bottom-1 right-1"
+            )}
+            title="Active voice call"
+          >
+            <Phone className="h-2.5 w-2.5 text-white" />
+          </div>
         )}
       </Button>
     );

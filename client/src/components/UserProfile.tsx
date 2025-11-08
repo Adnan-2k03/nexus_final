@@ -76,7 +76,7 @@ export function UserProfile({
   const [, setLocation] = useLocation();
 
   // Check if users are connected (only if not viewing own profile)
-  const { data: connectionRequests = [] } = useQuery({
+  const { data: connectionRequests = [] } = useQuery<any[]>({
     queryKey: ['/api/connection-requests'],
     enabled: !isOwn && !!currentUserId,
     retry: false,
@@ -167,15 +167,6 @@ export function UserProfile({
       ...prev,
       [profileId]: !prev[profileId]
     }));
-  };
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
-    }
   };
 
   const handleMessage = () => {
