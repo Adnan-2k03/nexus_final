@@ -51,7 +51,6 @@ export function Connections({ currentUserId }: ConnectionsProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
 
@@ -59,7 +58,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
   }
 
-  const { data: connections = [], isLoading, refetch } = useQuery<MatchConnectionWithUser[]>({
+  const { data: connections = [], isLoading, isFetching, refetch } = useQuery<MatchConnectionWithUser[]>({
     queryKey: ['/api/user/connections'],
     queryFn: async () => {
       const response = await fetch(getApiUrl('/api/user/connections'), {
@@ -102,13 +101,8 @@ export function Connections({ currentUserId }: ConnectionsProps) {
     enabled: !!viewMatchDetailsId,
   });
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
-    }
+  const handleRefresh = () => {
+    refetch();
   };
 
   // Handle real-time WebSocket updates for connections
@@ -251,11 +245,11 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoading || isRefreshing}
+              disabled={isFetching}
               data-testid="button-refresh-connections"
-              className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
+              className={`transition-transform ${isFetching ? 'scale-95' : 'hover:scale-105'}`}
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
@@ -485,11 +479,11 @@ export function Connections({ currentUserId }: ConnectionsProps) {
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              disabled={isLoading || isRefreshing}
+              disabled={isFetching}
               data-testid="button-refresh-connections"
-              className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
+              className={`transition-transform ${isFetching ? 'scale-95' : 'hover:scale-105'}`}
             >
-              <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
@@ -582,11 +576,11 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            disabled={isLoading}
+            disabled={isFetching}
             data-testid="button-refresh-connections"
-            className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
+            className={`transition-transform ${isFetching ? 'scale-95' : 'hover:scale-105'}`}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>

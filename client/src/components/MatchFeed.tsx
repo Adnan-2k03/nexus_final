@@ -94,7 +94,7 @@ export function MatchFeed({
   }, [filters.distance, userLocation]);
 
   // Fetch match requests from API
-  const { data: paginatedData, isLoading: isFetchingMatches, refetch } = useQuery<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }>({
+  const { data: paginatedData, isLoading: isFetchingMatches, isFetching, refetch } = useQuery<{ matchRequests: MatchRequestWithUser[]; total: number; page: number; limit: number; totalPages: number }>({
     queryKey: ['/api/match-requests', filters, userLocation, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -361,11 +361,11 @@ export function MatchFeed({
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            disabled={isFetchingMatches}
+            disabled={isFetching}
             data-testid="button-refresh-feed"
-            className={`h-8 px-2 sm:px-3 transition-transform ${isFetchingMatches ? 'scale-95' : 'hover:scale-105'}`}
+            className={`h-8 px-2 sm:px-3 transition-transform ${isFetching ? 'scale-95' : 'hover:scale-105'}`}
           >
-            <RefreshCw className={`h-4 w-4 ${isFetchingMatches ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
           </Button>
           <Button
             onClick={onCreateMatch}

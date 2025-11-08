@@ -52,7 +52,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
     return <div className="p-4 text-center text-muted-foreground">Loading user data...</div>;
   }
 
-  const { data: connectionRequests = [], isLoading: isLoadingRequests, refetch } = useQuery<ConnectionRequestWithUser[]>({
+  const { data: connectionRequests = [], isLoading: isLoadingRequests, isFetching, refetch } = useQuery<ConnectionRequestWithUser[]>({
     queryKey: ['/api/connection-requests'],
     retry: false,
   });
@@ -204,11 +204,11 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
             variant="outline"
             size="sm"
             onClick={handleRefresh}
-            disabled={isLoadingRequests}
+            disabled={isFetching}
             data-testid="button-refresh-messages"
-            className={`transition-transform ${isLoadingRequests ? 'scale-95' : 'hover:scale-105'}`}
+            className={`transition-transform ${isFetching ? 'scale-95' : 'hover:scale-105'}`}
           >
-            <RefreshCw className={`h-4 w-4 ${isLoadingRequests ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
           </Button>
         </div>
       </div>
