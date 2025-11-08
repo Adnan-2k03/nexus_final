@@ -29,6 +29,7 @@ export interface HMSService {
   createRoom: (options: CreateRoomOptions) => Promise<any>;
   generateAuthToken: (options: GenerateTokenOptions) => Promise<string>;
   endRoom: (roomId: string) => Promise<void>;
+  getActivePeers: (roomId: string) => Promise<any[]>;
   isConfigured: () => boolean;
 }
 
@@ -77,6 +78,20 @@ export const hmsService: HMSService = {
       });
     } catch (error) {
       console.error('Error ending room:', error);
+    }
+  },
+
+  getActivePeers: async (roomId: string) => {
+    if (!hmsClient) {
+      throw new Error('100ms is not configured. Please set HMS environment variables.');
+    }
+
+    try {
+      const peers = await (hmsClient as any).activeRooms.retrieveActivePeers(roomId);
+      return peers || [];
+    } catch (error) {
+      console.error('Error fetching active peers from HMS:', error);
+      return [];
     }
   },
 };

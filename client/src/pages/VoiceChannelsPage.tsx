@@ -349,19 +349,8 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     );
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] }),
-      queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] })
-    ]);
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast({
-        title: "Refreshed",
-        description: "Voice channels updated",
-      });
-    }, 500);
+  const handleRefresh = () => {
+    window.location.reload();
   };
 
   const handlePasteInviteLink = () => {

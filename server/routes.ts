@@ -903,29 +903,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userId = req.user.id;
-      const fileExtension = path.extname(req.file.originalname);
+      const originalFilename = req.file.originalname;
 
       // Try R2 first, fallback to local storage
       if (r2Storage.isConfigured()) {
-        const fileKey = generateFileKey('profile-photos', userId, fileExtension);
+        console.log(`[R2 Upload] Uploading profile photo for user ${userId}`);
+        // generateFileKey takes filename as-is, just sanitizes and adds timestamp
+        const fileKey = generateFileKey(userId, originalFilename, 'profile-photos');
+        console.log(`[R2 Upload] Generated file key: ${fileKey}`);
+        
         const fileUrl = await r2Storage.uploadFile({
           key: fileKey,
           buffer: req.file.buffer,
           contentType: req.file.mimetype,
         });
+        
+        console.log(`[R2 Upload] Successfully uploaded to: ${fileUrl}`);
         res.json({ url: fileUrl });
       } else {
+        console.log('[R2 Upload] R2 not configured, using local storage fallback');
         // Fallback to local storage
+        const fileExtension = path.extname(originalFilename);
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const filename = uniqueSuffix + fileExtension;
-        const filepath = path.join(uploadsDir, filename);
+        const localFilename = uniqueSuffix + fileExtension;
+        const filepath = path.join(uploadsDir, localFilename);
         
         fs.writeFileSync(filepath, req.file.buffer);
-        const fileUrl = `/uploads/${filename}`;
+        const fileUrl = `/uploads/${localFilename}`;
         res.json({ url: fileUrl });
       }
     } catch (error: any) {
-      console.error('Error uploading photo:', error);
+      console.error('[R2 Upload] Error uploading photo:', error);
       res.status(500).json({ message: error.message || 'Failed to upload photo' });
     }
   });
@@ -2602,7 +2610,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/group-voice/:channelId/members', authMiddleware, async (req: any, res) => {
     try {
       const { channelId } = req.params;
-      const members = await storage.getGroupVoiceMembers(channelId);
+      let members = await storage.getGroupVoiceMembers(channelId);
+      
+      // Verify active status against HMS API
+      const channel = await storage.getGroupVoiceChannel(channelId);
+      if (channel && channel.hmsRoomId && hmsService.isConfigured()) {
+        try {
+          const activePeers = await hmsService.getActivePeers(channel.hmsRoomId);
+          // Normalize peer user_ids to strings for comparison
+          const activePeerUserIds = new Set(
+            activePeers.map((peer: any) => String(peer.user_id || peer.userId))
+          );
+          
+          // Update member isActive status based on HMS API response
+          // Normalize member.userId to string for comparison
+          members = members.map(member => ({
+            ...member,
+            isActive: activePeerUserIds.has(String(member.userId))
+          }));
+          
+          console.log(`[HMS Verification] Channel ${channelId}: ${activePeerUserIds.size} active peers verified`);
+        } catch (error) {
+          console.error('Error verifying members with HMS API:', error);
+          // Fall back to database status if HMS API fails
+        }
+      }
+      
       res.json(members);
     } catch (error) {
       console.error("Error fetching channel members:", error);

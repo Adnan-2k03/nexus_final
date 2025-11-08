@@ -362,10 +362,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const toggleScreenShare = async () => {
     try {
       if (!isLocalScreenShared) {
-        await hmsActions.setScreenShareEnabled(true, {
-          preferCurrentTab: false,
-          displaySurface: 'monitor',
-        });
+        await hmsActions.setScreenShareEnabled(true);
         toast({
           title: "Screen sharing started",
           description: "Your screen is now visible to others in the channel",

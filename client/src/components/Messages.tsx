@@ -71,7 +71,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
   };
 
   const handleRefresh = () => {
-    refetch();
+    window.location.reload();
   };
 
   // Mutation to accept connection request
