@@ -292,7 +292,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                     </Avatar>
                     {waitingCallerGamertags.includes(displayName) && (
                       <div 
-                        className="absolute -top-1 -left-1 h-5 w-5 bg-green-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse"
+                        className="absolute -top-1 -left-1 h-5 w-5 bg-amber-500 dark:bg-amber-400 rounded-full border-2 border-background flex items-center justify-center animate-pulse"
                         data-testid={`waiting-call-indicator-${otherUserId}`}
                         title="Waiting in voice call"
                       >

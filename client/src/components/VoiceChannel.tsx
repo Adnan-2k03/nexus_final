@@ -86,6 +86,39 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     }
   }, [isConnected, isJoining, otherUserName, toast]);
 
+  // Handle wake lock re-acquisition when tab becomes visible
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible' && !wakeLockRef.current) {
+        try {
+          if ('wakeLock' in navigator) {
+            wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+            console.log('[Wake Lock] Re-acquired after tab became visible');
+          }
+        } catch (err) {
+          console.warn('[Wake Lock] Could not re-acquire wake lock:', err);
+        }
+      }
+    };
+
+    // Listen for visibility changes
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Listen for wake lock release to clear ref
+    if (wakeLockRef.current) {
+      wakeLockRef.current.addEventListener('release', () => {
+        console.log('[Wake Lock] Released by system');
+        wakeLockRef.current = null;
+      });
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isConnected]);
+
   // Handle HMS notifications and errors
   useEffect(() => {
     if (hmsMessages && hmsMessages.length > 0) {
@@ -402,10 +435,10 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                 </div>
               </div>
             ) : (
-              <div className="bg-green-500/10 border-2 border-green-500/30 rounded-lg p-3">
+              <div className="bg-emerald-500/10 border-2 border-emerald-500/30 rounded-lg p-3">
                 <div className="flex items-center gap-2">
-                  <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" data-testid="teammate-ready-indicator"></div>
-                  <span className="font-semibold text-sm text-green-600 dark:text-green-400">
+                  <div className="h-3 w-3 bg-emerald-500 rounded-full animate-pulse" data-testid="teammate-ready-indicator"></div>
+                  <span className="font-semibold text-sm text-emerald-600 dark:text-emerald-400">
                     {otherUserName || 'Teammate'} is in the voice channel
                   </span>
                 </div>

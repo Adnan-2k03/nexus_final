@@ -234,10 +234,20 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
 
   const getFriendsList = () => {
     return matchConnections.map(conn => {
-      const friendId = conn.requesterId === currentUserId ? conn.accepterId : conn.requesterId;
-      const friend = allUsers.find(u => u.id === friendId);
-      return friend;
-    }).filter((f): f is User => f !== undefined);
+      // Determine which user is the friend (the other person in the connection)
+      const iAmRequester = conn.requesterId === currentUserId;
+      const friendId = iAmRequester ? conn.accepterId : conn.requesterId;
+      const friendGamertag = iAmRequester ? conn.accepterGamertag : conn.requesterGamertag;
+      const friendProfileImageUrl = iAmRequester ? conn.accepterProfileImageUrl : conn.requesterProfileImageUrl;
+      
+      // Construct a User object from connection data
+      // Note: /api/users excludes connected users, so we must build from connection data
+      return {
+        id: friendId,
+        gamertag: friendGamertag,
+        profileImageUrl: friendProfileImageUrl,
+      } as User;
+    }).filter(f => f.id && f.gamertag); // Filter out any malformed data
   };
 
   const getSentInvitesForChannel = (channelId: string) => {

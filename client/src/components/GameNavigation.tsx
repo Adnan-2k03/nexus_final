@@ -54,7 +54,7 @@ export function GameNavigation({
     { id: "search", label: "Discover", icon: Search },
     { id: "connections", label: "Matches", icon: Users },
     { id: "messages", label: "Messages", icon: MessageCircle, badge: pendingMessages, hasPhoneIndicator: hasWaitingCalls },
-    { id: "voice-channels", label: "Voice", icon: Mic, hasPhoneIndicator: hasWaitingCalls },
+    { id: "voice-channels", label: "Voice", icon: Phone, hasPhoneIndicator: hasWaitingCalls },
     { id: "profile", label: "Profile", icon: User },
   ];
 
