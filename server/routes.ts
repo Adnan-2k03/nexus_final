@@ -1596,18 +1596,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // Set up WebSocket server for real-time match updates
+  // Set up WebSocket server for real-time match updates using noServer mode
+  // This allows Vite's HMR WebSocket to coexist on the same HTTP server
   const wss = new WebSocketServer({ 
-    server: httpServer, 
-    path: '/ws',
-    verifyClient: (info: { origin: string; req: any }) => {
+    noServer: true
+  });
+
+  // Manually handle upgrade requests, only accepting /ws path
+  httpServer.on('upgrade', (request, socket, head) => {
+    const pathname = new URL(request.url || '', `http://${request.headers.host}`).pathname;
+    
+    // Only handle /ws upgrades, leave others (like Vite HMR) untouched
+    if (pathname === '/ws') {
       // Validate Origin to prevent cross-site WebSocket hijacking
-      const origin = info.origin;
-      const host = info.req.headers.host;
+      const origin = request.headers.origin;
+      const host = request.headers.host;
       
       if (!origin || !host) {
         console.log('WebSocket connection rejected: Missing origin or host');
-        return false;
+        socket.destroy();
+        return;
       }
       
       try {
@@ -1615,46 +1623,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const originHost = new URL(origin).host;
         
         // Allow same-origin connections
-        if (originHost === host) {
-          return true;
-        }
+        let isAllowed = originHost === host;
         
-        // Allow configured CORS origins (for split deployments like Vercel + Railway)
-        const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || [];
-        const frontendUrl = process.env.FRONTEND_URL;
-        
-        // Check if origin matches CORS_ORIGIN or FRONTEND_URL
-        if (frontendUrl) {
-          try {
-            const frontendHost = new URL(frontendUrl).host;
-            if (originHost === frontendHost) {
-              console.log(`WebSocket connection allowed from configured frontend: ${origin}`);
-              return true;
+        if (!isAllowed) {
+          // Allow configured CORS origins (for split deployments like Vercel + Railway)
+          const allowedOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || [];
+          const frontendUrl = process.env.FRONTEND_URL;
+          
+          // Check if origin matches CORS_ORIGIN or FRONTEND_URL
+          if (frontendUrl) {
+            try {
+              const frontendHost = new URL(frontendUrl).host;
+              if (originHost === frontendHost) {
+                console.log(`WebSocket connection allowed from configured frontend: ${origin}`);
+                isAllowed = true;
+              }
+            } catch (e) {
+              // Invalid FRONTEND_URL, ignore
             }
-          } catch (e) {
-            // Invalid FRONTEND_URL, ignore
+          }
+          
+          // Check if origin is in CORS_ORIGIN list
+          if (!isAllowed && allowedOrigins.some(allowed => {
+            try {
+              return new URL(allowed).host === originHost;
+            } catch {
+              return allowed === origin;
+            }
+          })) {
+            console.log(`WebSocket connection allowed from CORS origin: ${origin}`);
+            isAllowed = true;
           }
         }
         
-        // Check if origin is in CORS_ORIGIN list
-        if (allowedOrigins.some(allowed => {
-          try {
-            return new URL(allowed).host === originHost;
-          } catch {
-            return allowed === origin;
-          }
-        })) {
-          console.log(`WebSocket connection allowed from CORS origin: ${origin}`);
-          return true;
+        if (!isAllowed) {
+          console.log(`WebSocket connection rejected: Origin ${origin} (${originHost}) does not match host ${host} or allowed origins`);
+          socket.destroy();
+          return;
         }
         
-        console.log(`WebSocket connection rejected: Origin ${origin} (${originHost}) does not match host ${host} or allowed origins`);
-        return false;
+        // Origin is valid, handle the upgrade
+        wss.handleUpgrade(request, socket, head, (ws) => {
+          wss.emit('connection', ws, request);
+        });
       } catch (error) {
         console.log(`WebSocket connection rejected: Invalid origin URL ${origin}`);
-        return false;
+        socket.destroy();
       }
     }
+    // For other paths (like Vite HMR), do nothing and let other handlers process them
   });
 
   // Store connected clients with their user info and heartbeat tracking

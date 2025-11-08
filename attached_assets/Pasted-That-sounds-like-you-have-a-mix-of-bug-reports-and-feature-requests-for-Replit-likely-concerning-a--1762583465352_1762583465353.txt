@@ -1,0 +1,50 @@
+That sounds like you have a mix of bug reports and feature requests for Replit, likely concerning a mobile app or specific features within the platform.
+
+Here is a proposed organization and formatting of your points, making them clearer for submission as feedback or bug reports, without changing the nature of your requests:
+
+ 
+
+🐛 Bug Reports & Technical Issues
+ 
+
+
+ 
+
+Voice/Mic Functionality Issues
+ 
+
+Background Mic Issue: When the application is in the background (not actively open on screen), the microphone is not working.
+Voice Channel/Messages Linking: In both the voice channel and messages, voices (audio streams) should not be linked.
+Voice Channel Quality: The voice channel functionality should be totally perfect (implies a need for stability, clarity, and reliability fixes).
+ 
+
+Screen Share & Invite Issues
+ 
+
+Screen Share in Messages: Screen share is not working within the messages section.
+Invite/Friends List Discrepancy: The "Invite Friends" feature in messages is not functioning correctly for users in existing connections.
+
+It displays the message: "No friends to invite. Add friends first!"
+It shows "Invite 0 friend(s)" even when there are people in the user's connections/friends list.
+
+the status display in the matching feature must be accurate, avoid ambiguity, and align with a professional, user-friendly UI/UX standard.
+ 
+
+✨ Feature Requests & UI/UX Enhancements
+ 
+ 
+
+User Interface (UI) Adjustments
+ 
+
+Phone Indicators Color: Feature Focus: Call Status Indicator Color (The visual indicator shown when a user is actively in a voice channel or on a call in messages).
+
+Current Issue/Goal: The color of this indicator needs to be changed.
+Title Bar Icon Uniformity: Make the voice/mic symbol in the title uniform with all other page title symbols to ensure a cohesive look across the application.
+ 
+
+Content Loading
+ 
+
+Photo Fetch: Ensure correct and consistent photo fetching (likely referring to profile pictures, images in messages, or images within a Repl project).
+Would you like me to help you format any of these points further, perhaps as individual, detailed bug reports?
