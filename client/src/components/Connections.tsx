@@ -326,20 +326,20 @@ export function Connections({ currentUserId }: ConnectionsProps) {
         </CardHeader>
         
         <CardContent>
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span>{timeAgo}</span>
+          <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+            <div className="flex-1 min-w-0 flex items-center gap-4 truncate">
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <Calendar className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">{timeAgo}</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Trophy className="h-3 w-3" />
-                <span>Match ID: {connection.requestId.slice(-6)}</span>
+              <div className="flex items-center gap-1 whitespace-nowrap">
+                <Trophy className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">Match ID: {connection.requestId.slice(-6)}</span>
               </div>
             </div>
             
             {showActions === 'confirm' && (
-              <div className="flex gap-2">
+              <div className="flex-shrink-0 flex items-center gap-2">
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -376,7 +376,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             )}
             
             {showActions === 'waiting' && (
-              <div className="flex gap-2 items-center">
+              <div className="flex-shrink-0 flex items-center gap-2">
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -387,7 +387,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                   <FileText className="h-4 w-4" />
                   <span className="text-xs">Match Details</span>
                 </Button>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs whitespace-nowrap">
                   Waiting for confirmation
                 </Badge>
                 <Button 
@@ -406,34 +406,32 @@ export function Connections({ currentUserId }: ConnectionsProps) {
             
             {showActions === 'chat' && (
               <Dialog open={openChatId === connection.id} onOpenChange={(open) => setOpenChatId(open ? connection.id : null)}>
-                <div className="flex gap-2 items-center justify-between w-full">
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="gap-1 text-primary hover:text-primary"
-                      onClick={() => setOpenChatId(connection.id)}
-                      data-testid={`button-open-connection-${connection.id}`}
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <Phone className="h-4 w-4" />
-                      <span className="text-xs">Chat & Voice</span>
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="gap-1"
-                      onClick={() => setViewMatchDetailsId(connection.requestId)}
-                      data-testid={`button-match-details-${connection.id}`}
-                    >
-                      <FileText className="h-4 w-4" />
-                      <span className="text-xs">Match Details</span>
-                    </Button>
-                  </div>
+                <div className="flex-shrink-0 flex items-center gap-2">
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="gap-1 text-destructive hover:text-destructive ml-auto"
+                    className="gap-1 text-primary hover:text-primary"
+                    onClick={() => setOpenChatId(connection.id)}
+                    data-testid={`button-open-connection-${connection.id}`}
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <Phone className="h-4 w-4" />
+                    <span className="text-xs">Chat & Voice</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-1"
+                    onClick={() => setViewMatchDetailsId(connection.requestId)}
+                    data-testid={`button-match-details-${connection.id}`}
+                  >
+                    <FileText className="h-4 w-4" />
+                    <span className="text-xs">Match Details</span>
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="gap-1 text-destructive hover:text-destructive"
                     onClick={() => deleteMatchConnectionMutation.mutate(connection.id)}
                     disabled={deleteMatchConnectionMutation.isPending}
                     data-testid={`button-disconnect-${connection.id}`}
