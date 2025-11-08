@@ -8,15 +8,25 @@ import { Loader2, Users, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { getApiUrl } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 import type { GroupVoiceChannelWithDetails } from "@shared/schema";
 
 export function JoinChannelPage() {
   const [, params] = useRoute("/join-channel/:inviteCode");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [isAccepting, setIsAccepting] = useState(false);
+  const [hasAttemptedAutoJoin, setHasAttemptedAutoJoin] = useState(false);
 
   const inviteCode = params?.inviteCode;
+
+  // Save invite code to sessionStorage for post-login redirect
+  useEffect(() => {
+    if (inviteCode) {
+      sessionStorage.setItem('pendingInviteCode', inviteCode);
+    }
+  }, [inviteCode]);
 
   const { data: channelData, isLoading: isLoadingChannel, error: channelError } = useQuery<GroupVoiceChannelWithDetails>({
     queryKey: ['/api/group-voice/channel-by-code', inviteCode],
@@ -44,6 +54,7 @@ export function JoinChannelPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/group-voice/channels'] });
       queryClient.invalidateQueries({ queryKey: ['/api/group-voice/invites'] });
+      sessionStorage.removeItem('pendingInviteCode');
       toast({
         title: "Success!",
         description: "You've joined the voice channel",
@@ -60,6 +71,43 @@ export function JoinChannelPage() {
       });
     },
   });
+
+  // Auto-join for authenticated users
+  useEffect(() => {
+    if (!isAuthLoading && isAuthenticated && user && channelData && !hasAttemptedAutoJoin) {
+      setHasAttemptedAutoJoin(true);
+      
+      // Check if the CURRENT user is already a member
+      const isAlreadyMember = channelData.members?.some((m) => m.userId === user.id);
+      
+      if (isAlreadyMember) {
+        sessionStorage.removeItem('pendingInviteCode');
+        toast({
+          title: "Already a member",
+          description: "You're already in this channel",
+        });
+        setTimeout(() => {
+          setLocation('/voice-channels');
+        }, 1500);
+      } else {
+        // Auto-join the channel
+        handleJoinChannel();
+      }
+    }
+  }, [isAuthLoading, isAuthenticated, user, channelData, hasAttemptedAutoJoin]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated && inviteCode) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to join this voice channel",
+      });
+      setTimeout(() => {
+        setLocation('/');
+      }, 1500);
+    }
+  }, [isAuthLoading, isAuthenticated, inviteCode]);
 
   const handleJoinChannel = async () => {
     if (!channelData) return;
@@ -90,12 +138,14 @@ export function JoinChannelPage() {
     );
   }
 
-  if (isLoadingChannel) {
+  if (isAuthLoading || isLoadingChannel) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-          <p className="text-muted-foreground">Loading channel details...</p>
+          <p className="text-muted-foreground">
+            {isAuthLoading ? "Checking authentication..." : "Loading channel details..."}
+          </p>
         </div>
       </div>
     );
@@ -121,7 +171,8 @@ export function JoinChannelPage() {
   }
 
   const memberCount = channelData.members?.length || 0;
-  const isAlreadyMember = channelData.members?.some((m) => m.userId);
+  // Check if the CURRENT user is already a member (not just any user)
+  const isAlreadyMember = user ? channelData.members?.some((m) => m.userId === user.id) : false;
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

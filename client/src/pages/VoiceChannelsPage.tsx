@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { selectIsConnectedToRoom, useHMSStore } from "@100mslive/react-sdk";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,11 +9,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
-import { Plus, Users, UserPlus, X, RefreshCw, Mic2, Search } from "lucide-react";
+import { Plus, Users, UserPlus, X, RefreshCw, Mic2, Search, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { GroupVoiceChannel } from "@/components/GroupVoiceChannel";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getApiUrl } from "@/lib/api";
 import type { GroupVoiceChannelWithDetails, User, ConnectionRequestWithUser } from "@shared/schema";
 import { useLayout } from "@/contexts/LayoutContext";
 
@@ -23,7 +25,9 @@ interface VoiceChannelsPageProps {
 export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [pasteInviteDialogOpen, setPasteInviteDialogOpen] = useState(false);
   const [channelName, setChannelName] = useState("");
+  const [inviteLinkInput, setInviteLinkInput] = useState("");
   const [selectedChannel, setSelectedChannel] = useState<GroupVoiceChannelWithDetails | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -35,6 +39,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
   const isConnected = useHMSStore(selectIsConnectedToRoom);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!isConnected && activeChannelId) {
@@ -346,6 +351,37 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     }, 500);
   };
 
+  const handlePasteInviteLink = () => {
+    if (!inviteLinkInput.trim()) {
+      toast({
+        title: "Invalid link",
+        description: "Please paste a valid invite link",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Extract invite code from the link
+    const linkPattern = /join-channel\/([a-zA-Z0-9]+)/;
+    const match = inviteLinkInput.match(linkPattern);
+    
+    if (!match || !match[1]) {
+      toast({
+        title: "Invalid link",
+        description: "Please paste a valid invite link",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const inviteCode = match[1];
+    setPasteInviteDialogOpen(false);
+    setInviteLinkInput("");
+    
+    // Navigate to the join-channel page
+    setLocation(`/join-channel/${inviteCode}`);
+  };
+
   if (isLoading) {
     return <div className="p-4">Loading channels...</div>;
   }
@@ -371,6 +407,46 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
           >
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
+          <Dialog open={pasteInviteDialogOpen} onOpenChange={setPasteInviteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" data-testid="button-paste-invite">
+                <LinkIcon className="h-4 w-4 mr-2" />
+                Paste Invite Link
+              </Button>
+            </DialogTrigger>
+            <DialogContent data-testid="dialog-paste-invite">
+              <DialogHeader>
+                <DialogTitle>Join with Invite Link</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="invite-link">Invite Link</Label>
+                  <Input
+                    id="invite-link"
+                    value={inviteLinkInput}
+                    onChange={(e) => setInviteLinkInput(e.target.value)}
+                    placeholder="Paste invite link here..."
+                    data-testid="input-invite-link"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handlePasteInviteLink();
+                      }
+                    }}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Example: https://nexus-final-tau.vercel.app/join-channel/abc123
+                  </p>
+                </div>
+                <Button
+                  onClick={handlePasteInviteLink}
+                  className="w-full"
+                  data-testid="button-submit-paste-invite"
+                >
+                  Join Channel
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm" data-testid="button-create-channel">
