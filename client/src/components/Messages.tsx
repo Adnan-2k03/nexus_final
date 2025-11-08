@@ -280,21 +280,21 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                       />
                       {isUserOnline(otherUserId) && (
                         <div 
-                          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-500 rounded-full border-2 border-background"
+                          className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-background"
                           data-testid={`online-indicator-${otherUserId}`}
                         />
                       )}
                       {isUserInVoice(otherUserId) && (
                         <div 
-                          className="absolute -top-1 -right-1 h-5 w-5 bg-primary rounded-full border-2 border-background flex items-center justify-center"
+                          className="absolute -top-1 -right-1 h-5 w-5 bg-blue-500 dark:bg-blue-400 rounded-full border-2 border-background flex items-center justify-center"
                           data-testid={`voice-indicator-${otherUserId}`}
                         >
-                          <Phone className="h-3 w-3 text-primary-foreground" />
+                          <Phone className="h-3 w-3 text-white" />
                         </div>
                       )}
                       {waitingCallerGamertags.includes(displayName) && (
                         <div 
-                          className="absolute -top-1 -left-1 h-5 w-5 bg-green-500 rounded-full border-2 border-background flex items-center justify-center animate-pulse"
+                          className="absolute -top-1 -left-1 h-5 w-5 bg-amber-500 dark:bg-amber-400 rounded-full border-2 border-background flex items-center justify-center animate-pulse"
                           data-testid={`waiting-call-indicator-${otherUserId}`}
                           title="Waiting in voice call"
                         >
@@ -312,12 +312,35 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
-                        {isUserInVoice(otherUserId) ? "Waiting in voice channel" : "Click to chat or join voice"}
+                        {isUserInVoice(otherUserId) ? "Waiting in voice channel" : "Message or voice call"}
                       </p>
                     </div>
-                    <div className="flex gap-1">
-                      <MessageCircle className="h-4 w-4 text-muted-foreground" />
-                      <Phone className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setSelectedConnection(request)}
+                        title="Open messages"
+                        data-testid={`button-message-${request.id}`}
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => {
+                          setSelectedConnection(request);
+                          setTimeout(() => {
+                            const voiceButton = document.querySelector('[data-testid="button-join-voice"]') as HTMLButtonElement;
+                            voiceButton?.click();
+                          }, 100);
+                        }}
+                        title="Start voice call"
+                        className={isUserInVoice(otherUserId) ? "text-primary animate-pulse" : ""}
+                        data-testid={`button-voice-${request.id}`}
+                      >
+                        <Phone className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 </CardContent>

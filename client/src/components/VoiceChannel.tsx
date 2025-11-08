@@ -38,15 +38,31 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const [minimizedPeerId, setMinimizedPeerId] = useState<string | null>(null);
   const screenShareVideoRef = useRef<HTMLVideoElement>(null);
   const minimizedVideoRef = useRef<HTMLVideoElement>(null);
+  const wakeLockRef = useRef<any>(null);
   const { toast } = useToast();
 
   const otherPeers = peers.filter(peer => !peer.isLocal);
   const hasOtherUser = otherPeers.length > 0;
 
-  // Set up HMS logging
+  // Set up HMS logging and audio quality settings
   useEffect(() => {
     hmsActions.setLogLevel(4);
     console.log('[HMS] Verbose logging enabled for voice channel');
+    
+    // Configure high-quality audio settings
+    const configureAudioQuality = async () => {
+      try {
+        // Set audio output settings for better quality with higher bitrate
+        await hmsActions.setAudioSettings({
+          maxBitrate: 64,
+        });
+        console.log('[HMS] High-quality audio settings configured');
+      } catch (error) {
+        console.warn('[HMS] Could not configure audio settings:', error);
+      }
+    };
+    
+    configureAudioQuality();
   }, [hmsActions]);
 
   // Auto-reconnect if user was in this voice channel before navigating away
@@ -77,7 +93,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       console.log('[HMS] Notification:', latestMessage);
       
       if (latestMessage.type === HMSNotificationTypes.ERROR) {
-        const error = latestMessage.data;
+        const error = (latestMessage as any).data;
         console.error('[HMS] Error received:', {
           code: error?.code,
           message: error?.message,
@@ -97,11 +113,11 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       }
       
       if (latestMessage.type === HMSNotificationTypes.PEER_JOINED) {
-        console.log('[HMS] Peer joined:', latestMessage.data);
+        console.log('[HMS] Peer joined:', (latestMessage as any).data);
       }
       
       if (latestMessage.type === HMSNotificationTypes.PEER_LEFT) {
-        console.log('[HMS] Peer left:', latestMessage.data);
+        console.log('[HMS] Peer left:', (latestMessage as any).data);
       }
     }
   }, [hmsMessages, isJoining, toast]);
@@ -141,7 +157,18 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
           isAudioMuted: false,
           isVideoMuted: true,
         },
+        rememberDeviceSelection: true,
       });
+
+      // Request wake lock to keep audio running when app is backgrounded
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+          console.log('[Wake Lock] Acquired to prevent audio interruption in background');
+        }
+      } catch (err) {
+        console.warn('[Wake Lock] Could not acquire wake lock:', err);
+      }
 
       console.log('[HMS] Join request sent successfully');
       
@@ -171,6 +198,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       // Clear active voice channel from context
       setVoiceChannelActive(null);
       
+      // Release wake lock
+      if (wakeLockRef.current) {
+        await wakeLockRef.current.release();
+        wakeLockRef.current = null;
+        console.log('[Wake Lock] Released');
+      }
+      
       // Notify backend
       await fetch(getApiUrl('/api/voice/leave'), {
         method: 'POST',
@@ -197,22 +231,29 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const toggleScreenShare = async () => {
     try {
       if (!isLocalScreenShared) {
-        await hmsActions.setScreenShareEnabled(true);
+        await hmsActions.setScreenShareEnabled(true, {
+          preferCurrentTab: false,
+          displaySurface: 'monitor',
+        });
         toast({
           title: "Screen sharing started",
-          description: "Your screen is now visible",
+          description: "Your screen is now visible to others in the channel",
         });
       } else {
         await hmsActions.setScreenShareEnabled(false);
         toast({
           title: "Screen sharing stopped",
+          description: "Your screen is no longer being shared",
         });
       }
     } catch (error) {
       console.error("Error toggling screen share:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to start screen sharing";
       toast({
         title: "Screen share error",
-        description: "Failed to start screen sharing",
+        description: errorMessage.includes("Permission denied") 
+          ? "Screen sharing permission was denied. Please allow screen sharing to continue."
+          : "Failed to start screen sharing. Please try again.",
         variant: "destructive",
       });
     }
@@ -224,8 +265,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   useEffect(() => {
     const fullscreenPeer = peers.find(p => p.id === fullscreenPeerId);
     if (fullscreenPeer && screenShareVideoRef.current) {
-      const screenTrack = fullscreenPeer.auxiliaryTracks[0];
-      if (screenTrack) {
+      const screenTrack = fullscreenPeer.auxiliaryTracks[0] as any;
+      if (screenTrack && screenTrack.id) {
         hmsActions.attachVideo(screenTrack.id, screenShareVideoRef.current);
         return () => {
           hmsActions.detachVideo(screenTrack.id, screenShareVideoRef.current!);
@@ -237,8 +278,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   useEffect(() => {
     const minimizedPeer = peers.find(p => p.id === minimizedPeerId);
     if (minimizedPeer && minimizedVideoRef.current) {
-      const screenTrack = minimizedPeer.auxiliaryTracks[0];
-      if (screenTrack) {
+      const screenTrack = minimizedPeer.auxiliaryTracks[0] as any;
+      if (screenTrack && screenTrack.id) {
         hmsActions.attachVideo(screenTrack.id, minimizedVideoRef.current);
         return () => {
           hmsActions.detachVideo(screenTrack.id, minimizedVideoRef.current!);
@@ -282,7 +323,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                   <div className="p-2 bg-primary rounded-full">
                     <Phone className="h-4 w-4 text-primary-foreground" />
                   </div>
-                  <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
+                  <div className="absolute -bottom-1 -right-1 h-3 w-3 bg-emerald-500 dark:bg-emerald-400 rounded-full border-2 border-background animate-pulse"></div>
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm">In Voice Channel</h3>
@@ -390,7 +431,10 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                     <video
                       ref={(videoEl) => {
                         if (videoEl && peer.auxiliaryTracks[0]) {
-                          hmsActions.attachVideo(peer.auxiliaryTracks[0].id, videoEl);
+                          const track = peer.auxiliaryTracks[0] as any;
+                          if (track && track.id) {
+                            hmsActions.attachVideo(track.id, videoEl);
+                          }
                         }
                       }}
                       autoPlay
