@@ -1471,10 +1471,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         const matchConnection = userConnections.find(c => c.id === connectionId);
         const requestConnection = connectionRequests.find(c => c.id === connectionId);
-        const connection = matchConnection || requestConnection;
         
-        if (connection) {
-          const otherUserId = connection.userId === userId ? connection.matchUserId : connection.userId;
+        let otherUserId: string | null = null;
+        
+        if (matchConnection) {
+          // MatchConnection has requesterId and accepterId
+          otherUserId = matchConnection.requesterId === userId ? matchConnection.accepterId : matchConnection.requesterId;
+        } else if (requestConnection) {
+          // ConnectionRequest has senderId and receiverId
+          otherUserId = requestConnection.senderId === userId ? requestConnection.receiverId : requestConnection.senderId;
+        }
+        
+        if (otherUserId) {
           
           // Check for recent duplicate notifications (within last 5 minutes)
           const recentNotifications = await storage.getUserNotifications(otherUserId, false);
