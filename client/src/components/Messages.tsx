@@ -43,6 +43,7 @@ function formatTimeAgo(date: string | Date | null): string {
 
 export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesProps) {
   const [selectedConnection, setSelectedConnection] = useState<ConnectionRequestWithUser | null>(null);
+  const [activeTab, setActiveTab] = useState<"chat" | "voice">("chat");
   const [searchTerm, setSearchTerm] = useState("");
   const [pendingRequestsOpen, setPendingRequestsOpen] = useState(true);
   const { toast } = useToast();
@@ -282,7 +283,10 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
               <Card
                 key={request.id}
                 className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => setSelectedConnection(request)}
+                onClick={() => {
+                  setActiveTab("chat");
+                  setSelectedConnection(request);
+                }}
                 data-testid={`conversation-${request.id}`}
               >
                 <CardContent className="p-4">
@@ -336,7 +340,10 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                       <Button
                         size="icon"
                         variant="ghost"
-                        onClick={() => setSelectedConnection(request)}
+                        onClick={() => {
+                          setActiveTab("chat");
+                          setSelectedConnection(request);
+                        }}
                         title="Open messages"
                         data-testid={`button-message-${request.id}`}
                       >
@@ -346,11 +353,8 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                         size="icon"
                         variant="ghost"
                         onClick={() => {
+                          setActiveTab("voice");
                           setSelectedConnection(request);
-                          setTimeout(() => {
-                            const voiceButton = document.querySelector('[data-testid="button-join-voice"]') as HTMLButtonElement;
-                            voiceButton?.click();
-                          }, 100);
                         }}
                         title="Start voice call"
                         className={isUserInVoice(otherUserId) ? "text-primary animate-pulse" : ""}
@@ -568,7 +572,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                     </AlertDialog>
                   </div>
                 </DialogHeader>
-                <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
+                <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "chat" | "voice")} className="flex-1 flex flex-col overflow-hidden">
                   <TabsList className="mx-4 mt-2">
                     <TabsTrigger value="chat" className="flex-1" data-testid="tab-chat">
                       <MessageCircle className="h-4 w-4 mr-1" />

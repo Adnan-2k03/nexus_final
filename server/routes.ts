@@ -1540,6 +1540,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.leaveVoiceChannel(channel.id, userId);
       
+      // Clean up voice_call_waiting notifications when leaving
+      // Get the other user in this connection to clean up their notifications
+      const currentUser = req.user; // Get current user from auth middleware
+      const userConnections = await storage.getUserConnections(userId);
+      const connectionRequests = await storage.getConnectionRequests(userId);
+      
+      const matchConnection = userConnections.find(c => c.id === connectionId);
+      const requestConnection = connectionRequests.find(c => c.id === connectionId);
+      
+      let otherUserId: string | null = null;
+      
+      if (matchConnection) {
+        otherUserId = matchConnection.requesterId === userId ? matchConnection.accepterId : matchConnection.requesterId;
+      } else if (requestConnection) {
+        otherUserId = requestConnection.senderId === userId ? requestConnection.receiverId : requestConnection.senderId;
+      }
+      
+      if (otherUserId && currentUser) {
+        // Delete voice_call_waiting notifications for the other user created by this user
+        const notifications = await storage.getUserNotifications(otherUserId, false);
+        const waitingNotifications = notifications.filter(n => 
+          n.type === 'voice_call_waiting' && 
+          n.message?.includes(currentUser.gamertag || 'A friend')
+        );
+        
+        // Mark these notifications as read to remove them from the UI
+        for (const notification of waitingNotifications) {
+          await storage.markNotificationAsRead(notification.id, otherUserId);
+        }
+      }
+      
       // Broadcast to other participants
       if (otherUserIds.length > 0) {
         const participantsAfter = await storage.getVoiceParticipants(channel.id);
