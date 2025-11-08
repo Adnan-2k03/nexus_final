@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Plus, Users, UserPlus, X, RefreshCw, Mic2 } from "lucide-react";
+import { Plus, Users, UserPlus, X, RefreshCw, Mic2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { GroupVoiceChannel } from "@/components/GroupVoiceChannel";
@@ -26,6 +26,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const [selectedChannel, setSelectedChannel] = useState<GroupVoiceChannelWithDetails | null>(null);
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [activeChannelId, setActiveChannelId] = useState<string | null>(() => {
     return localStorage.getItem('activeGroupVoiceChannelId');
   });
@@ -55,8 +56,21 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     return <div className="p-4 text-center text-muted-foreground">Loading...</div>;
   }
 
-  const { data: channels = [], isLoading } = useQuery<GroupVoiceChannelWithDetails[]>({
+  const { data: allChannels = [], isLoading } = useQuery<GroupVoiceChannelWithDetails[]>({
     queryKey: ['/api/group-voice/channels'],
+  });
+
+  // Filter channels by search term
+  const channels = allChannels.filter(channel => {
+    if (!searchTerm.trim()) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const nameMatch = channel.name.toLowerCase().includes(searchLower);
+    const memberMatch = channel.members?.some(member =>
+      member.gamertag?.toLowerCase().includes(searchLower)
+    );
+    
+    return nameMatch || memberMatch;
   });
 
   const { data: allInvites = [] } = useQuery<any[]>({
@@ -271,18 +285,18 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
 
   return (
     <div className={`w-full ${getContainerClass()} mx-auto space-y-6`}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-3">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2" data-testid="heading-voice-channels">
+          <h1 className="text-2xl font-bold flex items-center gap-2" data-testid="heading-voice-channels">
             <Mic2 className="h-6 w-6 text-primary" />
             Voice Channels
           </h1>
           <p className="text-muted-foreground">Create and join group voice channels</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap sm:ml-auto">
           <Button
             variant="outline"
-            size="icon"
+            size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
             data-testid="button-refresh-channels"
@@ -292,7 +306,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
           </Button>
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-create-channel">
+              <Button size="sm" data-testid="button-create-channel">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Channel
               </Button>
@@ -325,6 +339,28 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
           </Dialog>
         </div>
       </div>
+
+      {/* Search Bar */}
+      <Card className="mb-6">
+        <CardContent className="p-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+            <Input
+              type="text"
+              placeholder="Search channels by name or members..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 overflow-x-auto whitespace-nowrap"
+              style={{
+                textOverflow: 'clip',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}
+              data-testid="input-search-channels"
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       {receivedInvites.length > 0 && (
         <div className="space-y-2">

@@ -314,9 +314,9 @@ export function MatchFeed({
   );
 
   return (
-    <div className={`${getContainerClass()} mx-auto space-y-4 md:space-y-6 animate-in fade-in duration-300`}>
+    <div className={`${getContainerClass()} mx-auto space-y-4 md:space-y-6`}>
       {/* Header */}
-      <div className="mb-6 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-0 sm:justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-start gap-3">
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
             <Target className="h-6 w-6 text-primary" />
@@ -335,7 +335,7 @@ export function MatchFeed({
           <p className="text-muted-foreground">Discover and apply to match requests</p>
         </div>
         
-        <div className="flex gap-1.5 sm:gap-2 flex-wrap">
+        <div className="flex gap-1.5 sm:gap-2 flex-wrap sm:ml-auto">
           <Button
             variant={showHidden ? "default" : "outline"}
             size="sm"

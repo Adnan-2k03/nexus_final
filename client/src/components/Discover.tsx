@@ -236,7 +236,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   };
 
   return (
-    <div className={`${getContainerClass()} mx-auto animate-in fade-in duration-300`}>
+    <div className={`${getContainerClass()} mx-auto`}>
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
@@ -469,18 +469,9 @@ export function Discover({ currentUserId }: DiscoverProps) {
 
                   <div className="min-h-[28px] mb-4 flex items-center justify-center">
                     {user.preferredGames && user.preferredGames.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center">
-                        {user.preferredGames.slice(0, 2).map((game, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs">
-                            {game}
-                          </Badge>
-                        ))}
-                        {user.preferredGames.length > 2 && (
-                          <Badge variant="secondary" className="text-xs">
-                            +{user.preferredGames.length - 2}
-                          </Badge>
-                        )}
-                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {user.preferredGames[0]}
+                      </Badge>
                     )}
                   </div>
 

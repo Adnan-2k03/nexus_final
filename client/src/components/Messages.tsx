@@ -176,7 +176,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
   );
 
   return (
-    <div className={`${getContainerClass()} mx-auto animate-in fade-in duration-300`}>
+    <div className={`${getContainerClass()} mx-auto`}>
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
