@@ -32,7 +32,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const isLocalAudioEnabled = useHMSStore(selectIsLocalAudioEnabled);
   const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
   const hmsMessages = useHMSStore(selectHMSMessages);
-  const { setVoiceChannelActive } = useHMSContext();
+  const { setVoiceChannelActive, activeVoiceChannel } = useHMSContext();
   
   const [isJoining, setIsJoining] = useState(false);
   const [fullscreenPeerId, setFullscreenPeerId] = useState<string | null>(null);
@@ -66,11 +66,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     configureAudioQuality();
   }, [hmsActions]);
 
-  // Auto-reconnect if user was in this voice channel before navigating away
+  // Auto-reconnect if user was in this individual voice channel before navigating away
   useEffect(() => {
-    const savedConnectionId = sessionStorage.getItem('activeVoiceChannelId');
-    if (savedConnectionId === connectionId && !isConnected && !isJoining) {
-      console.log('[HMS] Auto-reconnecting to voice channel after navigation');
+    if (activeVoiceChannel?.id === connectionId && 
+        activeVoiceChannel?.type === 'individual' && 
+        !isConnected && 
+        !isJoining) {
+      console.log('[HMS] Auto-reconnecting to individual voice channel after navigation');
       joinChannel();
     }
   }, []);
@@ -221,8 +223,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
 
       console.log('[HMS] Join request sent successfully');
       
-      // Set active voice channel in context
-      setVoiceChannelActive(connectionId);
+      // Set active voice channel in context with type 'individual'
+      setVoiceChannelActive(connectionId, 'individual');
       
       toast({
         title: "Connecting...",
@@ -341,9 +343,14 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     }
   }, [minimizedPeerId, peers, hmsActions, hideScreenShare]);
 
+  // Check if user is in THIS specific individual voice channel
+  const isInThisIndividualChannel = isConnected && 
+                                     activeVoiceChannel?.id === connectionId && 
+                                     activeVoiceChannel?.type === 'individual';
+
   return (
     <div className="space-y-4">
-      {!isConnected ? (
+      {!isInThisIndividualChannel ? (
         <Card className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -478,7 +485,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       )}
 
       {/* Screen Shares Section - Only shown when hideScreenShare is false */}
-      {!hideScreenShare && isConnected && screenSharePeers.length > 0 && (
+      {!hideScreenShare && isInThisIndividualChannel && screenSharePeers.length > 0 && (
         <div className="space-y-2">
           <h3 className="font-semibold text-sm">Screen Shares</h3>
           <div className="grid gap-2">
