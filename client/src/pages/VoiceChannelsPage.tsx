@@ -80,15 +80,15 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const receivedInvites = allInvites.filter((inv: any) => inv.inviteeId === currentUserId);
   const sentInvites = allInvites.filter((inv: any) => inv.inviterId === currentUserId);
 
-  const { data: connectionsResponse } = useQuery<ConnectionRequestWithUser[]>({
-    queryKey: ['/api/connection-requests'],
+  const { data: matchConnectionsResponse } = useQuery<any[]>({
+    queryKey: ['/api/user/connections'],
   });
 
   const { data: usersResponse } = useQuery<{ users: User[] }>({
     queryKey: ['/api/users'],
   });
 
-  const connections = connectionsResponse?.filter(c => c.status === 'accepted') || [];
+  const matchConnections = matchConnectionsResponse?.filter(c => c.status === 'accepted') || [];
   const allUsers = usersResponse?.users || [];
 
   const createChannelMutation = useMutation({
@@ -233,8 +233,8 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   };
 
   const getFriendsList = () => {
-    return connections.map(conn => {
-      const friendId = conn.senderId === currentUserId ? conn.receiverId : conn.senderId;
+    return matchConnections.map(conn => {
+      const friendId = conn.requesterId === currentUserId ? conn.accepterId : conn.requesterId;
       const friend = allUsers.find(u => u.id === friendId);
       return friend;
     }).filter((f): f is User => f !== undefined);
