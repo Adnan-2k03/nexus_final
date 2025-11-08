@@ -314,7 +314,7 @@ export function MatchFeed({
   );
 
   return (
-    <div className={`${getContainerClass()} mx-auto space-y-4 md:space-y-6`}>
+    <div className={`${getContainerClass()} mx-auto space-y-4 md:space-y-6 animate-in fade-in duration-300`}>
       {/* Header */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-0 sm:justify-between">
         <div>

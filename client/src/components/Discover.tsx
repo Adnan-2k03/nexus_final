@@ -236,7 +236,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   };
 
   return (
-    <div className={`${getContainerClass()} mx-auto`}>
+    <div className={`${getContainerClass()} mx-auto animate-in fade-in duration-300`}>
       <div className="mb-6 flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground mb-2 flex items-center gap-2">
@@ -421,10 +421,11 @@ export function Discover({ currentUserId }: DiscoverProps) {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredUsers.map((user) => (
+            {filteredUsers.map((user, index) => (
             <Card
               key={user.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col"
+              className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer flex flex-col hover-elevate animate-in fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
               onClick={() => setSelectedUser(user)}
               data-testid={`card-user-${user.id}`}
             >
