@@ -422,6 +422,15 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public route for join-channel (works for everyone) */}
+      <Route path="/join-channel/:inviteCode">
+        {() => (
+          <div className="min-h-screen relative">
+            <JoinChannelPage />
+          </div>
+        )}
+      </Route>
+      
       {!isAuthenticated && !isLoading ? (
         <Route
           path="/"
@@ -580,13 +589,6 @@ function Router() {
                 </div>
               );
             }}
-          </Route>
-          <Route path="/join-channel/:inviteCode">
-            {() => (
-              <div className="min-h-screen relative">
-                <JoinChannelPage />
-              </div>
-            )}
           </Route>
           <Route path="/">
             {() => {

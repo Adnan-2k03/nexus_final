@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ProfileDialog } from "@/components/ui/profile-dialog";
 import { Plus, Users, UserPlus, X, RefreshCw, Mic2, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -437,39 +438,43 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar 
-                        className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary" 
-                        onClick={() => {
-                          if (invite.inviterId) {
-                            const user = allUsers.find(u => u.id === invite.inviterId);
-                            if (user) {
-                              const profileDialog = document.createElement('button');
-                              profileDialog.setAttribute('data-user-id', invite.inviterId);
-                              profileDialog.click();
-                            }
-                          }
-                        }}
-                        data-testid={`avatar-inviter-${invite.id}`}
-                      >
-                        <AvatarImage src={invite.inviterProfileImageUrl || undefined} />
-                        <AvatarFallback>
-                          {invite.inviterGamertag?.[0]?.toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ProfileDialog
+                        userId={invite.inviterId}
+                        gamertag={invite.inviterGamertag || undefined}
+                        profileImageUrl={invite.inviterProfileImageUrl || undefined}
+                        currentUserId={currentUserId}
+                        trigger={
+                          <button className="hover:opacity-80 transition-opacity">
+                            <Avatar 
+                              className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary" 
+                              data-testid={`avatar-inviter-${invite.id}`}
+                            >
+                              <AvatarImage src={invite.inviterProfileImageUrl || undefined} />
+                              <AvatarFallback>
+                                {invite.inviterGamertag?.[0]?.toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </button>
+                        }
+                      />
                       <div>
                         <p className="font-medium">{invite.channelName || "Voice Channel"}</p>
                         <p className="text-sm text-muted-foreground">
-                          Invited by <span 
-                            className="cursor-pointer hover:underline" 
-                            onClick={() => {
-                              if (invite.inviterId) {
-                                window.location.href = `/profile/${invite.inviterId}`;
-                              }
-                            }}
-                            data-testid={`inviter-name-${invite.id}`}
-                          >
-                            {invite.inviterGamertag || "Unknown"}
-                          </span>
+                          Invited by{" "}
+                          <ProfileDialog
+                            userId={invite.inviterId}
+                            gamertag={invite.inviterGamertag || undefined}
+                            profileImageUrl={invite.inviterProfileImageUrl || undefined}
+                            currentUserId={currentUserId}
+                            trigger={
+                              <span 
+                                className="cursor-pointer hover:underline inline"
+                                data-testid={`inviter-name-${invite.id}`}
+                              >
+                                {invite.inviterGamertag || "Unknown"}
+                              </span>
+                            }
+                          />
                         </p>
                       </div>
                     </div>
@@ -509,34 +514,43 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <Avatar 
-                        className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary" 
-                        onClick={() => {
-                          if (invite.inviteeId) {
-                            window.location.href = `/profile/${invite.inviteeId}`;
-                          }
-                        }}
-                        data-testid={`avatar-invitee-${invite.id}`}
-                      >
-                        <AvatarImage src={invite.inviteeProfileImageUrl || undefined} />
-                        <AvatarFallback>
-                          {invite.inviteeGamertag?.[0]?.toUpperCase() || "?"}
-                        </AvatarFallback>
-                      </Avatar>
+                      <ProfileDialog
+                        userId={invite.inviteeId}
+                        gamertag={invite.inviteeGamertag || undefined}
+                        profileImageUrl={invite.inviteeProfileImageUrl || undefined}
+                        currentUserId={currentUserId}
+                        trigger={
+                          <button className="hover:opacity-80 transition-opacity">
+                            <Avatar 
+                              className="h-10 w-10 cursor-pointer hover:ring-2 hover:ring-primary" 
+                              data-testid={`avatar-invitee-${invite.id}`}
+                            >
+                              <AvatarImage src={invite.inviteeProfileImageUrl || undefined} />
+                              <AvatarFallback>
+                                {invite.inviteeGamertag?.[0]?.toUpperCase() || "?"}
+                              </AvatarFallback>
+                            </Avatar>
+                          </button>
+                        }
+                      />
                       <div>
                         <p className="font-medium">{invite.channelName || "Voice Channel"}</p>
                         <p className="text-sm text-muted-foreground">
-                          Sent to <span 
-                            className="cursor-pointer hover:underline" 
-                            onClick={() => {
-                              if (invite.inviteeId) {
-                                window.location.href = `/profile/${invite.inviteeId}`;
-                              }
-                            }}
-                            data-testid={`invitee-name-${invite.id}`}
-                          >
-                            {invite.inviteeGamertag || "Unknown"}
-                          </span>
+                          Sent to{" "}
+                          <ProfileDialog
+                            userId={invite.inviteeId}
+                            gamertag={invite.inviteeGamertag || undefined}
+                            profileImageUrl={invite.inviteeProfileImageUrl || undefined}
+                            currentUserId={currentUserId}
+                            trigger={
+                              <span 
+                                className="cursor-pointer hover:underline inline"
+                                data-testid={`invitee-name-${invite.id}`}
+                              >
+                                {invite.inviteeGamertag || "Unknown"}
+                              </span>
+                            }
+                          />
                         </p>
                       </div>
                     </div>

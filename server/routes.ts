@@ -2223,7 +2223,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/group-voice/channel-by-code/:inviteCode', authMiddleware, async (req: any, res) => {
+  // Public endpoint - allows unauthenticated users to view channel invite details
+  app.get('/api/group-voice/channel-by-code/:inviteCode', async (req: any, res) => {
     try {
       const { inviteCode } = req.params;
       const channel = await storage.getGroupVoiceChannelByInviteWithDetails(inviteCode);
