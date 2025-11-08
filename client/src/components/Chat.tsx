@@ -4,8 +4,7 @@ import {
   selectIsLocalScreenShared, 
   useHMSActions, 
   useHMSStore,
-  selectIsConnectedToRoom,
-  selectPeers
+  selectIsConnectedToRoom
 } from "@100mslive/react-sdk";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +12,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Send, Loader2, Users, Mic, MicOff, MonitorUp, MonitorOff, Maximize2, Minimize2 } from "lucide-react";
+import { Send, Loader2, Users, Mic, MicOff, MonitorUp, MonitorOff } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -38,13 +36,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   const hmsActions = useHMSActions();
   const isConnected = useHMSStore(selectIsConnectedToRoom);
   const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
-  const peers = useHMSStore(selectPeers);
-  
-  // Screen share fullscreen/minimized state
-  const [fullscreenPeerId, setFullscreenPeerId] = useState<string | null>(null);
-  const [minimizedPeerId, setMinimizedPeerId] = useState<string | null>(null);
-  const screenShareVideoRef = useRef<HTMLVideoElement>(null);
-  const minimizedVideoRef = useRef<HTMLVideoElement>(null);
 
   // Fetch messages for this connection
   const { data: messages = [], isLoading } = useQuery<ChatMessageWithSender[]>({
@@ -166,37 +157,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
     }
   };
 
-  // Get screen share peers
-  const screenSharePeers = peers.filter(peer => peer.auxiliaryTracks.length > 0);
-
-  // Attach screen share video tracks for fullscreen view
-  useEffect(() => {
-    const fullscreenPeer = peers.find(p => p.id === fullscreenPeerId);
-    if (fullscreenPeer && screenShareVideoRef.current) {
-      const screenTrack = fullscreenPeer.auxiliaryTracks[0] as any;
-      if (screenTrack && screenTrack.id) {
-        hmsActions.attachVideo(screenTrack.id, screenShareVideoRef.current);
-        return () => {
-          hmsActions.detachVideo(screenTrack.id, screenShareVideoRef.current!);
-        };
-      }
-    }
-  }, [fullscreenPeerId, peers, hmsActions]);
-
-  // Attach screen share video tracks for minimized view
-  useEffect(() => {
-    const minimizedPeer = peers.find(p => p.id === minimizedPeerId);
-    if (minimizedPeer && minimizedVideoRef.current) {
-      const screenTrack = minimizedPeer.auxiliaryTracks[0] as any;
-      if (screenTrack && screenTrack.id) {
-        hmsActions.attachVideo(screenTrack.id, minimizedVideoRef.current);
-        return () => {
-          hmsActions.detachVideo(screenTrack.id, minimizedVideoRef.current!);
-        };
-      }
-    }
-  }, [minimizedPeerId, peers, hmsActions]);
-
   const formatMessageTime = (date: string | Date | null) => {
     if (!date) return "";
     const d = new Date(date);
@@ -261,58 +221,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
               Switch to the Voice tab to join the call{isConnected && " or control audio"}
             </p>
           </div>
-        </div>
-      )}
-
-      {/* Screen Share Display */}
-      {isConnected && screenSharePeers.length > 0 && (
-        <div className="border-b p-3 space-y-2">
-          <p className="text-sm font-medium text-foreground">Screen Shares</p>
-          {screenSharePeers.map((peer) => (
-            <div
-              key={peer.id}
-              className="bg-black rounded-lg overflow-hidden aspect-video relative group"
-              data-testid={`screenshare-${peer.id}`}
-            >
-              <video
-                ref={(videoEl) => {
-                  if (videoEl && peer.auxiliaryTracks[0]) {
-                    const track = peer.auxiliaryTracks[0] as any;
-                    if (track && track.id) {
-                      hmsActions.attachVideo(track.id, videoEl);
-                    }
-                  }
-                }}
-                autoPlay
-                muted
-                playsInline
-                className="w-full h-full object-contain"
-              />
-              <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
-                <p className="text-xs text-white">{peer.name}'s screen</p>
-              </div>
-              <div className="absolute top-2 right-2 flex gap-2 opacity-80 hover:opacity-100 transition-opacity">
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setFullscreenPeerId(peer.id)}
-                  data-testid={`button-fullscreen-${peer.id}`}
-                  className="backdrop-blur-sm bg-black/40 hover:bg-black/60 border-white/20 text-white"
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  onClick={() => setMinimizedPeerId(peer.id)}
-                  data-testid={`button-minimize-${peer.id}`}
-                  className="backdrop-blur-sm bg-black/40 hover:bg-black/60 border-white/20 text-white"
-                >
-                  <Minimize2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
         </div>
       )}
 
@@ -387,56 +295,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
           </Button>
         </form>
       </div>
-
-      {/* Fullscreen Screen Share Dialog */}
-      <Dialog open={fullscreenPeerId !== null} onOpenChange={(open) => !open && setFullscreenPeerId(null)}>
-        <DialogContent className="max-w-[95vw] h-[95vh]">
-          <DialogHeader>
-            <DialogTitle>
-              {peers.find(p => p.id === fullscreenPeerId)?.name}'s Screen Share
-            </DialogTitle>
-          </DialogHeader>
-          <div className="flex-1 bg-black rounded-lg overflow-hidden">
-            <video
-              ref={screenShareVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Minimized Pop-out Screen Share */}
-      {minimizedPeerId && (
-        <div className="fixed bottom-4 right-4 w-80 bg-background border-2 border-primary rounded-lg shadow-2xl z-50"
-          data-testid="minimized-screenshare">
-          <div className="flex items-center justify-between p-2 bg-primary text-primary-foreground">
-            <span className="text-sm font-medium">
-              {peers.find(p => p.id === minimizedPeerId)?.name}'s Screen
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setMinimizedPeerId(null)}
-              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
-              data-testid="button-close-minimized"
-            >
-              ✕
-            </Button>
-          </div>
-          <div className="aspect-video bg-black">
-            <video
-              ref={minimizedVideoRef}
-              autoPlay
-              muted
-              playsInline
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }
