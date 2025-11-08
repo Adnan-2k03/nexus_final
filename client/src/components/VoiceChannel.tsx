@@ -120,7 +120,14 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       });
 
       if (!response.ok) {
-        throw new Error('Failed to join voice channel');
+        const errorData = await response.json().catch(() => ({ message: 'Failed to join voice channel' }));
+        
+        // Handle service not configured (503)
+        if (response.status === 503) {
+          throw new Error('Voice service is not configured on this server. Please contact support or set up 100ms credentials.');
+        }
+        
+        throw new Error(errorData.message || 'Failed to join voice channel');
       }
 
       const data = await response.json() as { token: string; roomId: string };
@@ -150,7 +157,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       setIsJoining(false);
       const errorMessage = error instanceof Error ? error.message : "Could not connect to voice channel";
       toast({
-        title: "Failed to join",
+        title: "Voice channel unavailable",
         description: errorMessage,
         variant: "destructive",
       });
