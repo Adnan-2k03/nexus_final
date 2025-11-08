@@ -8,9 +8,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, MapPin, Users, MessageCircle, Loader2, RefreshCw, Filter } from "lucide-react";
+import { Search, MapPin, Users, MessageCircle, Loader2, RefreshCw, Filter, Phone } from "lucide-react";
 import { UserProfile } from "./UserProfile";
 import { useToast } from "@/hooks/use-toast";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { getApiUrl } from "@/lib/api";
 import type { User } from "@shared/schema";
@@ -78,6 +79,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
+  const { isUserOnline, isUserInVoice } = useOnlineStatus();
   
   // Reset page when filters change
   useEffect(() => {
@@ -431,16 +433,36 @@ export function Discover({ currentUserId }: DiscoverProps) {
             >
               <CardContent className="pt-6 flex flex-col flex-1">
                 <div className="flex flex-col items-center text-center flex-1">
-                  <Avatar className="h-20 w-20 mb-4">
-                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.gamertag || "User"} />
-                    <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                      {user.gamertag?.[0]?.toUpperCase() || user.firstName?.[0]?.toUpperCase() || "?"}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="relative mb-4">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage src={user.profileImageUrl || undefined} alt={user.gamertag || "User"} />
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                        {user.gamertag?.[0]?.toUpperCase() || user.firstName?.[0]?.toUpperCase() || "?"}
+                      </AvatarFallback>
+                    </Avatar>
+                    {isUserInVoice(user.id) && (
+                      <div className="absolute -bottom-1 -right-1 bg-blue-500 dark:bg-blue-600 rounded-full p-1.5 border-2 border-background">
+                        <Phone className="h-3 w-3 text-white" />
+                      </div>
+                    )}
+                  </div>
 
-                  <h3 className="font-bold text-lg text-foreground mb-1">
-                    {user.gamertag || "No Gamertag"}
-                  </h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-bold text-lg text-foreground">
+                      {user.gamertag || "No Gamertag"}
+                    </h3>
+                    <Badge 
+                      variant="secondary" 
+                      className={`text-xs ${
+                        isUserOnline(user.id) 
+                          ? 'bg-green-500/20 dark:bg-green-600/20 text-green-700 dark:text-green-400 border-green-500/30' 
+                          : 'bg-gray-500/20 dark:bg-gray-600/20 text-gray-700 dark:text-gray-400 border-gray-500/30'
+                      }`}
+                      data-testid={`status-${user.id}`}
+                    >
+                      {isUserOnline(user.id) ? 'Online' : 'Offline'}
+                    </Badge>
+                  </div>
 
                   <div className="min-h-[20px] mb-2">
                     {(user.firstName || user.lastName) && (
