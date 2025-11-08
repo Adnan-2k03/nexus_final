@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Mic, MicOff, Phone, PhoneOff, MonitorUp, MonitorOff, Maximize2, Minimize2 } from "lucide-react";
+import { Mic, MicOff, Phone, PhoneOff, MonitorUp, MonitorOff, Maximize2, Minimize2, Volume2, VolumeX } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getApiUrl } from "@/lib/api";
 import { useHMSContext } from "@/contexts/HMSContext";
@@ -37,9 +37,12 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const [isJoining, setIsJoining] = useState(false);
   const [fullscreenPeerId, setFullscreenPeerId] = useState<string | null>(null);
   const [minimizedPeerId, setMinimizedPeerId] = useState<string | null>(null);
+  const [remotePeerVolumes, setRemotePeerVolumes] = useState<Record<string, number>>({});
+  const [isRemoteAudioMuted, setIsRemoteAudioMuted] = useState(false);
   const screenShareVideoRef = useRef<HTMLVideoElement>(null);
   const minimizedVideoRef = useRef<HTMLVideoElement>(null);
   const wakeLockRef = useRef<any>(null);
+  const hasExplicitlyLeftRef = useRef(false);
   const { toast } = useToast();
 
   const otherPeers = peers.filter(peer => !peer.isLocal);
@@ -73,10 +76,12 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
     // 2. The saved channel is of type 'individual'
     // 3. We're not currently connected to any HMS room
     // 4. We're not already in the process of joining
+    // 5. The user hasn't explicitly left this channel
     if (activeVoiceChannel?.id === connectionId && 
         activeVoiceChannel?.type === 'individual' && 
         !isConnected && 
-        !isJoining) {
+        !isJoining &&
+        !hasExplicitlyLeftRef.current) {
       console.log('[HMS] Auto-reconnecting to individual voice channel after navigation');
       joinChannel();
     }
@@ -165,6 +170,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
 
   const joinChannel = async () => {
     setIsJoining(true);
+    hasExplicitlyLeftRef.current = false; // Clear explicit leave flag when joining
     try {
       // If already connected to a room, leave it first
       if (isConnected) {
@@ -249,6 +255,8 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
 
   const leaveChannel = async () => {
     try {
+      hasExplicitlyLeftRef.current = true; // Set explicit leave flag to prevent auto-rejoin
+      
       await hmsActions.leave();
       
       // Clear active voice channel from context
@@ -283,6 +291,73 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const toggleMute = async () => {
     await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
   };
+
+  const toggleRemoteAudioMute = async () => {
+    const newMuteState = !isRemoteAudioMuted;
+    setIsRemoteAudioMuted(newMuteState);
+    
+    // When toggling, apply to all current peers
+    for (const peer of otherPeers) {
+      if (peer.audioTrack) {
+        if (newMuteState) {
+          // When muting: Save current volume (100 is HMS default) then set to 0
+          setRemotePeerVolumes(prev => {
+            if (!(peer.id in prev)) {
+              return { ...prev, [peer.id]: 100 };
+            }
+            return prev;
+          });
+          await hmsActions.setVolume(0, peer.audioTrack);
+        } else {
+          // When unmuting: Restore to saved volume
+          await hmsActions.setVolume(remotePeerVolumes[peer.id] || 100, peer.audioTrack);
+        }
+      }
+    }
+    
+    toast({
+      title: newMuteState ? "Incoming audio muted" : "Incoming audio unmuted",
+      description: newMuteState ? "You won't hear others in the call" : "You can now hear others in the call",
+    });
+  };
+
+  // Apply mute state to peers when they join or when mute state changes
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    const applyVolumeState = async () => {
+      for (const peer of otherPeers) {
+        if (peer.audioTrack) {
+          if (isRemoteAudioMuted) {
+            // For new peers joining while muted: record baseline volume and mute
+            setRemotePeerVolumes(prev => {
+              if (!(peer.id in prev)) {
+                return { ...prev, [peer.id]: 100 };
+              }
+              return prev;
+            });
+            await hmsActions.setVolume(0, peer.audioTrack);
+          }
+        }
+      }
+    };
+    
+    applyVolumeState();
+  }, [peers.map(p => p.id).join(','), isRemoteAudioMuted, isConnected, hmsActions]);
+
+  // Clean up volumes for peers that have left
+  useEffect(() => {
+    const currentPeerIds = new Set(otherPeers.map(p => p.id));
+    setRemotePeerVolumes(prev => {
+      const cleaned: Record<string, number> = {};
+      for (const [peerId, volume] of Object.entries(prev)) {
+        if (currentPeerIds.has(peerId)) {
+          cleaned[peerId] = volume;
+        }
+      }
+      return cleaned;
+    });
+  }, [otherPeers.map(p => p.id).join(',')]);
 
   const toggleScreenShare = async () => {
     try {
@@ -425,6 +500,26 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                   <>
                     <Mic className="h-4 w-4 mr-1" />
                     Mute
+                  </>
+                )}
+              </Button>
+              <Button
+                size="sm"
+                variant={isRemoteAudioMuted ? "destructive" : "secondary"}
+                onClick={toggleRemoteAudioMute}
+                className="flex-1"
+                data-testid="button-toggle-speaker"
+                title={isRemoteAudioMuted ? "Unmute incoming audio" : "Mute incoming audio"}
+              >
+                {isRemoteAudioMuted ? (
+                  <>
+                    <VolumeX className="h-4 w-4 mr-1" />
+                    Speaker Off
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="h-4 w-4 mr-1" />
+                    Speaker
                   </>
                 )}
               </Button>
