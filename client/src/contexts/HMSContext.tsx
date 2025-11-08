@@ -54,10 +54,12 @@ export function HMSProvider({ children }: { children: ReactNode }) {
     }
   }, [activeVoiceChannel]);
 
+  const currentConnectionId = activeVoiceChannel?.id || null;
+
   return (
     <HMSContext.Provider value={{ 
       isInVoiceChannel, 
-      currentConnectionId: activeVoiceChannel?.id || null,
+      currentConnectionId,
       activeVoiceChannel,
       setVoiceChannelActive 
     }}>
