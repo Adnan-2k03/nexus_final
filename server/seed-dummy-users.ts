@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, matchRequests, gameProfiles, hobbies, connectionRequests, matchConnections } from "@shared/schema";
+import { users, matchRequests, gameProfiles, hobbies, connectionRequests, matchConnections, chatMessages, voiceChannels, groupVoiceChannels, groupVoiceMembers } from "@shared/schema";
 
 const locations = [
   { city: "Los Angeles, CA", lat: 34.0522, lng: -118.2437 },
@@ -174,12 +174,98 @@ export async function seedDummyUsers() {
       }
     }
 
+    // Create chat messages for accepted connections
+    console.log("\n💬 Creating chat messages...");
+    let messageCount = 0;
+    const acceptedConnectionRequests = await db.query.connectionRequests.findMany({
+      where: (cr, { eq }) => eq(cr.status, 'accepted')
+    });
+
+    for (const conn of acceptedConnectionRequests) {
+      const messages = [
+        "Hey! Looking forward to playing together!",
+        "What's your rank in Valorant?",
+        "I'm usually online after 8pm EST",
+        "Let's queue up sometime this week!",
+        "Down for some ranked matches?",
+        "Your profile looks awesome!",
+      ];
+
+      for (let i = 0; i < 3; i++) {
+        const isSenderFirst = i % 2 === 0;
+        await db.insert(chatMessages).values({
+          connectionId: conn.id,
+          senderId: isSenderFirst ? conn.senderId : conn.receiverId,
+          receiverId: isSenderFirst ? conn.receiverId : conn.senderId,
+          message: messages[Math.floor(Math.random() * messages.length)],
+        });
+        messageCount++;
+      }
+      console.log(`  💬 Added messages for connection ${conn.id.substring(0, 8)}...`);
+    }
+
+    // Create voice channels for some accepted connections
+    console.log("\n🎤 Creating voice channels...");
+    let voiceChannelCount = 0;
+    const connectionsForVoice = acceptedConnectionRequests.slice(0, 3);
+
+    for (const conn of connectionsForVoice) {
+      await db.insert(voiceChannels).values({
+        connectionId: conn.id,
+        hmsRoomId: `room-${conn.id}`,
+      });
+      voiceChannelCount++;
+      console.log(`  🎤 Voice channel for connection ${conn.id.substring(0, 8)}...`);
+    }
+
+    // Create group voice channels
+    console.log("\n👥 Creating group voice channels...");
+    let groupChannelCount = 0;
+    
+    if (createdUsers.length >= 4) {
+      const [groupChannel1] = await db.insert(groupVoiceChannels).values({
+        name: "Squad Gaming Session",
+        creatorId: createdUsers[0].id,
+        hmsRoomId: `group-room-1`,
+        inviteCode: `squad-${Math.random().toString(36).substring(7)}`,
+        isActive: true,
+      }).returning();
+
+      await db.insert(groupVoiceMembers).values([
+        { channelId: groupChannel1.id, userId: createdUsers[0].id, isActive: true, isMuted: false },
+        { channelId: groupChannel1.id, userId: createdUsers[1].id, isActive: true, isMuted: false },
+        { channelId: groupChannel1.id, userId: createdUsers[2].id, isActive: false, isMuted: false },
+      ]);
+      groupChannelCount++;
+      console.log(`  👥 Group channel: ${groupChannel1.name} (3 members)`);
+
+      const [groupChannel2] = await db.insert(groupVoiceChannels).values({
+        name: "Competitive Team",
+        creatorId: createdUsers[3].id,
+        hmsRoomId: `group-room-2`,
+        inviteCode: `team-${Math.random().toString(36).substring(7)}`,
+        isActive: true,
+      }).returning();
+
+      await db.insert(groupVoiceMembers).values([
+        { channelId: groupChannel2.id, userId: createdUsers[3].id, isActive: true, isMuted: false },
+        { channelId: groupChannel2.id, userId: createdUsers[4].id, isActive: true, isMuted: true },
+        { channelId: groupChannel2.id, userId: createdUsers[5].id, isActive: false, isMuted: false },
+        { channelId: groupChannel2.id, userId: createdUsers[6].id, isActive: false, isMuted: false },
+      ]);
+      groupChannelCount++;
+      console.log(`  👥 Group channel: ${groupChannel2.name} (4 members)`);
+    }
+
     console.log("\n✨ Successfully seeded comprehensive dummy data!");
     console.log(`   👥 ${createdUsers.length} users`);
     console.log(`   🎮 ${createdMatchRequests.length} match requests`);
     console.log(`   🤝 ${connectionRequestCount} connection requests`);
     console.log(`   📋 ${applicationCount} match applications`);
-    console.log("\n📝 Check the Discover, Match Feed, and Connections pages to test!");
+    console.log(`   💬 ${messageCount} chat messages`);
+    console.log(`   🎤 ${voiceChannelCount} voice channels`);
+    console.log(`   👥 ${groupChannelCount} group voice channels`);
+    console.log("\n📝 Check the Messages and Voice Channels to test!");
   } catch (error) {
     console.error("❌ Error seeding dummy users:", error);
     throw error;

@@ -1279,6 +1279,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/notifications/delete-all', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      await storage.deleteAllNotifications(userId);
+      res.json({ message: "All notifications deleted" });
+    } catch (error) {
+      console.error("Error deleting all notifications:", error);
+      res.status(500).json({ message: "Failed to delete all notifications" });
+    }
+  });
+
   app.delete('/api/notifications/:id', authMiddleware, async (req: any, res) => {
     try {
       const userId = req.user.id;
@@ -2361,6 +2372,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error leaving group voice channel:", error);
       res.status(500).json({ message: "Failed to leave channel" });
+    }
+  });
+
+  app.post('/api/group-voice/exit', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { channelId } = req.body;
+
+      if (!channelId) {
+        return res.status(400).json({ message: "Channel ID required" });
+      }
+
+      const channel = await storage.getGroupVoiceChannel(channelId);
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+
+      await storage.removeGroupVoiceMember(channelId, userId);
+
+      const remainingMembers = await storage.getGroupVoiceMembers(channelId);
+      if (remainingMembers.length === 0) {
+        try {
+          await storage.deleteGroupVoiceChannel(channelId, channel.creatorId);
+          console.log(`[Group Voice] Channel ${channelId} automatically deleted - no members remaining`);
+        } catch (deleteError) {
+          console.error('[Group Voice] Error during automatic cleanup:', deleteError);
+        }
+      }
+
+      res.json({ success: true, channelDeleted: remainingMembers.length === 0 });
+    } catch (error) {
+      console.error("Error exiting group voice channel:", error);
+      res.status(500).json({ message: "Failed to exit channel" });
     }
   });
 

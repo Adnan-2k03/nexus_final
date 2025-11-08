@@ -137,6 +137,27 @@ export function NotificationBell() {
     },
   });
 
+  const deleteAllMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("DELETE", "/api/notifications/delete-all");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/notifications/unread-count"] });
+      toast({
+        title: "Success",
+        description: "All notifications deleted",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete all notifications",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleNotificationClick = (notification: Notification) => {
     if (notification.isRead === false) {
       markAsReadMutation.mutate(notification.id);
@@ -234,19 +255,34 @@ export function NotificationBell() {
                 </Badge>
               )}
             </DialogTitle>
-            {unreadCount > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => markAllAsReadMutation.mutate()}
-                disabled={markAllAsReadMutation.isPending}
-                className="gap-2"
-                data-testid="button-mark-all-read"
-              >
-                <CheckCheck className="h-4 w-4" />
-                Mark All Read
-              </Button>
-            )}
+            <div className="flex gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => markAllAsReadMutation.mutate()}
+                  disabled={markAllAsReadMutation.isPending}
+                  className="gap-2"
+                  data-testid="button-mark-all-read"
+                >
+                  <CheckCheck className="h-4 w-4" />
+                  Mark All Read
+                </Button>
+              )}
+              {notifications.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => deleteAllMutation.mutate()}
+                  disabled={deleteAllMutation.isPending}
+                  className="gap-2 text-destructive hover:bg-destructive/10"
+                  data-testid="button-delete-all"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete All
+                </Button>
+              )}
+            </div>
           </div>
         </DialogHeader>
         <Separator />

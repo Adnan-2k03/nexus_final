@@ -252,6 +252,37 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
     }
   };
 
+  const exitChannel = async () => {
+    try {
+      if (isConnected) {
+        await hmsActions.leave();
+      }
+      
+      const response = await apiRequest("POST", "/api/group-voice/exit", { channelId: channel.id });
+      
+      // Clear active voice channel from context
+      setVoiceChannelActive(null);
+      
+      const wasDeleted = (response as any).channelDeleted;
+      
+      toast({
+        title: wasDeleted ? "Channel deleted" : "Exited channel",
+        description: wasDeleted 
+          ? "Channel was automatically deleted as you were the last member"
+          : "You've permanently left the channel",
+      });
+      
+      if (onLeave) onLeave();
+    } catch (error) {
+      console.error("Error exiting channel:", error);
+      toast({
+        title: "Failed to exit",
+        description: "Could not exit the channel. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const toggleAudio = async () => {
     await hmsActions.setLocalAudioEnabled(!isLocalAudioEnabled);
   };
@@ -400,22 +431,34 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
               </p>
             </div>
             
-            <div className="flex gap-2">
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <Button
+                  onClick={joinChannel}
+                  disabled={isJoining}
+                  className="flex-1"
+                  data-testid="button-join-channel"
+                >
+                  {isJoining ? "Joining..." : "Join Voice Channel"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={copyInviteLink}
+                  data-testid="button-copy-invite"
+                >
+                  {copiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
               <Button
-                onClick={joinChannel}
-                disabled={isJoining}
-                className="flex-1"
-                data-testid="button-join-channel"
+                variant="ghost"
+                size="sm"
+                onClick={exitChannel}
+                className="w-full text-destructive hover:bg-destructive/10"
+                data-testid="button-exit-channel"
               >
-                {isJoining ? "Joining..." : "Join Voice Channel"}
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={copyInviteLink}
-                data-testid="button-copy-invite"
-              >
-                {copiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                <X className="h-4 w-4 mr-1" />
+                Exit Channel
               </Button>
             </div>
 

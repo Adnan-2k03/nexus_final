@@ -426,8 +426,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
             {filteredUsers.map((user, index) => (
             <Card
               key={user.id}
-              className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer flex flex-col hover-elevate animate-in fade-in"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className="hover:shadow-lg hover:scale-[1.02] transition-all duration-200 cursor-pointer flex flex-col hover-elevate"
               onClick={() => setSelectedUser(user)}
               data-testid={`card-user-${user.id}`}
             >

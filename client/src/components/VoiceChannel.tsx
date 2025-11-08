@@ -639,13 +639,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       {/* Fullscreen Screen Share Dialog */}
       {!hideScreenShare && fullscreenPeerId && (
         <Dialog open={fullscreenPeerId !== null} onOpenChange={(open) => !open && setFullscreenPeerId(null)}>
-          <DialogContent className="max-w-[95vw] h-[95vh]">
+          <DialogContent className="max-w-[95vw] h-[95vh] flex flex-col">
             <DialogHeader>
               <DialogTitle>
-                {peers.find(p => p.id === fullscreenPeerId)?.name}'s Screen Share
+                {otherUserName}'s Screen Share
               </DialogTitle>
             </DialogHeader>
-            <div className="flex-1 bg-black rounded-lg overflow-hidden">
+            <div className="flex-1 bg-black rounded-lg overflow-hidden min-h-0">
               <video
                 ref={screenShareVideoRef}
                 autoPlay
@@ -665,7 +665,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
           data-testid="minimized-screenshare">
           <div className="flex items-center justify-between p-2 bg-primary text-primary-foreground">
             <span className="text-sm font-medium">
-              {peers.find(p => p.id === minimizedPeerId)?.name}'s Screen
+              {otherUserName}'s Screen
             </span>
             <Button
               size="sm"
