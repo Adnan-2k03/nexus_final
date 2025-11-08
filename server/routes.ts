@@ -1971,6 +1971,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         if (!hasOtherConnections) {
           try {
+            // Clean up group voice channel active status
+            await storage.cleanupUserActiveStatus(userId);
+            
             const userConnections = await storage.getUserConnections(userId);
             const connectionRequests = await storage.getConnectionRequests(userId);
             

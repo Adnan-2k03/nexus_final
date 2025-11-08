@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
@@ -28,7 +28,6 @@ import {
   Copy,
   Check,
   X,
-  ChevronDown,
   Volume2,
   VolumeX,
 } from "lucide-react";
@@ -68,13 +67,11 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
   const [remotePeerVolumes, setRemotePeerVolumes] = useState<Record<string, number>>({});
   const [isRemoteAudioMuted, setIsRemoteAudioMuted] = useState(false);
+  const [membersSheetOpen, setMembersSheetOpen] = useState(false);
   const { toast} = useToast();
   
   // Check if channel has active members
   const hasActiveMembers = members.some(m => m.isActive);
-  
-  // Auto-expand members if channel has active users
-  const [isMembersOpen, setIsMembersOpen] = useState(hasActiveMembers);
 
   const { data: profileUser } = useQuery<User>({
     queryKey: ["/api/users", profileDialogUserId],
@@ -94,13 +91,6 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   useEffect(() => {
     fetchMembers();
   }, [channel.id]);
-  
-  // Auto-expand members when channel becomes active
-  useEffect(() => {
-    if (hasActiveMembers && !isMembersOpen) {
-      setIsMembersOpen(true);
-    }
-  }, [hasActiveMembers]);
 
   useEffect(() => {
     hmsActions.setLogLevel(4);
@@ -394,13 +384,13 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
     <div className="space-y-4">
       {!isInThisGroupChannel ? (
         <Card data-testid="card-join-channel">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-lg">
               <Users className="h-5 w-5" />
               {channel.name}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="text-sm text-muted-foreground">
               <p>
                 {channel.memberCount} member{channel.memberCount !== 1 ? "s" : ""}
@@ -438,21 +428,21 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                     Active Now ({members.filter(m => m.isActive).length})
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
                   {members.filter(member => member.isActive).map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1.5"
+                      className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 rounded-full px-2 py-1"
                       data-testid={`active-member-${member.userId}`}
                     >
-                      <Avatar className="h-6 w-6 ring-2 ring-green-500">
+                      <Avatar className="h-5 w-5 ring-1 ring-green-500">
                         <AvatarImage src={member.profileImageUrl || undefined} />
                         <AvatarFallback className="text-xs">
                           {member.gamertag?.[0]?.toUpperCase() || "?"}
                         </AvatarFallback>
                       </Avatar>
                       <span
-                        className="text-sm font-medium cursor-pointer hover:underline"
+                        className="text-xs font-medium cursor-pointer hover:underline"
                         onClick={() => {
                           setProfileDialogUserId(member.userId);
                           setOpenProfileDialog(true);
@@ -461,81 +451,87 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                       >
                         {member.gamertag || "Unknown"}
                       </span>
-                      <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid={`active-indicator-${member.userId}`} />
+                      <div className="h-1.5 w-1.5 bg-green-500 rounded-full animate-pulse" data-testid={`active-indicator-${member.userId}`} />
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* All Members - Collapsible */}
-            <Collapsible open={isMembersOpen} onOpenChange={setIsMembersOpen}>
-              <div className="space-y-2">
-                <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full flex items-center justify-between p-2 hover:bg-accent"
-                    data-testid="button-toggle-all-members"
-                  >
-                    <span className="text-xs font-medium">
-                      All Members ({members.length})
-                    </span>
-                    <ChevronDown className={`h-4 w-4 transition-transform ${isMembersOpen ? 'rotate-180' : ''}`} />
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    {members.map((member) => (
-                      <div
-                        key={member.id}
-                        className={`flex items-center gap-2 rounded-full px-3 py-1 ${
-                          member.isActive ? 'bg-green-500/10 border border-green-500/30' : 'bg-muted'
-                        }`}
-                        data-testid={`member-${member.userId}`}
-                      >
-                        <Avatar className={`h-5 w-5 ${member.isActive ? 'ring-1 ring-green-500' : ''}`}>
-                          <AvatarImage src={member.profileImageUrl || undefined} />
-                          <AvatarFallback className="text-xs">
-                            {member.gamertag?.[0]?.toUpperCase() || "?"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span
-                          className="text-xs cursor-pointer hover:underline"
-                          onClick={() => {
-                            setProfileDialogUserId(member.userId);
-                            setOpenProfileDialog(true);
-                          }}
-                          data-testid={`member-name-${member.userId}`}
-                        >
-                          {member.gamertag || "Unknown"}
-                        </span>
-                        {member.isActive && (
-                          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid={`active-${member.userId}`} />
-                        )}
-                        {channel.creatorId === currentUserId && member.userId !== currentUserId && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => handleRemoveMember(member.userId)}
-                            data-testid={`button-remove-${member.userId}`}
+            {/* All Members - Sheet Trigger */}
+            <Sheet open={membersSheetOpen} onOpenChange={setMembersSheetOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full"
+                  data-testid="button-view-all-members"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  View All Members ({members.length})
+                </Button>
+              </SheetTrigger>
+              <SheetContent data-testid="sheet-channel-members">
+                <SheetHeader>
+                  <SheetTitle data-testid="title-channel-members">Channel Members</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6 space-y-3">
+                  {members.map((member) => (
+                    <div
+                      key={member.id}
+                      className={`flex items-center gap-3 p-3 rounded-md ${
+                        member.isActive ? 'bg-green-500/10 border border-green-500/30' : 'bg-muted'
+                      }`}
+                      data-testid={`member-${member.userId}`}
+                    >
+                      <Avatar className={`h-10 w-10 ${member.isActive ? 'ring-2 ring-green-500' : ''}`}>
+                        <AvatarImage src={member.profileImageUrl || undefined} />
+                        <AvatarFallback>
+                          {member.gamertag?.[0]?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="font-medium cursor-pointer hover:underline truncate"
+                            onClick={() => {
+                              setProfileDialogUserId(member.userId);
+                              setOpenProfileDialog(true);
+                            }}
+                            data-testid={`member-name-${member.userId}`}
                           >
-                            <X className="h-3 w-3" />
-                          </Button>
+                            {member.gamertag || "Unknown"}
+                          </span>
+                          {member.isActive && (
+                            <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" data-testid={`active-${member.userId}`} />
+                          )}
+                        </div>
+                        {member.isActive && (
+                          <p className="text-xs text-green-600 dark:text-green-400">Active in voice</p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </CollapsibleContent>
-              </div>
-            </Collapsible>
+                      {channel.creatorId === currentUserId && member.userId !== currentUserId && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => handleRemoveMember(member.userId)}
+                          data-testid={`button-remove-${member.userId}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </SheetContent>
+            </Sheet>
           </CardContent>
         </Card>
       ) : (
         <Card className="bg-primary/5 border-primary/20" data-testid="card-in-channel">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-between text-lg">
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <Users className="h-5 w-5" />
@@ -554,7 +550,7 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
               </Button>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <div className="grid grid-cols-3 gap-2">
               <Button
                 size="sm"
@@ -666,30 +662,35 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
               <div>
                 <p className="text-sm font-medium mb-2">Screen Shares</p>
                 <div className="grid gap-2">
-                  {screenSharePeers.map((peer) => (
-                    <div
-                      key={peer.id}
-                      className="bg-black rounded-lg overflow-hidden aspect-video"
-                      data-testid={`screenshare-${peer.id}`}
-                    >
-                      <video
-                        ref={(videoEl) => {
-                          if (videoEl && peer.auxiliaryTracks[0]) {
-                            const track = peer.auxiliaryTracks[0] as any;
-                            const trackId = typeof track === 'string' ? track : track.id;
-                            hmsActions.attachVideo(trackId, videoEl);
-                          }
-                        }}
-                        autoPlay
-                        muted
-                        playsInline
-                        className="w-full h-full object-contain"
-                      />
-                      <p className="text-xs text-white bg-black/50 px-2 py-1">
-                        {peer.name}'s screen
-                      </p>
-                    </div>
-                  ))}
+                  {screenSharePeers.map((peer) => {
+                    const member = members.find((m: any) => m.userId === peer.name);
+                    return (
+                      <div
+                        key={peer.id}
+                        className="bg-black rounded-lg overflow-hidden aspect-video relative"
+                        data-testid={`screenshare-${peer.id}`}
+                      >
+                        <video
+                          ref={(videoEl) => {
+                            if (videoEl && peer.auxiliaryTracks[0]) {
+                              const track = peer.auxiliaryTracks[0] as any;
+                              const trackId = typeof track === 'string' ? track : track.id;
+                              hmsActions.attachVideo(trackId, videoEl);
+                            }
+                          }}
+                          autoPlay
+                          muted
+                          playsInline
+                          className="w-full h-full object-contain"
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                          <p className="text-xs text-white font-medium">
+                            {member?.gamertag || peer.name}'s screen
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

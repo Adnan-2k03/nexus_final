@@ -181,6 +181,7 @@ export interface IStorage {
   getGroupVoiceMembers(channelId: string): Promise<GroupVoiceMemberWithUser[]>;
   setGroupMemberActive(channelId: string, userId: string, isActive: boolean): Promise<GroupVoiceMember>;
   setGroupMemberMuted(channelId: string, userId: string, isMuted: boolean): Promise<GroupVoiceMember>;
+  cleanupUserActiveStatus(userId: string): Promise<void>;
   
   // Group voice channel invite operations
   createGroupVoiceInvite(channelId: string, inviterId: string, inviteeId: string): Promise<GroupVoiceInvite>;
@@ -1594,6 +1595,13 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updated;
+  }
+
+  async cleanupUserActiveStatus(userId: string): Promise<void> {
+    await db
+      .update(groupVoiceMembers)
+      .set({ isActive: false })
+      .where(eq(groupVoiceMembers.userId, userId));
   }
 
   // Group voice channel invite operations
