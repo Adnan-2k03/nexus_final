@@ -394,12 +394,13 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                     <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/80 to-transparent">
                       <p className="text-xs text-white">{peer.name}'s screen</p>
                     </div>
-                    <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 flex gap-2 opacity-80 hover:opacity-100 transition-opacity">
                       <Button
                         size="sm"
                         variant="secondary"
                         onClick={() => setFullscreenPeerId(peer.id)}
                         data-testid={`button-fullscreen-${peer.id}`}
+                        className="backdrop-blur-sm bg-black/40 hover:bg-black/60 border-white/20 text-white"
                       >
                         <Maximize2 className="h-4 w-4" />
                       </Button>
@@ -408,6 +409,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                         variant="secondary"
                         onClick={() => setMinimizedPeerId(peer.id)}
                         data-testid={`button-minimize-${peer.id}`}
+                        className="backdrop-blur-sm bg-black/40 hover:bg-black/60 border-white/20 text-white"
                       >
                         <Minimize2 className="h-4 w-4" />
                       </Button>
