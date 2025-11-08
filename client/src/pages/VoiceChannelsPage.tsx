@@ -27,6 +27,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   const [selectedFriends, setSelectedFriends] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [friendSearchTerm, setFriendSearchTerm] = useState("");
   const [activeChannelId, setActiveChannelId] = useState<string | null>(() => {
     return localStorage.getItem('activeGroupVoiceChannelId');
   });
@@ -235,6 +236,30 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
       return;
     }
     inviteMutation.mutate({ channelId: selectedChannel.id, userIds: selectedFriends });
+  };
+
+  const getFilteredAndSortedFriends = () => {
+    const friends = getFriendsList();
+    
+    // Filter by search term
+    const filtered = friends.filter(friend => {
+      if (!friendSearchTerm.trim()) return true;
+      const searchLower = friendSearchTerm.toLowerCase();
+      return (friend.gamertag?.toLowerCase().includes(searchLower) || 
+              friend.firstName?.toLowerCase().includes(searchLower));
+    });
+    
+    // Sort by status: not in channel (top), invited pending (middle), already members (bottom)
+    return filtered.sort((a, b) => {
+      const statusA = getInviteStatus(selectedChannel?.id || '', a.id);
+      const statusB = getInviteStatus(selectedChannel?.id || '', b.id);
+      
+      const priorityMap = { 'none': 0, 'sent': 1, 'member': 2 };
+      const priorityA = priorityMap[statusA.status as keyof typeof priorityMap] || 0;
+      const priorityB = priorityMap[statusB.status as keyof typeof priorityMap] || 0;
+      
+      return priorityA - priorityB;
+    });
   };
 
   const getFriendsList = () => {
@@ -586,14 +611,33 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
         </div>
       </div>
 
-      <Dialog open={inviteDialogOpen} onOpenChange={setInviteDialogOpen}>
+      <Dialog open={inviteDialogOpen} onOpenChange={(open) => {
+        setInviteDialogOpen(open);
+        if (!open) {
+          setFriendSearchTerm("");
+          setSelectedFriends([]);
+        }
+      }}>
         <DialogContent data-testid="dialog-invite-friends">
           <DialogHeader>
             <DialogTitle>Invite Friends</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none z-10" />
+              <Input
+                type="text"
+                placeholder="Search friends..."
+                value={friendSearchTerm}
+                onChange={(e) => setFriendSearchTerm(e.target.value)}
+                className="pl-10"
+                data-testid="input-search-friends"
+              />
+            </div>
+            
             <div className="max-h-80 overflow-y-auto space-y-2">
-              {getFriendsList().map((friend) => {
+              {getFilteredAndSortedFriends().map((friend) => {
                 const inviteStatus = getInviteStatus(selectedChannel?.id || '', friend.id);
                 const isDisabled = inviteStatus.status !== 'none';
                 
@@ -644,9 +688,11 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                   </div>
                 );
               })}
-              {getFriendsList().length === 0 && (
+              {getFilteredAndSortedFriends().length === 0 && (
                 <p className="text-center text-muted-foreground py-4">
-                  No friends to invite. Add friends first!
+                  {friendSearchTerm.trim() ? 
+                    "No friends found matching your search." : 
+                    "No friends to invite. Add friends first!"}
                 </p>
               )}
             </div>
