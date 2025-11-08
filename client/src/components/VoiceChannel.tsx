@@ -159,6 +159,21 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
   const joinChannel = async () => {
     setIsJoining(true);
     try {
+      // If already connected to a room, leave it first
+      if (isConnected) {
+        console.log('[HMS] Already connected to a room, leaving first...');
+        await hmsActions.leave();
+        setVoiceChannelActive(null);
+        
+        // Wait a moment for HMS to fully disconnect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        toast({
+          title: "Switched channels",
+          description: "Left previous voice call to join this conversation",
+        });
+      }
+
       console.log('[HMS] Requesting auth token for voice channel...');
       const response = await fetch(getApiUrl('/api/voice/join'), {
         method: 'POST',

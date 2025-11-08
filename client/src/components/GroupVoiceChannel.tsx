@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { getApiUrl } from "@/lib/api";
 import type { GroupVoiceChannelWithDetails, GroupVoiceMemberWithUser } from "@shared/schema";
+import { useHMSContext } from "@/contexts/HMSContext";
 
 interface GroupVoiceChannelProps {
   channel: GroupVoiceChannelWithDetails;
@@ -49,6 +50,7 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
   const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
   const hmsMessages = useHMSStore(selectHMSMessages);
+  const { currentConnectionId, setVoiceChannelActive } = useHMSContext();
   
   const [isJoining, setIsJoining] = useState(false);
   const [members, setMembers] = useState<GroupVoiceMemberWithUser[]>([]);
@@ -145,6 +147,37 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   const joinChannel = async () => {
     setIsJoining(true);
     try {
+      // If already connected to a room, leave it first
+      if (isConnected) {
+        console.log('[HMS] Already connected to a room, leaving first...');
+        
+        // If there's an active direct voice channel, notify backend to clean it up
+        if (currentConnectionId) {
+          try {
+            await fetch(getApiUrl('/api/voice/leave'), {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ connectionId: currentConnectionId }),
+            });
+            console.log('[HMS] Notified backend to leave previous direct voice channel');
+          } catch (error) {
+            console.warn('[HMS] Failed to notify backend about leaving previous channel:', error);
+          }
+        }
+        
+        await hmsActions.leave();
+        setVoiceChannelActive(null);
+        
+        // Wait a moment for HMS to fully disconnect
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        toast({
+          title: "Switched channels",
+          description: "Left previous voice call to join this group channel",
+        });
+      }
+
       console.log('[HMS] Requesting auth token from backend...');
       const response = await apiRequest(
         "POST",

@@ -252,19 +252,21 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
       } as User;
     }).filter(f => f.id && f.gamertag);
     
-    // Get friends from direct connection requests
-    const connectionFriends = connectionRequests.map(conn => {
-      const iAmSender = conn.senderId === currentUserId;
-      const friendId = iAmSender ? conn.receiverId : conn.senderId;
-      const friendGamertag = iAmSender ? conn.receiverGamertag : conn.senderGamertag;
-      const friendProfileImageUrl = iAmSender ? conn.receiverProfileImageUrl : conn.senderProfileImageUrl;
-      
-      return {
-        id: friendId,
-        gamertag: friendGamertag,
-        profileImageUrl: friendProfileImageUrl,
-      } as User;
-    }).filter(f => f.id && f.gamertag);
+    // Get friends from direct connection requests (only accepted connections)
+    const connectionFriends = connectionRequests
+      .filter(conn => conn.status === 'accepted')
+      .map(conn => {
+        const iAmSender = conn.senderId === currentUserId;
+        const friendId = iAmSender ? conn.receiverId : conn.senderId;
+        const friendGamertag = iAmSender ? conn.receiverGamertag : conn.senderGamertag;
+        const friendProfileImageUrl = iAmSender ? conn.receiverProfileImageUrl : conn.senderProfileImageUrl;
+        
+        return {
+          id: friendId,
+          gamertag: friendGamertag,
+          profileImageUrl: friendProfileImageUrl,
+        } as User;
+      }).filter(f => f.id && f.gamertag);
     
     // Combine and deduplicate by user ID
     const allFriends = [...matchFriends, ...connectionFriends];
@@ -552,7 +554,7 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span>{channel.name}</span>
-                      {channel.creatorId === currentUserId && (
+                      {channel.members?.some(m => m.userId === currentUserId) && (
                         <Button
                           size="sm"
                           variant="outline"
