@@ -8,7 +8,16 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 
 ## Recent Updates (Nov 8, 2025)
 
-### Voice Channel Enhancements
+### Latest Enhancements
+- **Dummy Data Seeding**: Created comprehensive seed script with realistic users, connections, messages, and voice channels for testing
+- **Voice Channel Exit**: Implemented proper exit functionality - members can now fully exit channels (not just leave calls), with automatic cleanup when empty
+- **Notifications**: Added "Delete All" feature with backend route and proper cache invalidation
+- **UI Improvements**: Removed fade-in animations from Discover page for snappier response
+- **Screen Sharing Fixes**: 
+  - Fixed fullscreen black screen issue with proper flex layout
+  - Fixed missing gamertag display in pop-out window (now shows actual gamertag instead of peer ID)
+
+### Voice Channel Features
 - Fixed individual screen sharing black screen issue with proper video track lifecycle management
 - Added speaker/mute button to group voice channels with volume state persistence
 - Active voice channel members now display by default without requiring button clicks
