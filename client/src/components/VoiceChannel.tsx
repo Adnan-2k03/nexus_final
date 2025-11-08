@@ -651,6 +651,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
                 autoPlay
                 muted
                 playsInline
+                controls
                 className="w-full h-full object-contain"
                 data-testid="fullscreen-video"
               />
@@ -659,30 +660,35 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
         </Dialog>
       )}
 
-      {/* Minimized Pop-out Screen Share */}
+      {/* Minimized Pop-out Screen Share - Portal to render outside dialog */}
       {!hideScreenShare && minimizedPeerId && (
-        <div className="fixed bottom-4 right-4 w-80 bg-background border-2 border-primary rounded-lg shadow-2xl z-50"
-          data-testid="minimized-screenshare">
-          <div className="flex items-center justify-between p-2 bg-primary text-primary-foreground">
-            <span className="text-sm font-medium">
-              {otherUserName}'s Screen
-            </span>
+        <div className="fixed bottom-4 right-4 w-96 bg-background border-2 border-primary rounded-lg shadow-2xl z-[9999]"
+          data-testid="minimized-screenshare"
+          style={{ position: 'fixed' }}>
+          <div className="flex items-center justify-between p-3 bg-primary text-primary-foreground rounded-t-lg">
+            <div className="flex items-center gap-2">
+              <MonitorUp className="h-4 w-4" />
+              <span className="text-sm font-medium">
+                {otherUserName}'s Screen Share
+              </span>
+            </div>
             <Button
               size="sm"
               variant="ghost"
               onClick={() => setMinimizedPeerId(null)}
-              className="h-6 w-6 p-0 hover:bg-primary-foreground/20"
+              className="h-7 w-7 p-0 hover:bg-primary-foreground/20"
               data-testid="button-close-minimized"
             >
               ✕
             </Button>
           </div>
-          <div className="aspect-video bg-black">
+          <div className="aspect-video bg-black rounded-b-lg overflow-hidden">
             <video
               ref={minimizedVideoRef}
               autoPlay
               muted
               playsInline
+              controls
               className="w-full h-full object-contain"
               data-testid="minimized-video"
             />

@@ -450,17 +450,18 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                   {copiedInvite ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={exitChannel}
-                className="w-full text-destructive hover:bg-destructive/10"
-                data-testid="button-exit-channel"
-              >
-                <X className="h-4 w-4 mr-1" />
-                Exit Channel
-              </Button>
             </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={exitChannel}
+              className="text-xs text-destructive hover:bg-destructive/10"
+              data-testid="button-exit-channel"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Exit Channel
+            </Button>
 
             {/* Active Members - Always visible when there are active members */}
             {hasActiveMembers && (
@@ -724,6 +725,7 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
                           autoPlay
                           muted
                           playsInline
+                          controls
                           className="w-full h-full object-contain"
                         />
                         <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
