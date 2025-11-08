@@ -67,18 +67,31 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     queryKey: ['/api/group-voice/channels'],
   });
 
-  // Filter channels by search term
-  const channels = allChannels.filter(channel => {
-    if (!searchTerm.trim()) return true;
-    
-    const searchLower = searchTerm.toLowerCase();
-    const nameMatch = channel.name.toLowerCase().includes(searchLower);
-    const memberMatch = channel.members?.some(member =>
-      member.gamertag?.toLowerCase().includes(searchLower)
-    );
-    
-    return nameMatch || memberMatch;
-  });
+  // Filter channels by search term and sort by active members
+  const channels = allChannels
+    .filter(channel => {
+      if (!searchTerm.trim()) return true;
+      
+      const searchLower = searchTerm.toLowerCase();
+      const nameMatch = channel.name.toLowerCase().includes(searchLower);
+      const memberMatch = channel.members?.some(member =>
+        member.gamertag?.toLowerCase().includes(searchLower)
+      );
+      
+      return nameMatch || memberMatch;
+    })
+    .sort((a, b) => {
+      // Check if channels have active members
+      const aHasActiveMembers = a.members?.some(m => m.isActive) || false;
+      const bHasActiveMembers = b.members?.some(m => m.isActive) || false;
+      
+      // Sort channels with active members to the top
+      if (aHasActiveMembers && !bHasActiveMembers) return -1;
+      if (!aHasActiveMembers && bHasActiveMembers) return 1;
+      
+      // If both have active members or both don't, maintain original order
+      return 0;
+    });
 
   const { data: allInvites = [] } = useQuery<any[]>({
     queryKey: ['/api/group-voice/invites'],

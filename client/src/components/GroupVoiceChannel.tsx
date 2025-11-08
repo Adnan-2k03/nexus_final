@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ProfileDialog } from "@/components/ui/profile-dialog";
 import { useQuery } from "@tanstack/react-query";
 import type { User } from "@shared/schema";
@@ -27,6 +28,7 @@ import {
   Copy,
   Check,
   X,
+  ChevronDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -62,7 +64,13 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   const [copiedInvite, setCopiedInvite] = useState(false);
   const [profileDialogUserId, setProfileDialogUserId] = useState<string | null>(null);
   const [openProfileDialog, setOpenProfileDialog] = useState(false);
-  const { toast } = useToast();
+  const { toast} = useToast();
+  
+  // Check if channel has active members
+  const hasActiveMembers = members.some(m => m.isActive);
+  
+  // Auto-expand members if channel has active users
+  const [isMembersOpen, setIsMembersOpen] = useState(hasActiveMembers);
 
   const { data: profileUser } = useQuery<User>({
     queryKey: ["/api/users", profileDialogUserId],
@@ -82,6 +90,13 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   useEffect(() => {
     fetchMembers();
   }, [channel.id]);
+  
+  // Auto-expand members when channel becomes active
+  useEffect(() => {
+    if (hasActiveMembers && !isMembersOpen) {
+      setIsMembersOpen(true);
+    }
+  }, [hasActiveMembers]);
 
   useEffect(() => {
     hmsActions.setLogLevel(4);
@@ -340,49 +355,71 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
               </Button>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-xs font-medium">Members:</p>
-              <div className="flex flex-wrap gap-2">
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-2 bg-muted rounded-full px-3 py-1"
-                    data-testid={`member-${member.userId}`}
+            <Collapsible open={isMembersOpen} onOpenChange={setIsMembersOpen}>
+              <div className="space-y-2">
+                <CollapsibleTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full flex items-center justify-between p-2 hover:bg-accent"
+                    data-testid="button-toggle-members"
                   >
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={member.profileImageUrl || undefined} />
-                      <AvatarFallback>
-                        {member.gamertag?.[0]?.toUpperCase() || "?"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span
-                      className="text-xs cursor-pointer hover:underline"
-                      onClick={() => {
-                        setProfileDialogUserId(member.userId);
-                        setOpenProfileDialog(true);
-                      }}
-                      data-testid={`member-name-${member.userId}`}
-                    >
-                      {member.gamertag || "Unknown"}
+                    <span className="text-xs font-medium">
+                      Members ({members.length})
+                      {hasActiveMembers && (
+                        <span className="ml-2 inline-flex items-center gap-1">
+                          <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse" />
+                          <span className="text-green-600 dark:text-green-400">Active</span>
+                        </span>
+                      )}
                     </span>
-                    {member.isActive && (
-                      <div className="h-2 w-2 bg-green-500 rounded-full" data-testid={`active-${member.userId}`} />
-                    )}
-                    {channel.creatorId === currentUserId && member.userId !== currentUserId && (
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
-                        onClick={() => handleRemoveMember(member.userId)}
-                        data-testid={`button-remove-${member.userId}`}
+                    <ChevronDown className={`h-4 w-4 transition-transform ${isMembersOpen ? 'rotate-180' : ''}`} />
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {members.map((member) => (
+                      <div
+                        key={member.id}
+                        className="flex items-center gap-2 bg-muted rounded-full px-3 py-1"
+                        data-testid={`member-${member.userId}`}
                       >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    )}
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={member.profileImageUrl || undefined} />
+                          <AvatarFallback>
+                            {member.gamertag?.[0]?.toUpperCase() || "?"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span
+                          className="text-xs cursor-pointer hover:underline"
+                          onClick={() => {
+                            setProfileDialogUserId(member.userId);
+                            setOpenProfileDialog(true);
+                          }}
+                          data-testid={`member-name-${member.userId}`}
+                        >
+                          {member.gamertag || "Unknown"}
+                        </span>
+                        {member.isActive && (
+                          <div className="h-2 w-2 bg-green-500 rounded-full" data-testid={`active-${member.userId}`} />
+                        )}
+                        {channel.creatorId === currentUserId && member.userId !== currentUserId && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="h-4 w-4 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => handleRemoveMember(member.userId)}
+                            data-testid={`button-remove-${member.userId}`}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </CollapsibleContent>
               </div>
-            </div>
+            </Collapsible>
           </CardContent>
         </Card>
       ) : (
