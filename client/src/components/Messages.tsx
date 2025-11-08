@@ -593,6 +593,7 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
                       currentUserId={currentUserId}
                       otherUserId={otherUserId}
                       otherUserName={displayName}
+                      hideScreenShare={true}
                     />
                   </TabsContent>
                 </Tabs>
