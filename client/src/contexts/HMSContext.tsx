@@ -38,7 +38,8 @@ export function HMSProvider({ children }: { children: ReactNode }) {
       try {
         const parsed = JSON.parse(savedData) as ActiveVoiceChannel;
         setActiveVoiceChannel(parsed);
-        setIsInVoiceChannel(true);
+        // Note: isInVoiceChannel will be set to true when the user actually
+        // connects to the HMS room, not just when we load from sessionStorage
       } catch (e) {
         console.warn('Failed to parse saved voice channel data');
         sessionStorage.removeItem('activeVoiceChannel');
