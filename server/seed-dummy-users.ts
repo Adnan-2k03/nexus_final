@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, matchRequests, gameProfiles, hobbies } from "@shared/schema";
+import { users, matchRequests, gameProfiles, hobbies, connectionRequests, matchConnections } from "@shared/schema";
 
 const locations = [
   { city: "Los Angeles, CA", lat: 34.0522, lng: -118.2437 },
@@ -55,6 +55,10 @@ export async function seedDummyUsers() {
   console.log("🌱 Starting to seed dummy users...");
 
   try {
+    const createdUsers: any[] = [];
+    const createdMatchRequests: any[] = [];
+
+    // Create users with their profiles, hobbies, and match requests
     for (let i = 0; i < dummyUsers.length; i++) {
       const userData = dummyUsers[i];
       const location = locations[i];
@@ -80,6 +84,7 @@ export async function seedDummyUsers() {
         profileImageUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.gamertag}`,
       }).returning();
 
+      createdUsers.push(user);
       console.log(`✅ Created user: ${user.gamertag}`);
 
       if (Math.random() > 0.4) {
@@ -109,7 +114,7 @@ export async function seedDummyUsers() {
 
       if (Math.random() > 0.3) {
         const matchGame = userGames[Math.floor(Math.random() * userGames.length)];
-        await db.insert(matchRequests).values({
+        const [matchRequest] = await db.insert(matchRequests).values({
           userId: user.id,
           gameName: matchGame,
           gameMode: ["1v1", "2v2", "5v5", "Squad"][Math.floor(Math.random() * 4)],
@@ -117,13 +122,64 @@ export async function seedDummyUsers() {
           duration: Math.random() > 0.5 ? "short-term" : "long-term",
           description: `Looking for skilled ${matchGame} players. ${Math.random() > 0.5 ? "Let's rank up!" : "Casual fun games!"}`,
           region: location.city.split(",")[1]?.trim() || "NA",
-        });
+        }).returning();
+        createdMatchRequests.push(matchRequest);
         console.log(`  🎮 Created match request for ${matchGame}`);
       }
     }
 
-    console.log("\n✨ Successfully seeded 13 dummy users with profiles!");
-    console.log("📝 Run this script again to add more users, or check the Discover/Match Feed pages.");
+    // Create connection requests between users (direct user-to-user connections)
+    console.log("\n🤝 Creating connection requests...");
+    let connectionRequestCount = 0;
+    for (let i = 0; i < Math.min(8, createdUsers.length - 1); i++) {
+      const sender = createdUsers[i];
+      const receiver = createdUsers[i + 1];
+      
+      // Create various statuses for testing
+      const statuses = ["pending", "pending", "accepted", "declined"];
+      const status = statuses[connectionRequestCount % statuses.length];
+      
+      await db.insert(connectionRequests).values({
+        senderId: sender.id,
+        receiverId: receiver.id,
+        status,
+      });
+      
+      console.log(`  ✉️  Connection request: ${sender.gamertag} → ${receiver.gamertag} (${status})`);
+      connectionRequestCount++;
+    }
+
+    // Create match applications (match connections)
+    console.log("\n📋 Creating match applications...");
+    let applicationCount = 0;
+    for (let i = 0; i < Math.min(10, createdMatchRequests.length); i++) {
+      const matchRequest = createdMatchRequests[i];
+      // Find a different user to apply to this match request
+      const applicant = createdUsers.find(u => u.id !== matchRequest.userId);
+      
+      if (applicant) {
+        // Create various statuses for testing
+        const statuses = ["pending", "pending", "pending", "accepted", "declined"];
+        const status = statuses[applicationCount % statuses.length];
+        
+        await db.insert(matchConnections).values({
+          requestId: matchRequest.id,
+          requesterId: applicant.id,  // Person applying
+          accepterId: matchRequest.userId,  // Match request owner
+          status,
+        });
+        
+        console.log(`  📝 Application: ${applicant.gamertag} → ${createdUsers.find(u => u.id === matchRequest.userId)?.gamertag}'s match (${status})`);
+        applicationCount++;
+      }
+    }
+
+    console.log("\n✨ Successfully seeded comprehensive dummy data!");
+    console.log(`   👥 ${createdUsers.length} users`);
+    console.log(`   🎮 ${createdMatchRequests.length} match requests`);
+    console.log(`   🤝 ${connectionRequestCount} connection requests`);
+    console.log(`   📋 ${applicationCount} match applications`);
+    console.log("\n📝 Check the Discover, Match Feed, and Connections pages to test!");
   } catch (error) {
     console.error("❌ Error seeding dummy users:", error);
     throw error;
