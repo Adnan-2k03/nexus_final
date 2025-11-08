@@ -76,7 +76,6 @@ export function Discover({ currentUserId }: DiscoverProps) {
   const [showFilters, setShowFilters] = useState(false);
   const [connectingUserId, setConnectingUserId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toast } = useToast();
   const { getContainerClass } = useLayout();
   
@@ -126,7 +125,7 @@ export function Discover({ currentUserId }: DiscoverProps) {
 
   const queryUrl = `/api/users?${queryParams.toString()}`;
   
-  const { data: paginatedData, isLoading: isLoadingUsers, refetch } = useQuery<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>({
+  const { data: paginatedData, isLoading: isLoadingUsers, isFetching, refetch } = useQuery<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>({
     queryKey: [queryUrl],
     enabled: true,
   });
@@ -204,13 +203,8 @@ export function Discover({ currentUserId }: DiscoverProps) {
     setCurrentPage(1);
   };
 
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      await refetch();
-    } finally {
-      setTimeout(() => setIsRefreshing(false), 500);
-    }
+  const handleRefresh = () => {
+    refetch();
   };
 
   const handleConnectUser = (userId: string) => {
@@ -255,11 +249,11 @@ export function Discover({ currentUserId }: DiscoverProps) {
           variant="outline"
           size="sm"
           onClick={handleRefresh}
-          disabled={isLoadingUsers || isRefreshing}
+          disabled={isFetching}
           data-testid="button-refresh-discover"
-          className={`transition-transform ${isRefreshing ? 'scale-95' : 'hover:scale-105'}`}
+          className={`transition-transform ${isFetching ? 'scale-95' : 'hover:scale-105'}`}
         >
-          <RefreshCw className={`h-4 w-4 ${isLoadingUsers || isRefreshing ? 'animate-spin' : ''}`} />
+          <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
         </Button>
       </div>
 
@@ -430,12 +424,12 @@ export function Discover({ currentUserId }: DiscoverProps) {
             {filteredUsers.map((user) => (
             <Card
               key={user.id}
-              className="hover:shadow-lg transition-shadow cursor-pointer"
+              className="hover:shadow-lg transition-shadow cursor-pointer flex flex-col"
               onClick={() => setSelectedUser(user)}
               data-testid={`card-user-${user.id}`}
             >
-              <CardContent className="pt-6">
-                <div className="flex flex-col items-center text-center">
+              <CardContent className="pt-6 flex flex-col flex-1">
+                <div className="flex flex-col items-center text-center flex-1">
                   <Avatar className="h-20 w-20 mb-4">
                     <AvatarImage src={user.profileImageUrl || undefined} alt={user.gamertag || "User"} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-xl">
@@ -447,39 +441,47 @@ export function Discover({ currentUserId }: DiscoverProps) {
                     {user.gamertag || "No Gamertag"}
                   </h3>
 
-                  {(user.firstName || user.lastName) && (
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {user.firstName} {user.lastName}
-                    </p>
-                  )}
+                  <div className="min-h-[20px] mb-2">
+                    {(user.firstName || user.lastName) && (
+                      <p className="text-sm text-muted-foreground">
+                        {user.firstName} {user.lastName}
+                      </p>
+                    )}
+                  </div>
 
-                  {user.location && (
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
-                      <MapPin className="h-3 w-3" />
-                      <span>{user.location}</span>
-                    </div>
-                  )}
+                  <div className="min-h-[20px] mb-3">
+                    {user.location && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin className="h-3 w-3" />
+                        <span>{user.location}</span>
+                      </div>
+                    )}
+                  </div>
 
-                  {user.bio && (
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                      {user.bio}
-                    </p>
-                  )}
+                  <div className="min-h-[40px] mb-3 flex items-center">
+                    {user.bio && (
+                      <p className="text-sm text-muted-foreground line-clamp-2">
+                        {user.bio}
+                      </p>
+                    )}
+                  </div>
 
-                  {user.preferredGames && user.preferredGames.length > 0 && (
-                    <div className="flex flex-wrap gap-1 justify-center mb-3">
-                      {user.preferredGames.slice(0, 3).map((game, idx) => (
-                        <Badge key={idx} variant="secondary" className="text-xs">
-                          {game}
-                        </Badge>
-                      ))}
-                      {user.preferredGames.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{user.preferredGames.length - 3}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
+                  <div className="min-h-[28px] mb-4 flex items-center justify-center">
+                    {user.preferredGames && user.preferredGames.length > 0 && (
+                      <div className="flex flex-wrap gap-1 justify-center">
+                        {user.preferredGames.slice(0, 2).map((game, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {game}
+                          </Badge>
+                        ))}
+                        {user.preferredGames.length > 2 && (
+                          <Badge variant="secondary" className="text-xs">
+                            +{user.preferredGames.length - 2}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
 
                   {(() => {
                     const hasPendingRequest = connectionRequests.some(
