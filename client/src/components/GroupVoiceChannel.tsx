@@ -50,7 +50,12 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
   const isLocalVideoEnabled = useHMSStore(selectIsLocalVideoEnabled);
   const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
   const hmsMessages = useHMSStore(selectHMSMessages);
-  const { currentConnectionId, setVoiceChannelActive } = useHMSContext();
+  const { activeVoiceChannel, setVoiceChannelActive } = useHMSContext();
+  
+  // Check if user is actually in THIS specific group channel
+  const isInThisGroupChannel = isConnected && 
+                                activeVoiceChannel?.id === channel.id && 
+                                activeVoiceChannel?.type === 'group';
   
   const [isJoining, setIsJoining] = useState(false);
   const [members, setMembers] = useState<GroupVoiceMemberWithUser[]>([]);
@@ -152,15 +157,15 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
         console.log('[HMS] Already connected to a room, leaving first...');
         
         // If there's an active direct voice channel, notify backend to clean it up
-        if (currentConnectionId) {
+        if (activeVoiceChannel?.type === 'individual') {
           try {
             await fetch(getApiUrl('/api/voice/leave'), {
               method: 'POST',
               credentials: 'include',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ connectionId: currentConnectionId }),
+              body: JSON.stringify({ connectionId: activeVoiceChannel.id }),
             });
-            console.log('[HMS] Notified backend to leave previous direct voice channel');
+            console.log('[HMS] Notified backend to leave previous individual voice channel');
           } catch (error) {
             console.warn('[HMS] Failed to notify backend about leaving previous channel:', error);
           }
@@ -298,7 +303,7 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
 
   return (
     <div className="space-y-4">
-      {!isActiveChannel ? (
+      {!isInThisGroupChannel ? (
         <Card data-testid="card-join-channel">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
