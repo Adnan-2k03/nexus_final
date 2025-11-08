@@ -200,6 +200,9 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
 
       console.log('[HMS] Join request sent successfully');
       
+      // Set active voice channel with type 'group'
+      setVoiceChannelActive(channel.id, 'group');
+      
       toast({
         title: "Connecting...",
         description: "Joining voice channel",
