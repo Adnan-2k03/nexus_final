@@ -2223,6 +2223,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/group-voice/channel-by-code/:inviteCode', authMiddleware, async (req: any, res) => {
+    try {
+      const { inviteCode } = req.params;
+      const channel = await storage.getGroupVoiceChannelByInviteWithDetails(inviteCode);
+      
+      if (!channel) {
+        return res.status(404).json({ error: "Channel not found or invite link is invalid" });
+      }
+
+      res.json(channel);
+    } catch (error) {
+      console.error("Error fetching channel by invite code:", error);
+      res.status(500).json({ error: "Failed to fetch channel" });
+    }
+  });
+
+  app.post('/api/group-voice/accept-invite-link', authMiddleware, async (req: any, res) => {
+    try {
+      if (!hmsService.isConfigured()) {
+        return res.status(503).json({ message: "Voice service not configured" });
+      }
+
+      const userId = req.user.id;
+      const { channelId } = req.body;
+
+      if (!channelId) {
+        return res.status(400).json({ message: "Channel ID required" });
+      }
+
+      const channel = await storage.getGroupVoiceChannel(channelId);
+
+      if (!channel) {
+        return res.status(404).json({ message: "Channel not found" });
+      }
+
+      // Add user as member if not already a member
+      await storage.addGroupVoiceMember(channel.id, userId);
+
+      res.json({ success: true, channelId: channel.id });
+    } catch (error) {
+      console.error("Error accepting invite link:", error);
+      res.status(500).json({ message: "Failed to accept invite" });
+    }
+  });
+
   app.post('/api/group-voice/join', authMiddleware, async (req: any, res) => {
     try {
       if (!hmsService.isConfigured()) {

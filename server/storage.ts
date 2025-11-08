@@ -172,6 +172,7 @@ export interface IStorage {
   createGroupVoiceChannel(name: string, creatorId: string, hmsRoomId?: string): Promise<GroupVoiceChannel>;
   getGroupVoiceChannel(id: string): Promise<GroupVoiceChannel | undefined>;
   getGroupVoiceChannelByInvite(inviteCode: string): Promise<GroupVoiceChannel | undefined>;
+  getGroupVoiceChannelByInviteWithDetails(inviteCode: string): Promise<GroupVoiceChannelWithDetails | undefined>;
   getUserGroupVoiceChannels(userId: string): Promise<GroupVoiceChannelWithDetails[]>;
   updateGroupVoiceChannelRoomId(channelId: string, hmsRoomId: string): Promise<GroupVoiceChannel>;
   deleteGroupVoiceChannel(channelId: string, userId: string): Promise<void>;
@@ -1428,6 +1429,35 @@ export class DatabaseStorage implements IStorage {
       .where(eq(groupVoiceChannels.inviteCode, inviteCode));
     
     return channel || undefined;
+  }
+
+  async getGroupVoiceChannelByInviteWithDetails(inviteCode: string): Promise<GroupVoiceChannelWithDetails | undefined> {
+    const [channel] = await db
+      .select({
+        id: groupVoiceChannels.id,
+        name: groupVoiceChannels.name,
+        creatorId: groupVoiceChannels.creatorId,
+        hmsRoomId: groupVoiceChannels.hmsRoomId,
+        inviteCode: groupVoiceChannels.inviteCode,
+        isActive: groupVoiceChannels.isActive,
+        createdAt: groupVoiceChannels.createdAt,
+        creatorGamertag: users.gamertag,
+        creatorProfileImageUrl: users.profileImageUrl,
+      })
+      .from(groupVoiceChannels)
+      .leftJoin(users, eq(groupVoiceChannels.creatorId, users.id))
+      .where(eq(groupVoiceChannels.inviteCode, inviteCode));
+
+    if (!channel) return undefined;
+
+    const members = await this.getGroupVoiceMembers(channel.id);
+    
+    return {
+      ...channel,
+      memberCount: members.length,
+      activeCount: members.filter(m => m.isActive).length,
+      members: members,
+    };
   }
 
   async getUserGroupVoiceChannels(userId: string): Promise<GroupVoiceChannelWithDetails[]> {

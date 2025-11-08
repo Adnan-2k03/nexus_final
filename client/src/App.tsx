@@ -26,6 +26,7 @@ import { Messages } from "@/components/Messages";
 import { Discover } from "@/components/Discover";
 import { Settings } from "@/components/Settings";
 import { VoiceChannelsPage } from "@/pages/VoiceChannelsPage";
+import { JoinChannelPage } from "@/pages/JoinChannelPage";
 import NotFound from "@/pages/not-found";
 import { StarBackground } from "@/components/StarBackground";
 import { WebGLStarBackground } from "@/components/WebGLStarBackground";
@@ -579,6 +580,13 @@ function Router() {
                 </div>
               );
             }}
+          </Route>
+          <Route path="/join-channel/:inviteCode">
+            {() => (
+              <div className="min-h-screen relative">
+                <JoinChannelPage />
+              </div>
+            )}
           </Route>
           <Route path="/">
             {() => {
