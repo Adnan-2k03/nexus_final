@@ -80,7 +80,7 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
       console.log('[HMS] Auto-reconnecting to individual voice channel after navigation');
       joinChannel();
     }
-  }, []);
+  }, [activeVoiceChannel, connectionId, isConnected, isJoining]);
 
   // Handle connection success
   useEffect(() => {
