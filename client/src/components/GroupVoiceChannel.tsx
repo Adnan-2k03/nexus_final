@@ -224,6 +224,9 @@ export function GroupVoiceChannel({ channel, currentUserId, isActiveChannel, onJ
       await hmsActions.leave();
       await apiRequest("POST", "/api/group-voice/leave", { channelId: channel.id });
       
+      // Clear active voice channel from context
+      setVoiceChannelActive(null);
+      
       toast({
         title: "Left voice channel",
         description: "You've disconnected from the voice channel",

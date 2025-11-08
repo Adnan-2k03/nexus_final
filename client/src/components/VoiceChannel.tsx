@@ -68,6 +68,11 @@ export function VoiceChannel({ connectionId, currentUserId, otherUserId, otherUs
 
   // Auto-reconnect if user was in this individual voice channel before navigating away
   useEffect(() => {
+    // Only auto-reconnect if:
+    // 1. The saved channel matches this connection ID
+    // 2. The saved channel is of type 'individual'
+    // 3. We're not currently connected to any HMS room
+    // 4. We're not already in the process of joining
     if (activeVoiceChannel?.id === connectionId && 
         activeVoiceChannel?.type === 'individual' && 
         !isConnected && 
