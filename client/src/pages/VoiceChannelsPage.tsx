@@ -84,11 +84,16 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
     queryKey: ['/api/user/connections'],
   });
 
+  const { data: connectionRequestsResponse } = useQuery<ConnectionRequestWithUser[]>({
+    queryKey: ['/api/connection-requests'],
+  });
+
   const { data: usersResponse } = useQuery<{ users: User[] }>({
     queryKey: ['/api/users'],
   });
 
   const matchConnections = matchConnectionsResponse?.filter(c => c.status === 'accepted') || [];
+  const connectionRequests = connectionRequestsResponse?.filter(c => c.status === 'accepted') || [];
   const allUsers = usersResponse?.users || [];
 
   const createChannelMutation = useMutation({
@@ -233,21 +238,45 @@ export function VoiceChannelsPage({ currentUserId }: VoiceChannelsPageProps) {
   };
 
   const getFriendsList = () => {
-    return matchConnections.map(conn => {
-      // Determine which user is the friend (the other person in the connection)
+    // Get friends from match connections
+    const matchFriends = matchConnections.map(conn => {
       const iAmRequester = conn.requesterId === currentUserId;
       const friendId = iAmRequester ? conn.accepterId : conn.requesterId;
       const friendGamertag = iAmRequester ? conn.accepterGamertag : conn.requesterGamertag;
       const friendProfileImageUrl = iAmRequester ? conn.accepterProfileImageUrl : conn.requesterProfileImageUrl;
       
-      // Construct a User object from connection data
-      // Note: /api/users excludes connected users, so we must build from connection data
       return {
         id: friendId,
         gamertag: friendGamertag,
         profileImageUrl: friendProfileImageUrl,
       } as User;
-    }).filter(f => f.id && f.gamertag); // Filter out any malformed data
+    }).filter(f => f.id && f.gamertag);
+    
+    // Get friends from direct connection requests
+    const connectionFriends = connectionRequests.map(conn => {
+      const iAmSender = conn.senderId === currentUserId;
+      const friendId = iAmSender ? conn.receiverId : conn.senderId;
+      const friendGamertag = iAmSender ? conn.receiverGamertag : conn.senderGamertag;
+      const friendProfileImageUrl = iAmSender ? conn.receiverProfileImageUrl : conn.senderProfileImageUrl;
+      
+      return {
+        id: friendId,
+        gamertag: friendGamertag,
+        profileImageUrl: friendProfileImageUrl,
+      } as User;
+    }).filter(f => f.id && f.gamertag);
+    
+    // Combine and deduplicate by user ID
+    const allFriends = [...matchFriends, ...connectionFriends];
+    const uniqueFriendsMap = new Map<string, User>();
+    
+    allFriends.forEach(friend => {
+      if (!uniqueFriendsMap.has(friend.id)) {
+        uniqueFriendsMap.set(friend.id, friend);
+      }
+    });
+    
+    return Array.from(uniqueFriendsMap.values());
   };
 
   const getSentInvitesForChannel = (channelId: string) => {

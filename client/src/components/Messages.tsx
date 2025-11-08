@@ -145,7 +145,24 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
   const pendingSentRequests = connectionRequests.filter(
     r => r.status === 'pending' && r.senderId === currentUserId
   );
-  const acceptedDirectConnections = connectionRequests.filter(r => r.status === 'accepted');
+  
+  // Deduplicate accepted connections to ensure unique user pairs
+  // This prevents duplicate entries when voice channels are active
+  const acceptedConnections = connectionRequests.filter(r => r.status === 'accepted');
+  const uniqueConnectionsMap = new Map<string, ConnectionRequestWithUser>();
+  
+  acceptedConnections.forEach(request => {
+    const userData = getUserDataFromRequest(request, currentUserId);
+    const otherUserId = userData.id;
+    
+    // Only keep the most recent connection for each unique user pair
+    if (!uniqueConnectionsMap.has(otherUserId) || 
+        new Date(request.updatedAt!).getTime() > new Date(uniqueConnectionsMap.get(otherUserId)!.updatedAt!).getTime()) {
+      uniqueConnectionsMap.set(otherUserId, request);
+    }
+  });
+  
+  const acceptedDirectConnections = Array.from(uniqueConnectionsMap.values());
 
   // Apply search filter
   const filterBySearch = (request: ConnectionRequestWithUser) => {
