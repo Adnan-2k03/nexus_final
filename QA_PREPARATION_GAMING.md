@@ -23,21 +23,93 @@ When a question is asked:
 **Member 1 Answer:**
 > "Great question! Discord is a voice-first communication platform for existing friend groups and communities. Nexus Match is a matchmaking-first platform for finding NEW teammates and opponents.
 >
-> **Discord:** You need to already know people or find them manually in servers. No skill filtering, no playstyle matching, just text 'LFG' spam in channels.
+> **Discord:** You need to already know people or find them manually in servers. No skill filtering, no playstyle matching, just text 'LFG' spam in channels. And here's the killer problem - your 'LFG' messages get buried in minutes. If you're recruiting for an esports team, you have to post the same detailed requirements every single day when you're too tired to write it all out again.
 >
-> **Nexus Match:** Smart matchmaking with filters for skill, playstyle, personality - THEN integrate with voice. We help you FIND quality teammates, Discord helps you communicate with people you already know.
+> **Nexus Match:** Smart matchmaking with filters for skill, playstyle, personality - THEN integrate with voice. But here's what makes us revolutionary: **Post your requirements once, receive applications via notifications**. Building an esports roster? Create one detailed recruitment request - 'Need Platinum support players, 8pm-12pm daily for rank pushing' - and qualified gamers can apply. You get notified. No more daily Discord spam when you're exhausted.
 >
-> Many gamers will use both - Discord for their static squad, Nexus Match when their regular team isn't online. We complement each other."
+> Many gamers will use both - Discord for their static squad, Nexus Match for finding new teammates without the recruitment fatigue."
+
+---
+
+### Q: "What do you mean by 'create once, receive applications'?"
+**Member 3 Answer:**
+> "This is one of our most powerful features that solves a massive gamer pain point. Let me explain with a real scenario:
+>
+> **The Discord Problem:**
+> You're building a competitive Valorant team. You need a Platinum support player who's available 8pm-12pm daily for rank pushing. On Discord, you post:
+> - Monday: 'LFG Plat support, 8-12pm, rank push, mic req' in 5 different server channels
+> - Tuesday: Your messages are buried. You post again, but you're tired and just write 'LFG support'
+> - Wednesday: Too exhausted to post detailed requirements. Your recruitment stalls
+> - Thursday: Start over with full details...
+>
+> It's EXHAUSTING. And your messages disappear within hours.
+>
+> **The Nexus Match Solution:**
+> You create ONE match request with all your requirements:
+> - Game: Valorant
+> - Type: LFG (Looking for Group)  
+> - Role needed: Support player
+> - Rank: Platinum+
+> - Schedule: Daily 8pm-12pm
+> - Duration: Whole month for rank pushing
+> - Additional: Mic required, serious but chill
+>
+> This request **stays active** until you mark it as filled. When qualified gamers see it and apply, **you get push notifications on your phone**. You can review their profiles (which show their rank, stats, achievements) when YOU have time. No more daily posting fatigue.
+>
+> Your detailed profile also means people can find YOU through discovery filters, even if they're not actively checking match requests.
+>
+> **Result:** Post once, build your roster stress-free. This is how esports recruitment should work."
+
+---
+
+### Q: "Can I schedule recurring gaming sessions?"
+**Member 3 Answer:**
+> "Absolutely! This is a core feature designed for dedicated gamers and competitive teams.
+>
+> **Time-Specific Match Requests:**
+> When creating a match request, you can specify:
+> - **One-time:** 'Tonight at 9pm'
+> - **Daily:** '8pm-12pm every day'
+> - **Weekly:** 'Every weekend for scrims'
+> - **Monthly commitment:** 'Daily sessions for whole month to push rank'
+> - **Flexible:** 'Weekday evenings'
+>
+> **Use Case Example - Rank Pushing:**
+> You want to climb from Platinum to Diamond in Valorant. You need consistent teammates for the entire month. Create one request:
+> - 'LFG Valorant Comp, Platinum rank, Daily 8pm-12pm for whole month, Goal: Push to Diamond, Mic required'
+>
+> This request is visible to all gamers filtering for Valorant + Platinum + your time slots. As they apply, you build your regular 5-stack roster. Once you have your team, mark the request as filled.
+>
+> **The Power:**
+> - No need to find new teammates every single night
+> - Build chemistry with consistent squad
+> - Everyone knows the commitment upfront (whole month, daily sessions)
+> - Applicants can plan their schedule around your sessions
+>
+> This solves the 'I want to rank push seriously but need committed teammates' problem that Discord and random matchmaking can't solve."
 
 ---
 
 ### Q: "Why not just use Reddit LFG or GamerLink?"
 **Member 3 Answer:**
-> "Reddit LFG subreddits have several problems: Text-only posts with no structure, no voice integration (you match then have to exchange Discord tags), no profiles to verify skill, and chronological ordering means good posts get buried fast.
+> "Reddit LFG subreddits have critical problems: Text-only posts with no structure, no voice integration (you match then have to exchange Discord tags), no profiles to verify skill, and chronological ordering means good posts get buried in minutes. **Most importantly - no persistent requests with notifications.** You post 'LFG' and hope someone sees it within an hour. Then you have to post again tomorrow. And again. And again when you're too tired.
 >
-> GamerLink is closer to what we do, but they lack integrated voice - you still need Discord/TeamSpeak separately. Their interface is also mobile-focused with limited desktop experience.
+> GamerLink is closer to what we do, but:
+> - They lack integrated voice - you still need Discord/TeamSpeak separately  
+> - No time-specific recurring sessions - only one-time matches
+> - No notification system for applications to your requests
+> - Mobile-focused interface with limited desktop experience
+> - No rich game portfolios with achievements and clips
 >
-> Nexus Match provides INTEGRATED voice (no app switching), works great on both desktop and mobile, and has richer profiles with game portfolios showcasing achievements. We're the complete package in one platform."
+> **Nexus Match provides:**
+> - INTEGRATED professional voice (no app switching)
+> - Time-specific requests ('8pm-12pm for whole month')
+> - Create once, receive applications via push notifications
+> - Works great on both desktop and mobile (PWA)
+> - Rich profiles - post your gaming background once, never retype it
+> - Anti-fatigue design for esports recruiters
+>
+> We're solving the 'I'm too tired to post recruitment details every day' problem that NO other platform addresses."
 
 ---
 
@@ -77,14 +149,33 @@ When a question is asked:
 
 ### Q: "Can this be used for esports teams?"
 **Member 3 Answer:**
-> "Absolutely! Our LFO (Looking for Opponent) feature is designed exactly for this. Esports teams and competitive squads can:
-> - Post their team's skill level and availability
-> - Find scrim opponents at similar rank for quality practice
-> - Use voice channels for match communication
-> - Share strategy screens during planning
-> - Track scrim results in their team portfolio
+> "Absolutely! This is actually one of our **killer use cases** - and where Nexus Match truly shines over Discord.
 >
-> Several semi-pro Apex and Valorant teams in our beta have been using Nexus Match for organized scrims. Future features will include tournament brackets and team analytics."
+> **For Team Recruitment (Building Your Roster):**
+> Amateur and semi-pro teams struggle with recruitment on Discord. You need specific roles with specific skills, and posting detailed requirements every day is exhausting. With Nexus Match:
+>
+> **Create Detailed Recruitment Request Once:**
+> - 'LFG Valorant competitive team, need Platinum+ support/controller players'
+> - Schedule: Daily 8pm-12pm for rank pushing
+> - Requirements: Mic required, VOD review willingness, tournament interest
+> - Team info: Our current roster is Diamond avg, goal is Radiant push
+>
+> **Qualified players apply → You get notifications → Review profiles at your pace**
+>
+> Their profiles show you EVERYTHING: rank history, stats, playstyle, past achievements, even gameplay clips. You're not interviewing blind. And you didn't have to repost recruitment details when you were too tired after practice.
+>
+> **For Finding Scrim Opponents (LFO):**
+> Our LFO (Looking for Opponent) feature helps teams find practice opponents:
+> - Post your team's skill level and availability  
+> - Find other teams at similar rank for quality scrims
+> - Use integrated voice channels for match comms
+> - Share screens for strategy review
+> - Schedule recurring scrim blocks
+>
+> **Real Beta Usage:**
+> Several semi-pro Apex and Valorant teams have been using Nexus Match for both roster building and scrim finding. The consistent feedback: 'This is how esports recruitment should work - no more Discord spam fatigue.'
+>
+> Future features include tournament brackets, team analytics, and performance tracking."
 
 ---
 
@@ -287,6 +378,45 @@ When a question is asked:
 ---
 
 ## Category 4: Gaming Features (Member 3 Primary)
+
+### Q: "How do notifications work exactly?"
+**Member 3 Answer:**
+> "Great question - notifications are a critical part of our 'create once, receive applications' system.
+>
+> **How It Works:**
+>
+> **1. You Create a Match Request:**
+> - 'LFG Valorant Comp, Platinum, 8pm-12pm daily for rank pushing'
+> - This request stays active in our database
+> - Visible to all gamers who filter for Valorant + Platinum + your time
+>
+> **2. Someone Applies to Your Request:**
+> - They see your request in discovery or match feed
+> - Click 'Apply' or 'Join Request'
+> - System creates an application record
+>
+> **3. You Get Instant Notification:**
+> - **PWA Push Notification** on your phone (even if app is closed)
+> - Notification shows: '[Gamertag] wants to join your Valorant rank push session'
+> - Click notification → Opens to their full profile
+>
+> **4. You Review at Your Pace:**
+> - See their rank, stats, playstyle, achievements, clips
+> - Send message to coordinate details
+> - Accept them to your roster or keep reviewing other applicants
+>
+> **Technical Implementation:**
+> - Web Push API for browser/PWA notifications (works on Android, desktop)
+> - WebSocket real-time updates when you're actively in the app
+> - Notification history stored so you don't miss anyone
+> - Works even when you're offline - sync when you reconnect
+>
+> **The Anti-Fatigue Benefit:**
+> Instead of refreshing Discord channels every 10 minutes hoping someone posted, you post ONCE and get pinged when qualified gamers apply. You can be in class, at work, or sleeping - you won't miss opportunities.
+>
+> This is the core of solving the 'too tired to post recruitment every day' problem."
+
+---
 
 ### Q: "How does matchmaking filtering actually work?"
 **Member 3 Answer:**

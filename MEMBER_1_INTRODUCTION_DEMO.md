@@ -21,7 +21,11 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 > - Joining random lobbies and getting toxic teammates
 > - Finally finding a group... and they're all Bronze when you're Platinum
 >
-> By the time you find decent teammates, your gaming session is half over. **This is the problem we solved.**"
+> By the time you find decent teammates, your gaming session is half over.
+>
+> Or worse - you're building an esports team. Every single day you're too tired to post recruitment details in Discord channels again. 'Looking for Diamond support player, must know these agents, available 8pm-12pm for rank pushing...' Copy, paste, post. Every. Single. Day.
+>
+> **This is the problem we solved.**"
 
 **What to do:**
 - Make eye contact, show frustration (relatable!)
@@ -74,9 +78,9 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 - Create a new match request OR show existing requests
 
 **Say:**
-> "Here's where the magic happens. I want to play Valorant Competitive right now. Let me create a match request..."
+> "Here's where the magic happens. Two powerful scenarios:"
 
-**If creating new request:**
+**Scenario 1: Immediate Gaming (Quick Match):**
 - Click "Create Match Request"
 - Select game: Valorant
 - Select mode: Competitive
@@ -87,6 +91,18 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 
 **Say:**
 > "In 10 seconds, I've posted exactly what I need. Now other gamers can instantly find me with filters."
+
+**Scenario 2: Long-term Recruitment (The Game-Changer):**
+- Click "Create Match Request"
+- Game: Valorant
+- Type: LFG (Looking for Group)
+- Time: "Daily 8pm-12pm for whole month"
+- Goal: "Rank pushing to Diamond"
+- Requirements: "Platinum players, mic required, serious but chill"
+- Submit
+
+**Say:**
+> "Now here's what's revolutionary - I post this ONCE. When other players see this and apply, **I get push notifications on my phone**. No more posting the same recruitment message in Discord every day when I'm tired. Create once, receive applications. The request stays active until my roster is full."
 
 **If showing discovery:**
 - Navigate to Discovery page
@@ -148,11 +164,11 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 **The Gamer Pain Points:**
 > "Why did we build this? Because current solutions are broken for gamers:
 >
-> **Discord** is great for voice, terrible for finding new teammates. You're stuck posting 'LFG' in text channels hoping someone sees it.
+> **Discord** is great for voice, terrible for finding new teammates. You're stuck posting 'LFG' in text channels hoping someone sees it. And if you're recruiting for esports? You have to post the same detailed requirements every single day because Discord messages get buried. Too tired to write it all out again? Tough luck.
 >
-> **LFG websites** like Reddit r/ApexLFG or GamerLink have no voice integration. You match with someone, then have to exchange Discord tags, add each other, create a server... 5 minutes wasted.
+> **LFG websites** like Reddit r/ApexLFG or GamerLink have no voice integration. You match with someone, then have to exchange Discord tags, add each other, create a server... 5 minutes wasted. And there's no persistent profile - you can't just post your detailed gaming background once and let people find you.
 >
-> **In-game matchmaking** gives you random teammates. No filters, no communication beforehand, often toxic.
+> **In-game matchmaking** gives you random teammates. No filters, no communication beforehand, often toxic. And forget about finding long-term teammates for a month-long rank push - impossible.
 >
 > **Premium platforms** like Guilded or TeamSpeak hosting cost $10-30/month. Students and casual gamers can't afford that."
 
@@ -160,13 +176,15 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 > "Nexus Match combines everything gamers actually need:
 >
 > ✓ **Smart Matchmaking** - Find teammates by skill, game, and playstyle in seconds  
+> ✓ **Persistent Requests** - Post detailed requirements ONCE, receive applications via notifications  
+> ✓ **Time-Specific Sessions** - "8pm-12pm rank pushing for whole month" - create once, gamers apply  
+> ✓ **Rich Gamer Profiles** - Showcase your rank, clips, achievements - stop reposting your details  
 > ✓ **Integrated Voice** - No separate apps, just click and talk  
-> ✓ **Gamer Profiles** - Showcase your rank, clips, achievements  
-> ✓ **Real-time Updates** - See new LFG requests instantly via WebSockets  
+> ✓ **Real-time Notifications** - Get push alerts when someone applies to your request  
 > ✓ **Mobile PWA** - Game anywhere, get notified anywhere  
 > ✓ **Almost Free** - ~$5/month infrastructure vs. $100+ for competitors
 >
-> It's like if Discord and a premium LFG platform had a baby, but actually affordable."
+> It's like if Discord and a premium LFG platform had a baby, but with the intelligence to remember your details and notify you of perfect matches."
 
 ---
 

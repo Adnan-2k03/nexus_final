@@ -92,7 +92,8 @@
 2. **Time Wasted:** Average 15-30 mins to find good teammates
 3. **Bad Matches:** No skill/playstyle filtering = toxic experiences
 4. **Cost:** Premium Discord servers, TeamSpeak hosting = expensive
-5. **Our Solution:** One platform, instant matches, smart filters, almost free
+5. **THE KILLER PAIN POINT:** Esports recruiters too tired to post detailed requirements in Discord every day
+6. **Our Solution:** Post requirements ONCE, receive applications via notifications - end recruitment fatigue
 
 ### The Gaming Market Opportunity
 - **3 billion gamers globally**
@@ -188,18 +189,36 @@
 ## Key Differentiators to Emphasize
 
 ### vs. Discord:
-- **Discord:** Voice-first, minimal matchmaking
-- **Us:** Matchmaking-first with integrated voice
-- **Discord:** No skill-based filtering
-- **Us:** Smart filters for quality matches
+- **Discord:** Voice-first, minimal matchmaking, messages get buried in minutes
+- **Us:** Matchmaking-first with integrated voice, persistent requests with notifications
+- **Discord:** No skill-based filtering, must repost LFG every day when tired
+- **Us:** Smart filters, post ONCE and receive applications - end recruitment fatigue
 
 ### vs. LFG Websites:
-- **LFG sites:** No voice, no profiles, just text posts
-- **Us:** Voice + rich profiles + real-time matching
+- **LFG sites:** No voice, no profiles, just text posts that get buried
+- **Us:** Voice + rich profiles + persistent requests + push notifications
 
 ### vs. Gaming Communities:
-- **Communities:** Scattered across platforms
-- **Us:** Unified platform with everything gamers need
+- **Communities:** Scattered across platforms, repetitive recruitment posting
+- **Us:** Unified platform with time-specific sessions ('8pm-12pm for whole month')
+
+## THE KILLER FEATURES (Emphasize These!)
+
+1. **Create Once, Receive Applications:**
+   - Post detailed recruitment ONCE (not daily!)
+   - Get push notifications when qualified gamers apply
+   - Review profiles at YOUR pace
+   - End the "too tired to post again" problem
+
+2. **Time-Specific Recurring Sessions:**
+   - "8pm-12pm daily for rank pushing whole month"
+   - Build consistent squads with committed teammates
+   - No more finding randoms every single night
+
+3. **Rich Persistent Profiles:**
+   - Showcase rank, stats, achievements, clips ONCE
+   - Stop retyping your gaming background every time
+   - Let recruiters find YOU through filters
 
 ---
 

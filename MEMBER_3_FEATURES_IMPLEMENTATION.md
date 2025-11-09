@@ -33,21 +33,29 @@ You're the **gaming product expert** - showcase the features that make Nexus Mat
 > - **LFG (Looking for Group):** Need teammates for ranked, casual, or tournaments
 > - **LFO (Looking for Opponent):** Looking for scrims, 1v1s, or competitive practice
 >
-> But here's where we go beyond basic LFG sites:"
+> But here's where we revolutionize matchmaking:"
+
+**The Game-Changing Difference:**
+> "**Create Once, Receive Applications:**
+> Unlike Discord where your 'LFG' message gets buried in minutes, our match requests stay active. Post your requirements once - 'Need Platinum support players for 8pm-12pm rank pushing whole month' - and when qualified gamers apply, **you get push notifications**.
+>
+> **For Esports Recruitment:**
+> Building a competitive team? Create detailed recruitment requests with all your requirements. Stop posting the same details in Discord channels every day when you're tired. Your profile showcases everything - rank, playstyle, achievements - so applicants know exactly what they're joining."
 
 **Advanced Filters:**
 > "Our matchmaking filters include:
 > - **Game & Mode:** Valorant Competitive, Apex Ranked, League Normals
 > - **Skill Range:** Bronze to Masters - match with similar skilled players
 > - **Region & Language:** EU West + English-speaking for low ping and clear comms
+> - **Time Commitment:** One-time session, Daily 8pm-12pm, Weekends only, Whole month
 > - **Playstyle:** Aggressive entry fragger, Support player, IGL (in-game leader)
 > - **Personality:** Chill/competitive, learning-focused, tournament-ready
 > - **Voice Preference:** Mic required vs optional
 > - **Distance:** Find local gamers for LAN events or just lower ping
 >
-> **Real Example:** 'LFG Valorant Competitive, Gold 2-Platinum 1, EU West, English, Entry Fragger, Chill but competitive, Mic required'
+> **Real Example:** 'LFG Valorant Competitive, Gold 2-Platinum 1, EU West, English, Daily 8pm-12pm for rank pushing to Diamond, Entry Fragger, Serious but chill, Mic required'
 >
-> This eliminates the randomness. No more joining a 'Gold lobby' only to find Bronze smurfs or toxic players. You get exactly what you're looking for."
+> This eliminates the randomness AND the repetition. No more joining a 'Gold lobby' only to find Bronze smurfs. No more reposting recruitment details every day. You get exactly what you're looking for."
 
 ---
 
@@ -63,7 +71,8 @@ You're the **gaming product expert** - showcase the features that make Nexus Mat
 > - **Media Gallery:** My best ace clips, 4K highlights, clutch moments
 > - **Tournament Screenshots:** Proof of competitive experience
 >
-> Think of it as your gaming LinkedIn. When someone sees your profile, they instantly know if you're a good squad fit. No more asking 'What's your rank?' or 'What agents do you play?'  - it's all there."
+> **Why This Solves the Discord Problem:**
+> On Discord, every time someone asks 'What rank are you?' or 'What agents do you play?' you have to retype everything. You're too tired to post full recruitment details in channels every day. With Nexus Match, **post your detailed profile once**. Long-term esports recruiters can find you by filtering your exact specs. You never have to repost your gaming background again."
 
 ---
 
@@ -104,14 +113,16 @@ You're the **gaming product expert** - showcase the features that make Nexus Mat
 
 > "Now, here's what separates Nexus Match from every other gaming platform:"
 
-#### Feature 1: PWA with Push Notifications
+#### Feature 1: PWA with Push Notifications - The Anti-Fatigue System
 > "**Progressive Web App with Instant Alerts:**
 > - Install on your phone like a native app (no App Store needed)
-> - Push notifications when someone matches your LFG request
+> - Push notifications when someone applies to your match request
 > - Offline support - view profiles even without internet
 > - <50MB install size vs 200MB+ for Discord mobile
 >
-> **Gaming Scenario:** You post 'LFG Apex Ranked' and head to class. 10 minutes later, notification on your phone: 'DiamondPlayer44 wants to squad up!' Accept instantly, coordinate timing via message, game when you're home. No lost opportunities."
+> **Gaming Scenario 1 (Immediate):** You post 'LFG Apex Ranked' and head to class. 10 minutes later, notification on your phone: 'DiamondPlayer44 wants to squad up!' Accept instantly, coordinate timing via message, game when you're home. No lost opportunities.
+>
+> **Gaming Scenario 2 (Long-term Esports):** You create a recruitment request: 'LFG Valorant team, 8pm-12pm daily for rank pushing to Diamond, need Platinum support and controller players.' Over the next week, you receive notifications as qualified players apply. Review their profiles when YOU have time. No more exhausting daily Discord recruitment posts when you're tired. Create once, receive applications, build your roster stress-free."
 
 #### Feature 2: Real-Time Match Updates
 > "**WebSocket-Powered Instant Updates:**
@@ -162,13 +173,20 @@ You're the **gaming product expert** - showcase the features that make Nexus Mat
 > "Who needs Nexus Match? We identified four primary gamer segments:"
 
 #### 1. Competitive Ranked Grinders
-> "Players climbing ranked ladders need consistent, skilled teammates. Posting LFG Valorant Ranked with skill filters gets them quality squads in seconds, not the 30-minute Reddit/Discord hunt. **Market size:** 100M+ ranked players across major titles."
+> "Players climbing ranked ladders need consistent, skilled teammates. **Time-specific requests solve this perfectly:** Post 'LFG 8pm-12pm daily for rank pushing to Diamond' once. Receive applications via notifications. Build your regular squad without daily recruitment grind. **Market size:** 100M+ ranked players across major titles."
 
 #### 2. Casual Gamers & Students
 > "Students with limited gaming time can't afford to waste 20 minutes finding teammates. Quick matchmaking means more time playing, less time organizing. **Market size:** 500M+ casual multiplayer gamers."
 
-#### 3. Esports Teams & Competitive Squads
-> "Amateur and semi-pro teams need scrimmage partners at their skill level. LFO (Looking for Opponent) feature connects teams for practice matches. Voice channels become their practice comms. **Market size:** 10M+ competitive team players."
+#### 3. Esports Teams & Competitive Squads - The Killer Use Case
+> "**This is where Nexus Match shines.** Amateur and semi-pro teams building rosters are exhausted from posting detailed recruitment in Discord channels every day. With Nexus Match:
+> - Post detailed recruitment requirements ONCE with all player specs needed
+> - Applicants can see your full team profile (achievements, playstyle, goals)
+> - Receive applications via push notifications as qualified players apply
+> - Review profiles when YOU have time - all details already visible
+> - No more being too tired to post the same recruitment message again
+>
+> **Market size:** 10M+ competitive team players desperately need this."
 
 #### 4. Gaming Communities & Clans
 > "Clans and communities can use Nexus Match as their unified platform - matchmaking for members, voice channels for events, portfolios to track member stats. **Market size:** 50M+ gaming community members."
