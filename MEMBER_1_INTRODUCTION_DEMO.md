@@ -159,7 +159,7 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 
 ---
 
-### [3:30 - 5:00] Problem & Solution Deep Dive (1.5 minutes)
+### [3:30 - 5:00] Problem & Major Use Cases (1.5 minutes)
 
 **The Gamer Pain Points:**
 > "Why did we build this? Because current solutions are broken for gamers:
@@ -171,6 +171,29 @@ You're the **gaming evangelist** - show the platform works flawlessly and make j
 > **In-game matchmaking** gives you random teammates. No filters, no communication beforehand, often toxic. And forget about finding long-term teammates for a month-long rank push - impossible.
 >
 > **Premium platforms** like Guilded or TeamSpeak hosting cost $10-30/month. Students and casual gamers can't afford that."
+
+**The Major Use Cases We Solve:**
+
+> "Let me show you the THREE critical scenarios Nexus Match handles perfectly:
+>
+> **Use Case 1: Long-Term Esports Recruitment**
+> - You're building a competitive team and need teammates with specific skills
+> - On Discord: You post detailed requirements every day - 'Need Diamond support, knows smokes, 8-12pm available, mic required, VOD review willingness...'
+> - Problem: Not everyone posts these details in Discord because they don't know what to include OR they're too tired to type it all out repeatedly
+> - **Nexus Match Solution:** Create ONE detailed profile with all your requirements. Qualified gamers apply. You get notifications. Review their complete profiles when YOU have time. No more daily posting fatigue.
+>
+> **Use Case 2: Time-Specific Rank Pushing**
+> - Want to find teammates for 8pm to 12pm sessions for rank pushing the whole month?
+> - On Discord: You'd have to post 'LFG 8-12pm' every single night and hope to find the same people
+> - **Nexus Match Solution:** Input those details ONCE - '8pm-12pm daily for whole month, goal: Diamond rank.' When gamers match your schedule and skill apply, you get notifications. Build your consistent squad without daily recruitment grind.
+>
+> **Use Case 3: Application Notifications (Anti-Fatigue)**
+> - You post recruitment details and go about your day
+> - When someone applies who matches your requirements, you receive push notification
+> - No more refreshing Discord channels, no more reposting when tired
+> - Review applicants' full profiles at your convenience - all their details already visible
+>
+> These aren't hypothetical - these are the exact problems we as gamers face when trying to build serious teams or find committed teammates."
 
 **Our Solution:**
 > "Nexus Match combines everything gamers actually need:
