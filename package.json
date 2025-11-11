@@ -14,7 +14,8 @@
     "cap:build": "npm run build:frontend && npx cap sync",
     "cap:android": "npm run cap:build && npx cap open android",
     "cap:ios": "npm run cap:build && npx cap open ios",
-    "cap:sync": "npx cap sync"
+    "cap:sync": "npx cap sync",
+    "appflow:build": "npm run build:frontend && npx cap sync"
   },
   "dependencies": {
     "@100mslive/react-icons": "^0.10.39",
