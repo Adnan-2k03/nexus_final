@@ -1,13 +1,8 @@
 {
   "apps": [
     {
-      "appId": "com.nexusmatch.app",
-      "name": "Nexus Match",
-      "integrations": {
-        "capacitor": {
-          "enabled": true
-        }
-      }
+      "appId": "de5afe88",
+      "webBuildCommand": "npm run build:frontend && npx cap sync"
     }
   ]
 }
