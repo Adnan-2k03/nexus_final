@@ -1,0 +1,13 @@
+{
+  "apps": [
+    {
+      "appId": "com.nexusmatch.app",
+      "name": "Nexus Match",
+      "integrations": {
+        "capacitor": {
+          "enabled": true
+        }
+      }
+    }
+  ]
+}
