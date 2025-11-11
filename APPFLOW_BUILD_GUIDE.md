@@ -50,10 +50,15 @@ In the Appflow dashboard where you are now:
 Appflow will:
 - Pull your code from GitHub
 - Run `npm install`
-- Build your frontend with `npm run build:frontend`
+- Build your project (see Build Command Configuration below)
 - Sync Capacitor with `npx cap sync`
 - Compile the native Android APK or iOS IPA
 - Make it available for download
+
+**Important:** By default, Appflow runs `npm run build`, which includes database migration (`db:push`). For cloud builds, configure the build command:
+1. Go to **Build > Native Configs** in Appflow
+2. Set **Build Command** to: `npm run build:frontend && npx cap sync`
+3. This skips database operations and only builds the frontend
 
 ### Step 3: Download Your Build
 
