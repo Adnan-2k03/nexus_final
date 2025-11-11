@@ -32,6 +32,7 @@ import { StarBackground } from "@/components/StarBackground";
 import { WebGLStarBackground } from "@/components/WebGLStarBackground";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { registerServiceWorker } from "@/registerSW";
+import { initializeAdMob } from "@/lib/admob";
 
 // Types
 import type { User } from "@shared/schema";
@@ -645,6 +646,7 @@ function App() {
   // Register service worker for PWA and push notifications
   useEffect(() => {
     registerServiceWorker();
+    initializeAdMob();
   }, []);
 
   // Listen for navigation messages from service worker
