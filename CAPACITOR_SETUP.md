@@ -306,10 +306,17 @@ When you make changes to your React code:
 - Check internet connection
 - Wait a few seconds after app launch
 
+## Cloud Build Alternative
+
+**Don't want to install Android Studio/Xcode?** 
+
+Use **Ionic Appflow** for cloud builds! See **APPFLOW_BUILD_GUIDE.md** for complete instructions on building your app in the cloud without any local installations.
+
 ## Resources
 
 - [Capacitor Docs](https://capacitorjs.com/docs)
 - [AdMob Plugin](https://github.com/capacitor-community/admob)
+- [Ionic Appflow](https://ionic.io/appflow) - Cloud builds
 - [Google Play Console](https://play.google.com/console)
 - [App Store Connect](https://appstoreconnect.apple.com)
 
