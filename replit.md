@@ -6,7 +6,17 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 
 **Status**: Fully functional MVP with all core features implemented. Voice channels fully operational with screen sharing, speaker controls, and active member indicators.
 
-## Recent Updates (Nov 8, 2025)
+## Recent Updates (Nov 11, 2025)
+
+### Native App Conversion with Capacitor
+- **Capacitor Integration**: Converted PWA to native Android/iOS app for better monetization opportunities
+- **AdMob Integration**: Added @capacitor-community/admob plugin with helper service for rewarded video ads and banner ads
+- **Build Scripts**: Added npm scripts for building and syncing native platforms (`cap:build`, `cap:android`, `cap:ios`)
+- **Documentation**: Created comprehensive CAPACITOR_SETUP.md with step-by-step deployment guide
+- **Configuration**: Set up capacitor.config.ts with AdMob plugin configuration and splash screen settings
+- **Native Platforms**: Initialized Android and iOS platforms ready for Google Play Store and Apple App Store deployment
+
+### Previous Updates (Nov 8, 2025)
 
 ### Critical Bug Fixes (Latest)
 - **Screen Sharing in Messages**: Fixed black screen issue by removing restrictive `displaySurface: 'monitor'` option, allowing users to choose window/tab/screen
@@ -34,6 +44,7 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 
 - **DOCUMENTATION.md** - Complete feature documentation, tech stack, database schema
 - **DEPLOYMENT.md** - Deployment guides for Replit, Railway, Vercel, Docker
+- **CAPACITOR_SETUP.md** - Native app setup guide for Android/iOS with AdMob monetization
 
 ## User Preferences
 
@@ -48,6 +59,7 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 **Frontend**: React 18 + TypeScript + Vite + Wouter + TanStack Query + Shadcn/UI + Tailwind CSS
 **Backend**: Node.js + Express + TypeScript + Drizzle ORM + WebSockets + Passport.js
 **Database**: PostgreSQL (Neon)
+**Native**: Capacitor + AdMob (Android/iOS)
 **Optional**: Google OAuth, 100ms (voice), Firebase (phone auth), web-push (notifications)
 
 ## Core Features
