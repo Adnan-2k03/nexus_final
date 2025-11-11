@@ -4,6 +4,28 @@
 
 Your Nexus Match app is now ready for cloud builds! Ionic Appflow will build your Android and iOS apps **in the cloud** - no need to install Android Studio or Xcode on your computer.
 
+## Step 0: Import Your App into Appflow (First Time Setup)
+
+When you first import your app into Appflow, you'll see a screen asking for:
+
+### **Select your native runtime:**
+✅ **Choose "Capacitor"** (not "Android Native" or "iOS Native")
+
+Your app uses Capacitor, which is a cross-platform framework that handles both Android and iOS builds. The other options are for apps built with different frameworks:
+- **Capacitor** ← Choose this! (Your app)
+- Cordova (Legacy framework)
+- React Native (Different framework)
+- iOS Native (Xcode-only projects)
+- Android Native (Android Studio-only projects)
+
+### **App name:**
+Enter: `Nexus Match` (or your preferred app name)
+
+### **Select your git host:**
+Connect your GitHub, GitLab, or Bitbucket account where your code is stored.
+
+Once imported, continue with the steps below!
+
 ## What's Already Done ✅
 
 I've prepared your project:
@@ -11,6 +33,7 @@ I've prepared your project:
 - ✅ Android & iOS platforms initialized
 - ✅ AdMob App IDs added to native manifests
 - ✅ Build scripts ready in `package.json`
+- ✅ **Special `appflow:build` script added** (prevents database errors in cloud builds)
 - ✅ Appflow configuration created (`appflow.config.json`)
 
 ## Step-by-Step Build Process
@@ -50,15 +73,14 @@ In the Appflow dashboard where you are now:
 Appflow will:
 - Pull your code from GitHub
 - Run `npm install`
-- Build your project (see Build Command Configuration below)
-- Sync Capacitor with `npx cap sync`
+- Automatically run `npm run appflow:build` (which builds only the frontend and syncs Capacitor)
 - Compile the native Android APK or iOS IPA
 - Make it available for download
 
-**Important:** By default, Appflow runs `npm run build`, which includes database migration (`db:push`). For cloud builds, configure the build command:
-1. Go to **Build > Native Configs** in Appflow
-2. Set **Build Command** to: `npm run build:frontend && npx cap sync`
-3. This skips database operations and only builds the frontend
+**Important:** Appflow looks for a special `appflow:build` script in your `package.json`. This has already been added to your project and will:
+- Build only the frontend (skip database migrations)
+- Sync Capacitor automatically
+- Work perfectly in the cloud environment
 
 ### Step 3: Download Your Build
 
