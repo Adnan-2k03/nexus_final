@@ -1,4 +1,4 @@
-import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, RewardAdOptions, AdLoadInfo, AdMobRewardItem } from '@capacitor-community/admob';
+import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, RewardAdOptions, AdLoadInfo, AdMobRewardItem, RewardAdPluginEvents } from '@capacitor-community/admob';
 import { Capacitor } from '@capacitor/core';
 
 const isNative = Capacitor.isNativePlatform();
@@ -11,7 +11,6 @@ export const initializeAdMob = async () => {
 
   try {
     await AdMob.initialize({
-      requestTrackingAuthorization: true,
       testingDevices: ['YOUR_TEST_DEVICE_ID'],
       initializeForTesting: true,
     });
@@ -61,29 +60,27 @@ export const showRewardedAd = async (): Promise<boolean> => {
   };
 
   return new Promise(async (resolve, reject) => {
+    let rewarded = false;
+
     try {
-      await AdMob.prepareRewardVideoAd(options);
-      
-      const rewardedListener = await AdMob.addListener('onRewardedVideoAdLoaded', (info: AdLoadInfo) => {
+      const rewardedListener = await AdMob.addListener(RewardAdPluginEvents.Loaded, (info: AdLoadInfo) => {
         console.log('Rewarded ad loaded', info);
       });
 
-      const dismissedListener = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      const dismissedListener = await AdMob.addListener(RewardAdPluginEvents.Dismissed, () => {
         console.log('Rewarded ad dismissed');
         rewardedListener.remove();
         dismissedListener.remove();
         rewardListener.remove();
-        resolve(false);
+        resolve(rewarded);
       });
 
-      const rewardListener = await AdMob.addListener('onRewardedVideoAdRewarded', (reward: AdMobRewardItem) => {
+      const rewardListener = await AdMob.addListener(RewardAdPluginEvents.Rewarded, (reward: AdMobRewardItem) => {
         console.log('User earned reward:', reward);
-        rewardedListener.remove();
-        dismissedListener.remove();
-        rewardListener.remove();
-        resolve(true);
+        rewarded = true;
       });
 
+      await AdMob.prepareRewardVideoAd(options);
       await AdMob.showRewardVideoAd();
     } catch (error) {
       console.error('Failed to show rewarded ad:', error);
