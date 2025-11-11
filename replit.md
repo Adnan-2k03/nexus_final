@@ -45,6 +45,7 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 - **DOCUMENTATION.md** - Complete feature documentation, tech stack, database schema
 - **DEPLOYMENT.md** - Deployment guides for Replit, Railway, Vercel, Docker
 - **CAPACITOR_SETUP.md** - Native app setup guide for Android/iOS with AdMob monetization
+- **APPFLOW_BUILD_GUIDE.md** - Cloud build guide using Ionic Appflow (no local Android Studio/Xcode needed)
 
 ## User Preferences
 
