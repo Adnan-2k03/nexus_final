@@ -9,3 +9,8 @@ vite.config.ts.*
 *.log
 migrations
 uploads
+
+# Capacitor
+android/
+ios/
+.capacitor/
