@@ -27,6 +27,7 @@
     "@aws-sdk/client-sns": "^3.925.0",
     "@aws-sdk/s3-request-presigner": "^3.922.0",
     "@capacitor-community/admob": "^7.2.0",
+    "@capacitor-firebase/authentication": "^7.4.0",
     "@capacitor/android": "^7.4.4",
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^7.4.4",
