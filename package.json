@@ -15,7 +15,9 @@
     "cap:android": "npm run cap:build && npx cap open android",
     "cap:ios": "npm run cap:build && npx cap open ios",
     "cap:sync": "npx cap sync",
-    "appflow:build": "npm run build:frontend && npx cap sync"
+    "appflow:build": "npm run build:frontend && npx cap sync",
+    "cap:dev": "npm run build:frontend && npx cap copy android --config capacitor.config.dev.ts",
+    "cap:prod": "npm run build:frontend && npx cap copy android --config capacitor.config.ts"
   },
   "dependencies": {
     "@100mslive/react-icons": "^0.10.39",
