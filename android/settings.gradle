@@ -7,10 +7,13 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
+        flatDir {
+            dirs 'capacitor-cordova-android-plugins/src/main/libs', 'app/libs'
+        }
     }
 }
 
