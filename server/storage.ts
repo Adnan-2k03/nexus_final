@@ -80,6 +80,7 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByGamertag(gamertag: string): Promise<User | undefined>;
   getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   getAllUsers(filters?: { search?: string; gender?: string; language?: string; game?: string; rank?: string; latitude?: number; longitude?: number; maxDistance?: number; page?: number; limit?: number }): Promise<{ users: User[]; total: number; page: number; limit: number; totalPages: number }>;
   getUserCount(): Promise<number>;
   upsertUser(user: UpsertUser): Promise<User>;
@@ -397,6 +398,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user || undefined;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 

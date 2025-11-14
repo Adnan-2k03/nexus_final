@@ -197,6 +197,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/auth/firebase-login', async (req: any, res) => {
+    try {
+      if (!isPhoneAuthConfigured()) {
+        return res.status(503).json({ message: "Firebase authentication is not configured on the server" });
+      }
+
+      const { idToken } = req.body;
+
+      if (!idToken) {
+        return res.status(400).json({ message: "Firebase ID token is required" });
+      }
+
+      const verifiedUser = await verifyFirebaseToken(idToken);
+      if (!verifiedUser) {
+        return res.status(400).json({ message: "Invalid or expired Firebase token" });
+      }
+
+      const { uid, email } = verifiedUser;
+
+      if (!email) {
+        return res.status(400).json({ message: "Email is required for Google authentication" });
+      }
+
+      let user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        user = await storage.upsertUserByGoogleId({
+          googleId: uid,
+          email: email,
+          firstName: null,
+          lastName: null,
+          profileImageUrl: null,
+        });
+      }
+
+      req.login(user, (err: any) => {
+        if (err) {
+          console.error("Error logging in with Firebase:", err);
+          return res.status(500).json({ message: "Login successful but session creation failed" });
+        }
+        res.json(user);
+      });
+    } catch (error) {
+      console.error("Error authenticating with Firebase:", error);
+      res.status(500).json({ message: "Failed to authenticate with Firebase" });
+    }
+  });
+
   // User discovery routes
   app.get('/api/users', async (req: any, res) => {
     try {
