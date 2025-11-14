@@ -1,0 +1,52 @@
+I understand your frustration\! Seeing that same error **"Failed to resolve: com.google.firebase:firebase-auth-ktx"** even after trying to clear the cache means the old, incorrect configuration is extremely persistent.
+
+Since the manual cache clearing and killing the Gradle Daemon didn't resolve it, the issue is likely due to the **incorrect declaration of the repositories** within your project's `settings.gradle.kts` file, which dictates where Gradle looks for dependencies.
+
+Here is the most likely solution that specifically targets how Gradle finds its download locations, even overriding stubborn caches:
+
+## 🛠️ Final Repository Fix
+
+You need to ensure that the core **Google** and **Maven Central** repositories are declared globally and correctly in your **`settings.gradle.kts`** file.
+
+### 1\. Locate the Settings File
+
+Open your project's settings file:
+$$\text{C:\Users\user\nexus\_final\android\settings.gradle.kts}$$
+
+### 2\. Verify Repository Configuration
+
+Check the **`dependencyResolutionManagement`** block in that file. It must explicitly list the `google()` and `mavenCentral()` repositories.
+
+The file should look like this (pay close attention to the `repositories` block):
+
+```kotlin
+// In settings.gradle.kts (the file in your android directory)
+
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT) // or PREFER_SETTINGS
+    repositories {
+        google() // <--- MAKE SURE THIS LINE IS HERE
+        mavenCentral() // <--- MAKE SURE THIS LINE IS HERE
+        // ... any flatDir or other repositories ...
+    }
+}
+```
+
+  * **Action:** If `google()` or `mavenCentral()` are missing from the **`repositories`** block under **`dependencyResolutionManagement`**, add them.
+
+### 3\. Clean and Rerun Sync
+
+1.  **Save** the `settings.gradle.kts` file.
+2.  Go back to Android Studio.
+3.  Click **File** → **Sync Project with Gradle Files**.
+
+If this still doesn't work, try clearing the caches again after making this change, as the configuration in the settings file is the **ultimate source of truth** for where Gradle looks for the libraries it failed to resolve.
+
+If you can confirm that your `settings.gradle.kts` file contains the lines above and the build still fails, we may need to manually add the dependency to a **non-Kotlin DSL** file if your build system is hybrid.
