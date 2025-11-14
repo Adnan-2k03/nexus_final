@@ -67,6 +67,8 @@ export const users = pgTable("users", {
   showMutualGames: varchar("show_mutual_games").default("everyone"), // everyone, connections, nobody
   showMutualFriends: varchar("show_mutual_friends").default("everyone"),
   showMutualHobbies: varchar("show_mutual_hobbies").default("everyone"),
+  // Voice overlay settings (mobile only)
+  voiceOverlayEnabled: boolean("voice_overlay_enabled").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [

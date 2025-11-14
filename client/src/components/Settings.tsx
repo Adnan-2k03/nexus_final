@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { PrivacySettings } from "./PrivacySettings";
 import { PushNotificationToggle } from "./PushNotificationPrompt";
+import { VoiceOverlayToggle } from "./VoiceOverlayToggle";
 import { Check, Sparkles, Zap, Square, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { User } from "@shared/schema";
@@ -152,6 +153,17 @@ export function Settings({ user }: SettingsProps) {
           </CardHeader>
           <CardContent>
             <PushNotificationToggle />
+          </CardContent>
+        </Card>
+
+        {/* Voice Channel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Voice Channel</CardTitle>
+            <CardDescription>Control voice channel behavior on mobile</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <VoiceOverlayToggle userId={user?.id} />
           </CardContent>
         </Card>
       </div>

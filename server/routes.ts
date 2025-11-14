@@ -920,6 +920,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/users/me/settings', authMiddleware, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const { voiceOverlayEnabled } = req.body;
+      
+      if (typeof voiceOverlayEnabled !== 'boolean' && voiceOverlayEnabled !== undefined) {
+        return res.status(400).json({ message: "voiceOverlayEnabled must be a boolean" });
+      }
+      
+      const updatedUser = await storage.updateUserProfile(userId, { 
+        voiceOverlayEnabled 
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user settings:", error);
+      res.status(500).json({ message: "Failed to update user settings" });
+    }
+  });
+
   // Photo upload route - uses R2 cloud storage if configured, falls back to local storage
   const uploadsDir = path.join(__dirname, '../uploads');
   if (!fs.existsSync(uploadsDir)) {
