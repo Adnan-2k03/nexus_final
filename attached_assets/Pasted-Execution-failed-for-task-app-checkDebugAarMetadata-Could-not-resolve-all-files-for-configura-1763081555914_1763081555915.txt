@@ -1,0 +1,161 @@
+Execution failed for task ':app:checkDebugAarMetadata'.
+> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.appcompat:appcompat:1.7.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/appcompat-1.7.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/appcompat.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/appcompat-1.7.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/appcompat.jar
+        Required by:
+            project :app
+            project :app > project :capacitor-android
+            project :app > project :capacitor-cordova-android-plugins
+            project :app > project :capacitor-community-admob
+            project :app > project :capacitor-firebase-authentication
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.coordinatorlayout:coordinatorlayout:1.2.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/coordinatorlayout-1.2.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/coordinatorlayout.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/coordinatorlayout-1.2.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/coordinatorlayout.jar
+        Required by:
+            project :app
+            project :app > project :capacitor-android
+            project :app > project :capacitor-community-admob
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.core:core-splashscreen:1.0.1.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/core-splashscreen-1.0.1.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/core-splashscreen.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/core-splashscreen-1.0.1.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/core-splashscreen.jar
+        Required by:
+            project :app
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find com.google.firebase:firebase-bom:34.5.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/firebase-bom-34.5.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/firebase-bom.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/firebase-bom-34.5.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/firebase-bom.jar
+        Required by:
+            project :app
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find com.google.firebase:firebase-analytics:.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/firebase-analytics.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/firebase-analytics.jar
+        Required by:
+            project :app
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find com.google.firebase:firebase-auth-ktx:.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/firebase-auth-ktx.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/firebase-auth-ktx.jar
+        Required by:
+            project :app
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find org.jetbrains.kotlin:kotlin-bom:1.9.25.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/kotlin-bom-1.9.25.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/kotlin-bom.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/kotlin-bom-1.9.25.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/kotlin-bom.jar
+        Required by:
+            project :app > project :capacitor-android
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.core:core:1.15.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/core-1.15.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/core.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/core-1.15.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/core.jar
+        Required by:
+            project :app > project :capacitor-android
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.activity:activity:1.9.2.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/activity-1.9.2.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/activity.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/activity-1.9.2.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/activity.jar
+        Required by:
+            project :app > project :capacitor-android
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.fragment:fragment:1.8.4.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/fragment-1.8.4.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/fragment.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/fragment-1.8.4.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/fragment.jar
+        Required by:
+            project :app > project :capacitor-android
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.webkit:webkit:1.12.1.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/webkit-1.12.1.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/webkit.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/webkit-1.12.1.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/webkit.jar
+        Required by:
+            project :app > project :capacitor-android
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find org.apache.cordova:framework:10.1.1.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/framework-10.1.1.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/framework.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/framework-10.1.1.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/framework.jar
+        Required by:
+            project :app > project :capacitor-android
+            project :app > project :capacitor-cordova-android-plugins
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find any matches for com.google.android.gms:play-services-ads:24.7.+ as no versions of com.google.android.gms:play-services-ads are available.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/
+          - file:/C:/Users/user/nexus_final/android/app/libs/
+        Required by:
+            project :app > project :capacitor-community-admob
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find com.google.android.ump:user-messaging-platform:3.1.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/user-messaging-platform-3.1.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/user-messaging-platform.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/user-messaging-platform-3.1.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/user-messaging-platform.jar
+        Required by:
+            project :app > project :capacitor-community-admob
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find androidx.core:core-ktx:1.15.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/core-ktx-1.15.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/core-ktx.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/core-ktx-1.15.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/core-ktx.jar
+        Required by:
+            project :app > project :capacitor-community-admob
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find org.jetbrains.kotlin:kotlin-stdlib:2.1.20.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/kotlin-stdlib-2.1.20.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/kotlin-stdlib.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/kotlin-stdlib-2.1.20.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/kotlin-stdlib.jar
+        Required by:
+            project :app > project :capacitor-community-admob
+   > Could not resolve all dependencies for configuration ':app:debugRuntimeClasspath'.
+      > Could not find com.google.firebase:firebase-auth:23.1.0.
+        Searched in the following locations:
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/firebase-auth-23.1.0.jar
+          - file:/C:/Users/user/nexus_final/android/capacitor-cordova-android-plugins/src/main/libs/firebase-auth.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/firebase-auth-23.1.0.jar
+          - file:/C:/Users/user/nexus_final/android/app/libs/firebase-auth.jar
+        Required by:
+            project :app > project :capacitor-firebase-authentication
+
+Possible solution:
+ - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
+
+Ask Gemini
