@@ -17,12 +17,13 @@ buildscript {
 
 apply from: "variables.gradle"
 
-allprojects {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
+// Repositories moved to settings.gradle with dependencyResolutionManagement
+// allprojects {
+//     repositories {
+//         google()
+//         mavenCentral()
+//     }
+// }
 
 task clean(type: Delete) {
     delete rootProject.buildDir

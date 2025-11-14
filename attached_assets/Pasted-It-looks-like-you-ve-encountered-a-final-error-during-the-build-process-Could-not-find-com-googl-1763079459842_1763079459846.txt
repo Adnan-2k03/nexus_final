@@ -1,0 +1,43 @@
+It looks like you've encountered a final error during the build process: **`Could not find com.google.firebase:firebase-auth-ktx:`**.
+
+This error occurs because Gradle is looking for the actual library file (`firebase-auth-ktx.jar`) in specific locations on your computer, but it can't find it. This usually happens when the dependency was added to the Gradle file, but the build tool couldn't download the library from the internet because the correct **repository** was missing from the configuration.
+
+Here is the solution, which involves ensuring the necessary Google and Maven repositories are declared in your root-level `build.gradle.kts` file.
+
+-----
+
+## 🛠️ Resolving the `Could not find` Error
+
+You need to check your root-level `build.gradle.kts` file and ensure it explicitly includes the standard Google and Maven repositories where Firebase artifacts are stored.
+
+### 1\. Locate the Root Gradle File
+
+Open the project-level file:
+$$\text{C:\Users\user\nexus\_final\android\build.gradle.kts}$$
+
+### 2\. Add Repositories
+
+You must locate the `repositories` block (or create it if missing) inside the `dependencyResolutionManagement` block and ensure it looks like this:
+
+```kotlin
+// In build.gradle.kts (the root project level file)
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google() // <--- MAKE SURE THIS LINE EXISTS
+        mavenCentral() // <--- MAKE SURE THIS LINE EXISTS
+        
+        // ... any other repositories you might have ...
+    }
+}
+```
+
+The `google()` repository is **crucial** for downloading Firebase and AndroidX dependencies.
+
+### 3\. Sync Project
+
+1.  **Save** the `build.gradle.kts` file.
+2.  Go back to Android Studio and click the **"Sync Now"** button (or the Sync/Elephant icon) to force Gradle to re-read the configuration and download the missing dependency.
+
+After the sync is complete, the `firebase-auth-ktx.jar` file should be downloaded, and your build should succeed when you try to run it again.
