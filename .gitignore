@@ -6,6 +6,8 @@ vite.config.ts.*
 *.tar.gz
 .env
 .env.local
+.env.production
+.env.*.local
 *.log
 migrations
 uploads
@@ -14,3 +16,10 @@ uploads
 android/
 ios/
 .capacitor/
+
+# Android Keystore & Secrets (NEVER COMMIT THESE!)
+*.jks
+*.keystore
+android/keystore.properties
+android/app/*.jks
+android/app/*.keystore
