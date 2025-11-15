@@ -33,6 +33,8 @@ import { WebGLStarBackground } from "@/components/WebGLStarBackground";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
 import { registerServiceWorker } from "@/registerSW";
 import { initializeAdMob } from "@/lib/admob";
+import { FloatingVoiceOverlay } from "@/components/FloatingVoiceOverlay";
+import { subscribeToOverlayState } from "@/lib/voice-overlay-plugin";
 
 // Types
 import type { User } from "@shared/schema";
@@ -642,11 +644,22 @@ function BackgroundRenderer() {
 
 function App() {
   const [, setLocation] = useLocation();
+  const [isOverlayVisible, setIsOverlayVisible] = useState(() => {
+    return localStorage.getItem('voice-overlay-enabled') === 'true';
+  });
 
   // Register service worker for PWA and push notifications
   useEffect(() => {
     registerServiceWorker();
     initializeAdMob();
+  }, []);
+
+  // Subscribe to overlay state changes
+  useEffect(() => {
+    const unsubscribe = subscribeToOverlayState((enabled) => {
+      setIsOverlayVisible(enabled);
+    });
+    return unsubscribe;
   }, []);
 
   // Listen for navigation messages from service worker
@@ -665,6 +678,11 @@ function App() {
     };
   }, [setLocation]);
 
+  const handleCloseOverlay = async () => {
+    const VoiceOverlay = (await import('@/lib/voice-overlay-plugin')).default;
+    await VoiceOverlay.disableOverlay();
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <HMSProvider>
@@ -678,6 +696,12 @@ function App() {
                 {/* Foreground content */}
                 <Router />
                 <Toaster />
+                
+                {/* Floating voice overlay */}
+                <FloatingVoiceOverlay
+                  isVisible={isOverlayVisible}
+                  onClose={handleCloseOverlay}
+                />
               </TooltipProvider>
             </LayoutProvider>
           </BackgroundProvider>
