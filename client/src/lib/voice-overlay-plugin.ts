@@ -9,19 +9,23 @@ export interface VoiceOverlayPlugin {
   updateSpeakerState(options: { on: boolean }): Promise<void>;
 }
 
+const mockImplementation = {
+  enableOverlay: async () => {
+    console.log('Voice overlay: Native plugin not available - feature disabled');
+  },
+  disableOverlay: async () => {
+    console.log('Voice overlay: Native plugin not available - feature disabled');
+  },
+  checkPermission: async () => ({ granted: false }),
+  requestPermission: async () => ({ granted: false }),
+  updateMicState: async () => {},
+  updateSpeakerState: async () => {},
+};
+
 const VoiceOverlay = registerPlugin<VoiceOverlayPlugin>('VoiceOverlay', {
-  web: () => ({
-    enableOverlay: async () => {
-      console.log('Voice overlay is only available on native platforms');
-    },
-    disableOverlay: async () => {
-      console.log('Voice overlay is only available on native platforms');
-    },
-    checkPermission: async () => ({ granted: false }),
-    requestPermission: async () => ({ granted: false }),
-    updateMicState: async () => {},
-    updateSpeakerState: async () => {},
-  }),
+  web: () => mockImplementation,
+  android: () => mockImplementation,
+  ios: () => mockImplementation,
 });
 
 export default VoiceOverlay;
