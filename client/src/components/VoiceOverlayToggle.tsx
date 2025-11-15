@@ -26,11 +26,32 @@ export function VoiceOverlayToggle({ userId }: VoiceOverlayToggleProps) {
   const isNative = Capacitor.isNativePlatform();
 
   useEffect(() => {
-    if (isNative) {
-      checkPermission();
-      loadUserPreference();
+    initializeOverlay();
+  }, [userId]);
+
+  const initializeOverlay = async () => {
+    try {
+      const permissionResult = await VoiceOverlay.checkPermission();
+      setHasPermission(permissionResult.granted);
+      
+      if (!userId) return;
+      
+      const response = await fetch("/api/auth/user", {
+        credentials: "include",
+      });
+      if (response.ok) {
+        const user = await response.json();
+        const savedPreference = user.voiceOverlayEnabled || false;
+        setIsEnabled(savedPreference);
+        
+        if (savedPreference && permissionResult.granted) {
+          await VoiceOverlay.enableOverlay();
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing overlay:", error);
     }
-  }, [isNative, userId]);
+  };
 
   const checkPermission = async () => {
     try {
@@ -41,34 +62,12 @@ export function VoiceOverlayToggle({ userId }: VoiceOverlayToggleProps) {
     }
   };
 
-  const loadUserPreference = async () => {
-    if (!userId) return;
-    
-    try {
-      const response = await fetch("/api/auth/user", {
-        credentials: "include",
-      });
-      if (response.ok) {
-        const user = await response.json();
-        setIsEnabled(user.voiceOverlayEnabled || false);
-        
-        if (user.voiceOverlayEnabled && hasPermission) {
-          await VoiceOverlay.enableOverlay();
-        }
-      }
-    } catch (error) {
-      console.error("Error loading overlay preference:", error);
-    }
-  };
-
   const handleToggle = async (checked: boolean) => {
-    if (!isNative) return;
-
     setIsLoading(true);
 
     try {
       if (checked) {
-        if (!hasPermission) {
+        if (!hasPermission && isNative) {
           setShowDialog(true);
           setIsLoading(false);
           return;
@@ -120,25 +119,6 @@ export function VoiceOverlayToggle({ userId }: VoiceOverlayToggleProps) {
     }
   };
 
-  if (!isNative) {
-    return (
-      <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-full bg-muted-foreground/20 flex items-center justify-center">
-            <Mic className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <div>
-            <Label className="text-sm font-medium">Floating Voice Controls</Label>
-            <p className="text-xs text-muted-foreground">
-              Only available on Android mobile app
-            </p>
-          </div>
-        </div>
-        <Switch disabled data-testid="switch-voice-overlay" />
-      </div>
-    );
-  }
-
   return (
     <>
       <div className="flex items-center justify-between p-4 bg-card rounded-lg border">
@@ -151,7 +131,10 @@ export function VoiceOverlayToggle({ userId }: VoiceOverlayToggleProps) {
               Floating Voice Controls
             </Label>
             <p className="text-xs text-muted-foreground">
-              Show draggable mic/speaker buttons over other apps
+              {isNative 
+                ? "Show draggable mic/speaker buttons over other apps"
+                : "Show floating voice overlay while in voice channels"
+              }
             </p>
           </div>
         </div>
