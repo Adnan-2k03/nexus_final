@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Capacitor } from "@capacitor/core";
+import VoiceOverlay from "@/lib/voice-overlay-plugin";
 
 interface FloatingVoiceOverlayProps {
   isVisible: boolean;
@@ -38,6 +40,24 @@ export function FloatingVoiceOverlay({ isVisible, onClose }: FloatingVoiceOverla
 
   const localPeer = peers.find((peer: HMSPeer) => peer.isLocal);
   const otherPeers = peers.filter((peer: HMSPeer) => !peer.isLocal);
+  const isNativePlatform = Capacitor.isNativePlatform();
+
+  useEffect(() => {
+    if (isNativePlatform && isVisible && isConnected) {
+      const participants = otherPeers.map((peer: HMSPeer) => ({
+        name: peer.name || 'User',
+        isSpeaking: !!peer.audioTrack
+      }));
+      
+      VoiceOverlay.updateParticipants({ participants }).catch(console.error);
+    }
+  }, [otherPeers, isVisible, isConnected, isNativePlatform]);
+
+  useEffect(() => {
+    if (isNativePlatform && isVisible) {
+      VoiceOverlay.updateMicState({ isMuted: !isLocalAudioEnabled }).catch(console.error);
+    }
+  }, [isLocalAudioEnabled, isVisible, isNativePlatform]);
 
   useEffect(() => {
     localStorage.setItem('voice-overlay-position', JSON.stringify(position));
