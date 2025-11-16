@@ -6,7 +6,19 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 
 **Status**: Fully functional MVP with all core features implemented. Voice channels fully operational with screen sharing, speaker controls, and active member indicators.
 
-## Recent Updates (Nov 11, 2025)
+## Recent Updates (Nov 16, 2025)
+
+### System-Level Voice Overlay (Android)
+- **Native Android Plugin**: Created custom Capacitor plugin with WindowManager-based overlay that appears over ALL apps
+- **Foreground Service**: Implemented VoiceOverlayService that keeps overlay alive even when app is in background
+- **Real-time Participant Updates**: Overlay automatically shows voice channel participants and speaking status
+- **Mic/Speaker Controls**: Visual indicators for mute/unmute state synchronized with HMS SDK
+- **SYSTEM_ALERT_WINDOW Permission**: Proper permission flow with Android settings integration
+- **Draggable UI**: Users can position overlay anywhere on screen, position persists
+- **Platform Detection**: Web fallback for desktop browsers (overlay within app), native overlay for Android
+- **Documentation**: Created SYSTEM_OVERLAY_GUIDE.md with setup, usage, and troubleshooting
+
+### Previous Updates (Nov 11, 2025)
 
 ### Native App Conversion with Capacitor
 - **Capacitor Integration**: Converted PWA to native Android/iOS app for better monetization opportunities
@@ -46,6 +58,7 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 - **DEPLOYMENT.md** - Deployment guides for Replit, Railway, Vercel, Docker
 - **CAPACITOR_SETUP.md** - Native app setup guide for Android/iOS with AdMob monetization
 - **APPFLOW_BUILD_GUIDE.md** - Cloud build guide using Ionic Appflow (no local Android Studio/Xcode needed)
+- **SYSTEM_OVERLAY_GUIDE.md** - System-level voice overlay guide for Android (overlay over all apps)
 
 ## User Preferences
 
@@ -68,6 +81,7 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 - Matchmaking (LFG/LFO with filters)
 - User profiles with game portfolios
 - Direct messaging and voice channels
+- **System-level voice overlay (Android)** - Overlay appears over all apps including games
 - Real-time updates via WebSockets
 - Push notifications (PWA)
 - Discover page for finding gamers
