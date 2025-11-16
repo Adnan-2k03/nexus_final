@@ -1,12 +1,13 @@
 import { registerPlugin } from '@capacitor/core';
 
 export interface VoiceOverlayPlugin {
-  enableOverlay(): Promise<void>;
-  disableOverlay(): Promise<void>;
+  enableOverlay(): Promise<{ enabled: boolean }>;
+  disableOverlay(): Promise<{ enabled: boolean }>;
   checkPermission(): Promise<{ granted: boolean }>;
   requestPermission(): Promise<{ granted: boolean }>;
-  updateMicState(options: { muted: boolean }): Promise<void>;
-  updateSpeakerState(options: { on: boolean }): Promise<void>;
+  updateParticipants(options: { participants: Array<{ name: string; isSpeaking: boolean }> }): Promise<{ success: boolean }>;
+  updateMicState(options: { isMuted: boolean }): Promise<{ success: boolean }>;
+  updateSpeakerState(options: { isMuted: boolean }): Promise<{ success: boolean }>;
 }
 
 type OverlayStateListener = (enabled: boolean) => void;
@@ -28,11 +29,13 @@ const webImplementation: VoiceOverlayPlugin = {
     console.log('[Voice Overlay] Enabling web overlay');
     localStorage.setItem('voice-overlay-enabled', 'true');
     notifyOverlayState(true);
+    return { enabled: true };
   },
   disableOverlay: async () => {
     console.log('[Voice Overlay] Disabling web overlay');
     localStorage.setItem('voice-overlay-enabled', 'false');
     notifyOverlayState(false);
+    return { enabled: false };
   },
   checkPermission: async () => {
     return { granted: true };
@@ -40,26 +43,20 @@ const webImplementation: VoiceOverlayPlugin = {
   requestPermission: async () => {
     return { granted: true };
   },
-  updateMicState: async (options: { muted: boolean }) => {
-    console.log('[Voice Overlay] Mic state updated:', options.muted ? 'muted' : 'unmuted');
+  updateParticipants: async (options: { participants: Array<{ name: string; isSpeaking: boolean }> }) => {
+    console.log('[Voice Overlay] Participants updated:', options.participants.length);
+    return { success: true };
   },
-  updateSpeakerState: async (options: { on: boolean }) => {
-    console.log('[Voice Overlay] Speaker state updated:', options.on ? 'on' : 'off');
+  updateMicState: async (options: { isMuted: boolean }) => {
+    console.log('[Voice Overlay] Mic state updated:', options.isMuted ? 'muted' : 'unmuted');
+    return { success: true };
+  },
+  updateSpeakerState: async (options: { isMuted: boolean }) => {
+    console.log('[Voice Overlay] Speaker state updated:', options.isMuted ? 'muted' : 'unmuted');
+    return { success: true };
   },
 };
 
-const mockImplementation: VoiceOverlayPlugin = {
-  enableOverlay: async () => {
-    console.log('Voice overlay: Native plugin not available - feature disabled');
-  },
-  disableOverlay: async () => {
-    console.log('Voice overlay: Native plugin not available - feature disabled');
-  },
-  checkPermission: async () => ({ granted: false }),
-  requestPermission: async () => ({ granted: false }),
-  updateMicState: async () => {},
-  updateSpeakerState: async () => {},
-};
 
 const VoiceOverlay = registerPlugin<VoiceOverlayPlugin>('VoiceOverlay', {
   web: () => webImplementation,
