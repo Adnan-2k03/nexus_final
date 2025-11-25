@@ -38,7 +38,7 @@ As a supporting team member, my responsibilities will include providing technica
 2. **Backend Support & Testing**
    - Assist with API testing and validation
    - Help debug integration issues between frontend and backend
-   - Support database query optimization
+   - Support database query optimization for player discovery
    - Contribute to system testing efforts
 
 3. **Documentation & Code Review**

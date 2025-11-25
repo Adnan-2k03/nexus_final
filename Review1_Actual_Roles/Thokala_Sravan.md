@@ -38,13 +38,13 @@ As the frontend developer, my primary responsibilities will focus on designing a
 2. **UI Component Development**
    - Design and build reusable UI components using shadcn/ui library
    - Create form components for user input and interactions
-   - Develop layouts for displaying game matches and user profiles
+   - Develop layouts for displaying player profiles and search results
    - Implement interactive modals and dialogs
 
 3. **User Interface Implementation**
    - Create responsive landing page with feature showcase
-   - Design user dashboard with match request management
-   - Build player discovery interface with filtering
+   - Design user dashboard with player request management
+   - Build player discovery and search interface with filtering by skill and game preferences
    - Implement notification center for real-time updates
 
 4. **State Management & Data Fetching**
