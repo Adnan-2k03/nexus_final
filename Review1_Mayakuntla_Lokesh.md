@@ -33,8 +33,8 @@ As a full-stack development contributor, my primary responsibilities will includ
    - Research and integrate Google OAuth 2.0 authentication system for user login
    - Implement Firebase integration for phone verification capabilities
    - Set up 100ms real-time voice channel integration for team communication
-   - Configure AWS S3 integration for user profile image storage and management
-   - Plan Stripe payment system integration for future premium features
+   - Configure Cloudflare R2 integration for user profile image storage and management
+   - Plan additional service integrations for extended functionality
 
 2. **API Testing & Validation**
    - Develop and execute comprehensive API testing for all backend endpoints
@@ -63,8 +63,8 @@ As a full-stack development contributor, my primary responsibilities will includ
 ### Approach
 The development will follow an integration-focused approach:
 - **Phase 1 (Week 1-2):** Research third-party service documentation, plan integration strategy, establish service accounts
-- **Phase 2 (Week 3-4):** Implement OAuth and Firebase integration, configure AWS S3 bucket, test authentication
-- **Phase 3 (Week 5-6):** Integrate 100ms voice channels, plan payment system, conduct API testing
+- **Phase 2 (Week 3-4):** Implement OAuth and Firebase integration, configure Cloudflare R2 bucket, test authentication
+- **Phase 3 (Week 5-6):** Integrate 100ms voice channels, configure Cloudflare R2 storage, conduct API testing
 - **Phase 4 (Week 7-8):** Optimize integrations, improve error handling, finalize documentation, conduct system testing
 
 ---
@@ -78,7 +78,7 @@ The development will follow an integration-focused approach:
 | d) An ability to function on multidisciplinary teams | Will work with backend and frontend developers on integration points, coordinate testing efforts, and participate in team knowledge sharing. |
 | e) An ability to identify, formulate, and solve engineering problems | Will resolve authentication token management issues, debug integration problems, fix data synchronization issues, and optimize validation workflows. |
 | g) An ability to communicate effectively | Will document third-party service integrations with setup instructions, create troubleshooting guides, and communicate issues and solutions to team. |
-| k) An ability to use the techniques, skills, and modern engineering tools necessary for engineering practice | Will utilize Google OAuth, Firebase SDK, AWS SDK, 100ms SDK, Stripe API, Postman for API testing, and debugging tools. |
+| k) An ability to use the techniques, skills, and modern engineering tools necessary for engineering practice | Will utilize Google OAuth, Firebase SDK, Cloudflare R2 API, 100ms SDK, Postman for API testing, and debugging tools. |
 
 ---
 
@@ -88,8 +88,9 @@ The development will follow an integration-focused approach:
 - **Cost Management:** Will select free or low-cost tiers for third-party services; implement cost monitoring
 - **Service Reliability:** Will implement timeout and retry logic for external API calls; add fallback mechanisms
 - **Authentication Complexity:** Will initially focus on Google OAuth; design for extensibility of additional methods
-- **Payment Integration:** Will implement Stripe skeleton for future premium features without full payment flow in MVP
+- **Storage Management:** Will integrate Cloudflare R2 for reliable and scalable file storage solution
 - **Real-time Communication:** Will configure 100ms voice channels for group communication within resource limits
+- **Storage Infrastructure:** Will utilize Cloudflare R2 for efficient and cost-effective file storage
 - **Data Security:** Will ensure proper credential management using environment variables and secrets
 - **Development Pace:** Will complete integrations within 8-week project timeline
 
@@ -102,6 +103,7 @@ The development will follow an integration-focused approach:
 - **Error Handling:** Will apply consistent error handling patterns, provide meaningful error messages, and implement logging
 - **Testing Standards:** Will follow systematic testing approaches, maintain test documentation, and execute integration scenarios
 - **Code Quality:** Will apply clean code principles, maintain TypeScript type safety, and follow naming conventions
+- **File Storage Standards:** Will implement proper file handling, validate uploads, and ensure efficient storage management
 - **Documentation Standards:** Will provide integration setup guides, API usage documentation, and troubleshooting procedures
 - **Security Standards:** Will implement proper credential management, follow secure coding practices, and validate external inputs
 - **Version Control:** Will maintain organized commits, meaningful messages, and proper branch management
