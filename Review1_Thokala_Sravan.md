@@ -24,47 +24,47 @@
 ## Project and Task Description
 
 ### Project Summary
-The project, "A Real-Time Player Matching System," is an MVP social platform designed to help users find and connect with others for specific gaming activities. The application addresses the challenge of finding compatible teammates or opponents for online games. The MVP focuses on core functionality with an intuitive UI, including user profiles, a public request board, a 1v1 and team finder, and a real-time status system. The approach utilizes modern full-stack technologies to build a responsive, serverless application that prioritizes immediate, action-oriented requests with real-time updates.
+The project, "A Real-Time Player Matching System," is an MVP social platform designed to help users find and connect with others for specific gaming activities. The application will address the challenge of finding compatible teammates or opponents for online games. The MVP will focus on core functionality with an intuitive UI, including user profiles, a public request board, a 1v1 and team finder, and a real-time status system. The approach will utilize modern full-stack technologies to build a responsive, serverless application that prioritizes immediate, action-oriented requests with real-time updates.
 
 ### Individual Role and Tasks
-As a full-stack development contributor, my primary responsibilities centered on deployment, performance optimization, and system architecture. Specifically, I:
+As a full-stack development contributor, my primary responsibilities will center on project setup, deployment configuration, and performance optimization. Specifically, I will:
 
-1. **Deployment & DevOps**
-   - Set up project deployment configuration on Replit platform
-   - Configured build and run scripts for production environments
-   - Implemented environment variable management and secrets handling
-   - Created deployment documentation and setup procedures for team
+1. **Project Setup & Configuration**
+   - Set up the project development environment and folder structure
+   - Configure build tools (Vite, esbuild) for both development and production
+   - Establish development environment setup documentation
+   - Configure environment variables and secrets management
 
-2. **Database & Performance Optimization**
-   - Analyzed database query performance and implemented indexing strategies
-   - Optimized WebSocket message handling for efficient real-time updates
-   - Implemented connection pooling for database connections
-   - Profiled application performance and identified bottlenecks
+2. **Deployment & DevOps**
+   - Plan and configure deployment strategy for the application
+   - Set up production build scripts and optimization
+   - Document deployment procedures and environment setup
+   - Implement proper configuration management for different environments
 
-3. **System Architecture Support**
-   - Contributed to overall system architecture planning and discussions
-   - Helped establish project structure and folder organization
-   - Implemented build configuration (Vite, esbuild) optimization
-   - Ensured proper separation of concerns across modules
+3. **Database & Performance**
+   - Analyze database design for optimal query performance
+   - Plan indexing strategy for frequently accessed data
+   - Assist in performance optimization of critical paths
+   - Plan caching strategies for improved response times
 
-4. **Quality Assurance & Testing**
-   - Performed end-to-end testing of user workflows
-   - Tested real-time features and WebSocket connections
-   - Validated API responses and error handling
-   - Tested responsive design across different devices and browsers
+4. **System Architecture Support**
+   - Contribute to overall system architecture planning
+   - Support build system configuration and optimization
+   - Help establish best practices for code organization
+   - Assist in ensuring proper separation of concerns
 
-5. **Documentation & Setup**
-   - Created setup guide for development environment
-   - Documented deployment procedures and troubleshooting steps
-   - Maintained README and project documentation
-   - Provided installation instructions for dependencies
+5. **Testing & Quality Assurance**
+   - Plan and execute end-to-end testing workflows
+   - Test responsive design across different devices
+   - Validate real-time features and WebSocket functionality
+   - Support quality assurance processes throughout development
 
 ### Approach
-The development followed an infrastructure-focused approach:
-- **Phase 1 (Week 1-2):** Project setup, environment configuration, build system initialization
-- **Phase 2 (Week 3-4):** Performance profiling, database optimization, caching strategy implementation
-- **Phase 3 (Week 5-6):** Deployment configuration, environment management, production build optimization
-- **Phase 4 (Week 7-8):** Performance testing, optimization validation, documentation finalization, deployment verification
+The development will follow an infrastructure-focused approach across 4 phases:
+- **Phase 1 (Week 1-2):** Project setup, environment configuration, build system initialization, documentation
+- **Phase 2 (Week 3-4):** Performance planning, caching strategy design, database optimization planning
+- **Phase 3 (Week 5-6):** Deployment configuration, environment management, build optimization
+- **Phase 4 (Week 7-8):** Testing, deployment validation, performance verification, final documentation
 
 ---
 
@@ -72,35 +72,35 @@ The development followed an infrastructure-focused approach:
 
 | Outcome | Plan for Demonstrating Outcome |
 |---------|--------------------------------|
-| a) An ability to apply knowledge of mathematics, science, and engineering | Applied computer systems knowledge for performance optimization; utilized algorithm analysis for query optimization; understood distributed systems concepts for deployment. |
-| c) An ability to design a system, component, or process to meet desired needs within realistic constraints | Designed deployment architecture considering resource constraints, scalability requirements, and performance targets. Implemented optimization strategies to meet latency and throughput goals. |
-| d) An ability to function on multidisciplinary teams | Collaborated with backend and frontend teams on performance requirements, coordinated deployment strategy, participated in architecture discussions, and shared performance metrics with team. |
-| e) An ability to identify, formulate, and solve engineering problems | Identified performance bottlenecks through profiling, resolved WebSocket scalability issues, optimized database queries, and debugged deployment configuration issues. |
-| g) An ability to communicate effectively | Created deployment and setup documentation, provided performance analysis reports, documented optimization strategies, and communicated system requirements to team members. |
-| k) An ability to use the techniques, skills, and modern engineering tools necessary for engineering practice | Utilized Vite, esbuild, PostgreSQL optimization tools, Chrome DevTools for profiling, deployment platforms (Replit), Git, and environment management tools. |
+| a) An ability to apply knowledge of mathematics, science, and engineering | Will apply computer systems knowledge for architecture planning; utilize data structures and algorithms concepts for performance optimization; understand distributed system principles. |
+| c) An ability to design a system, component, or process to meet desired needs within realistic constraints | Will design deployment and configuration architecture considering resource constraints, scalability requirements, and performance targets. |
+| d) An ability to function on multidisciplinary teams | Will collaborate with backend and frontend teams on architecture requirements, coordinate setup procedures, and participate in system design discussions. |
+| e) An ability to identify, formulate, and solve engineering problems | Will identify performance bottlenecks, develop optimization strategies, solve configuration challenges, and debug system-level issues. |
+| g) An ability to communicate effectively | Will create deployment documentation, provide setup guides, document configuration procedures, and communicate technical requirements to team members. |
+| k) An ability to use the techniques, skills, and modern engineering tools necessary for engineering practice | Will utilize Vite, esbuild, Git, environment configuration tools, deployment platforms, and debugging/profiling tools. |
 
 ---
 
 ## Realistic Constraints
 
-- **Resource Limitations:** Deployed on Replit's free tier with limited memory and CPU resources; optimized application to run efficiently within constraints
-- **Database Performance:** PostgreSQL query optimization to handle multiple concurrent connections efficiently
-- **Real-time Scalability:** WebSocket connections optimized for handling 50-100 concurrent users within resource limits
-- **Build Time:** Vite and esbuild configured to minimize build time while maintaining optimization
-- **Development Environment:** Balanced fast development with reasonable production parity
-- **Monitoring & Logging:** Implemented lightweight logging for production monitoring without excessive overhead
-- **Cost Constraints:** Utilized free or low-cost deployment options and services
-- **Development Timeline:** Completed optimization and deployment within 8-week project timeline
+- **Resource Limitations:** Will design for efficient resource utilization on the Replit deployment platform
+- **Development Environment:** Will balance fast development iteration with reasonable production parity
+- **Build Performance:** Will optimize Vite and esbuild configurations for reasonable build times
+- **Database Performance:** Will plan for PostgreSQL query optimization and connection management
+- **Real-time Scalability:** Will design WebSocket handling for expected concurrent user load
+- **Cost Efficiency:** Will utilize free or low-cost deployment and infrastructure options
+- **Monitoring:** Will implement lightweight logging and error tracking without excessive overhead
+- **Development Timeline:** Will establish setup and configuration within 8-week project timeline
 
 ---
 
 ## Engineering Standards
 
-- **Performance Standards:** Implemented query optimization, code splitting, lazy loading, and caching strategies
-- **Deployment Standards:** Followed infrastructure-as-code principles, maintained reproducible builds, and documented deployment procedures
-- **Optimization Standards:** Applied performance profiling methodologies, established performance metrics, and tracked optimization improvements
-- **Code Quality:** Maintained clean code, proper error handling, and TypeScript type safety
-- **Monitoring Standards:** Implemented application logging, error tracking, and performance monitoring where applicable
-- **Documentation Standards:** Provided deployment guides, troubleshooting documentation, and system architecture diagrams
-- **Version Control:** Maintained organized Git history with clear commit messages for infrastructure changes
-- **Security Standards:** Properly managed secrets and credentials, implemented secure environment configurations, and followed deployment security practices
+- **Build Standards:** Will follow best practices for build configuration, development versus production setup
+- **Deployment Standards:** Will implement infrastructure-as-code principles and reproducible builds
+- **Performance Standards:** Will establish performance metrics and optimization targets
+- **Code Quality:** Will ensure proper code organization, TypeScript type safety, and consistent formatting
+- **Environment Management:** Will properly manage secrets, credentials, and environment-specific configurations
+- **Testing Standards:** Will establish testing procedures and quality assurance processes
+- **Documentation Standards:** Will provide setup guides, deployment procedures, and troubleshooting documentation
+- **Version Control:** Will maintain organized Git history with clear commits for infrastructure and configuration changes
