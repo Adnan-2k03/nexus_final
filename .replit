@@ -4,6 +4,7 @@ hidden = [".config", ".git", "generated-icon.png", "node_modules", "dist"]
 
 [nix]
 channel = "stable-25_05"
+packages = ["wkhtmltopdf"]
 
 [deployment]
 deploymentTarget = "autoscale"
@@ -17,6 +18,10 @@ externalPort = 80
 [[ports]]
 localPort = 38359
 externalPort = 3000
+
+[[ports]]
+localPort = 42467
+externalPort = 3002
 
 [[ports]]
 localPort = 44511
