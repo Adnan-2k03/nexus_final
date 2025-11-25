@@ -1,0 +1,118 @@
+Capstone Project Proposal Report
+(Individual Report)
+
+Instructions:
+
+This form is to be completed by each student doing Project registration to fulfill their senior design or capstone requirement.  It must be completed and submitted to your Guide.  Each student must complete this form individually.
+		
+This report is to be completed during the starting of the semester, while the project description report will be completed during end of the semester.
+
+
+Guide Approval (initials/date):
+
+
+
+
+
+
+CAP4001– Capstone Project Proposal Report
+
+Student Name
+
+
+Student Register Number
+
+
+Programme
+
+
+Semester/Year
+
+
+Guide(s)
+
+
+Project Title
+
+
+
+Team Composition:  Provide the information below for each member of the project team.  Include all project team members, not just those in your discipline or those enrolled for Capstone project.  Please also include yourself!
+
+
+Reg. No
+Name
+Major
+Specialization
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Project and Task Description:  Provide a brief (one or two page) technical description of the design project and your specific tasks, as outlined below: (use a separate sheet)
+
+Provide a summary of the project, including a description of the project and its requirements, the purpose, specifications, and a summary of the approach.  If this is a continuing project, you may use and/or edit the same project description.
+
+Describe the specific role and tasks that you individually will be completing as part of the design of the project. What specific deliverables will you produce?
+
+Discuss in detail the specific approach that will be used to complete your portion of the design.
+
+Describe the phases of the design process that will be incorporated and what work will be accomplished during those phases. (you may attach a Gantt Chart)
+
+Outcome Matrix:  Describe your plan to demonstrate each of the outcomes below.  
+
+Outcomes:
+Plan for demonstrating outcome:
+a)    an ability to apply knowledge of mathematics, science, and engineering 
+
+
+ 
+c)    an ability  to design  a system, component, or  process  to  meet desired  needs within  realistic constraints such as economic, environmental, social, political, ethical, health and safety, manufacturability, and sustainability
+ 
+d)    an ability to function on multidisciplinary teams
+ 
+e)    an ability to identify, formulate, and solve engineering problems
+ 
+g)    an ability to communicate effectively
+ 
+k)    an ability to use the techniques, skills, and modern engineering tools necessary for engineering practice
+ 
+
+
+Realistic Constraints:
+
+ Discuss on the Realistic Constraints taken in to account for the Project:
+
+
+Engineering Standards:
+
+
+ Discuss the Engineering Standards that will be followed and maintained in the Project:
