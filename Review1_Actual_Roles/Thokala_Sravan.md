@@ -6,7 +6,7 @@
 **Programme:** Bachelor of Technology  
 **Semester/Year:** Fall sem (2025-26)  
 **Guide(s):** Saroj Kumar Panigrahy  
-**Project Title:** A Real-Time Player Matching System  
+**Project Title:** A Real-Time Player Finding System  
 
 ---
 
@@ -24,7 +24,7 @@
 ## Project and Task Description
 
 ### Project Summary
-The project, "A Real-Time Player Matching System," is an MVP social platform designed to help users find and connect with others for specific gaming activities. The application will address the challenge of finding compatible teammates or opponents for online games. The MVP will focus on core functionality with an intuitive UI, including user profiles, a public request board, a 1v1 and team finder, and a real-time status system. The approach will utilize modern full-stack technologies to build a responsive, serverless application that prioritizes immediate, action-oriented requests with WebSocket-based real-time updates.
+The project, "A Real-Time Player Finding System," is an MVP social platform designed to help users find and connect with others for specific gaming activities. The application will address the challenge of finding compatible teammates or opponents for online games. The MVP will focus on core functionality with an intuitive UI, including user profiles, a public request board, a 1v1 and team finder, and a real-time status system. The approach will utilize modern full-stack technologies to build a responsive, serverless application that prioritizes immediate, action-oriented requests with WebSocket-based real-time updates.
 
 ### Individual Role and Tasks
 As the frontend developer, my primary responsibilities will focus on designing and implementing the user-facing application. Specifically, I will:
