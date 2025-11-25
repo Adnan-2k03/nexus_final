@@ -46,7 +46,7 @@ As the project manager and originator of the project idea, my responsibilities w
    - Design and implement the Express.js backend server
    - Develop REST API endpoints for core functionality
    - Implement WebSocket integration for real-time features
-   - Build business logic for matchmaking and user management
+   - Build business logic for player discovery, search filtering, and user management
 
 4. **Integration & Configuration**
    - Plan and integrate third-party services (OAuth, Firebase, etc.)
@@ -73,7 +73,7 @@ The project management and technical approach will span 4 phases:
 
 | Outcome | Plan for Demonstrating Outcome |
 |---------|--------------------------------|
-| a) An ability to apply knowledge of mathematics, science, and engineering | Will apply software engineering principles to system design, utilize data structures and algorithms for backend logic, and implement relational database concepts. |
+| a) An ability to apply knowledge of mathematics, science, and engineering | Will apply software engineering principles to system design, utilize data structures for player discovery and search functionality, and implement relational database concepts. |
 | c) An ability to design a system, component, or process to meet desired needs within realistic constraints | Will design comprehensive system architecture balancing functionality, performance, scalability, and development timeline constraints. |
 | d) An ability to function on multidisciplinary teams | Will lead team coordination, facilitate collaboration between frontend and backend developers, and manage team dynamics throughout project. |
 | e) An ability to identify, formulate, and solve engineering problems | Will identify system bottlenecks, formulate solutions for integration challenges, and troubleshoot issues across multiple system components. |

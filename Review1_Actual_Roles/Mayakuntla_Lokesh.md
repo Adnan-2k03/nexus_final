@@ -37,7 +37,7 @@ As the backend developer, my primary responsibilities will focus on designing an
 
 2. **Database Design & Management**
    - Design the complete database schema using Drizzle ORM
-   - Create and manage database tables for users, matches, notifications, etc.
+   - Create and manage database tables for users, player profiles, requests, notifications, etc.
    - Plan and implement indexing for performance optimization
    - Set up database migrations and synchronization
 
@@ -48,7 +48,7 @@ As the backend developer, my primary responsibilities will focus on designing an
    - Implement error handling and response formatting
 
 4. **Business Logic Implementation**
-   - Implement matchmaking algorithm considering game preferences and skill levels
+   - Implement player discovery and search functionality with filtering by skill level and game preferences
    - Build user management and profile functionality
    - Develop notification system logic
    - Create real-time update handlers for WebSocket integration
@@ -72,7 +72,7 @@ The backend development will follow a systematic approach across 4 phases:
 
 | Outcome | Plan for Demonstrating Outcome |
 |---------|--------------------------------|
-| a) An ability to apply knowledge of mathematics, science, and engineering | Will apply data structures and algorithms for matchmaking logic; utilize relational database theory for schema design; implement server architecture principles. |
+| a) An ability to apply knowledge of mathematics, science, and engineering | Will apply data structures for player discovery and search functionality; utilize relational database theory for schema design; implement server architecture principles. |
 | c) An ability to design a system, component, or process to meet desired needs within realistic constraints | Will design backend system considering API rate limits, database performance, scalability, and cost efficiency constraints. |
 | d) An ability to function on multidisciplinary teams | Will collaborate with frontend developer on API specifications, coordinate with project lead on architecture, and support team integration efforts. |
 | e) An ability to identify, formulate, and solve engineering problems | Will identify performance bottlenecks, solve database scalability issues, resolve real-time synchronization challenges. |
