@@ -13,9 +13,10 @@ Competitive gamers struggle to:
 - Find players at their skill level for meaningful competition
 - Form tournament-ready teams with high-skilled teammates
 - Improve their gameplay by competing against challenging opponents
-- Locate reliable, vetted teammates for serious competitive play
+- Locate reliable teammates for serious competitive play
+- Review other players' actual gameplay (clips, videos, different scenarios)
 - Coordinate team strategy and communication before tournaments
-- Use multiple fragmented platforms (Discord, in-game chat, Reddit) with no verification system
+- Use multiple fragmented platforms (Discord, in-game chat, Reddit) with no centralized player profiles
 
 ### What We Built
 **A Real-Time Player Finding System** - A unified platform for competitive players to:
@@ -35,22 +36,23 @@ Competitive gamers struggle to:
 **The Competitive Gaming Problem:**
 - 150M+ competitive/ranked gamers worldwide focus on skill improvement
 - $2B+ esports market demands team formation and recruitment
-- Team-based competitive games: Valorant, CS2, League of Legends, Dota 2 need verified skilled teammates
-- Current solutions (Discord, Twitter, Reddit) lack skill verification and real-time coordination
+- Team-based competitive games: Valorant, CS2, League of Legends, Dota 2 require skilled teammates
+- Current solutions (Discord, Twitter, Reddit) lack player skill showcasing and real-time coordination
 
 **The Skilled Player Discovery Crisis:**
 - Competitive players spend 1-2 hours finding tournament-ready teammates
-- No centralized platform for skill-verified team formation
+- No centralized platform where players showcase their actual gameplay
 - Tournament teams form through weak networks (friend-of-friend)
 - Solo queue improvement is limited - players need skilled opponents and teams
 - Esports aspirants cannot find consistent high-level teammates
+- No way to see other players' actual gameplay (different weapons, maps, scenarios) before connecting
 
 **Why Existing Solutions Fail:**
-- ❌ Discord: No skill verification, not purpose-built for team formation
-- ❌ Reddit: Passive posting, no real-time status or skill matching
-- ❌ Twitter: Lost in noise, cannot verify player competence
-- ❌ In-game LFG: Limited to one game, no tournament history
-- ❌ Gaming platforms: Don't connect players across games for team building
+- ❌ Discord: No player profiles or gameplay showcase, not purpose-built for team formation
+- ❌ Reddit: Passive posting, no real-time status or player profiles
+- ❌ Twitter: Lost in noise, cannot see player skill demonstration
+- ❌ In-game LFG: Limited to one game, no tournament history or skill showcase
+- ❌ Gaming platforms: Don't connect players across games with gameplay profiles
 
 **Evolution:** 
 - **Started:** Solving skilled player discovery for competitive play
@@ -208,9 +210,10 @@ Competitive gamers struggle to:
 
 **1. Competitive Team Formation for Tournaments**
 - Scout talented players through skill-based discovery
-- Form tournament-ready teams with verified rank/MMR
+- View players' gameplay clips/videos showcasing their abilities
+- Form tournament-ready teams based on gameplay profiles
 - Coordinate strategy via voice channels before matches
-- **Proven:** Skill level matching, profile statistics, voice channels all working
+- **Proven:** Skill level matching, player profiles with gameplay showcases, voice channels all working
 
 **2. Player Skill Improvement Network**
 - Find opponents at or above your skill level
@@ -330,7 +333,7 @@ Competitive gamers struggle to:
 
 **How It Works:**
 1. User opens Discover tab
-2. Views all available players filtered by skill
+2. Views all available players filtered by skill level
 3. Sees real-time status: 🟢 Online / 🔴 Offline / 🎮 In-Game
 4. Filters by:
    - **Game type** (Valorant, CS2, League, Dota 2, etc.)
@@ -339,15 +342,16 @@ Competitive gamers struggle to:
    - **Language** (English, Spanish, French, etc.)
    - **Availability status** - See who's online NOW
    - **Playstyle** (Competitive / Casual / Both) - Intent matching
-   - **Statistics** - Win rate, ranking, match history visible
+   - **Gameplay Showcase** - View player-uploaded clips/videos showing different weapons, maps, scenarios
 
 **Technical Implementation:**
 - 500+ line React component with advanced filtering UI
 - GET `/api/users` endpoint with skill-based dynamic filters
+- Player profiles display gameplay clips/videos in formatted structure
 - TanStack React Query for smart caching & invalidation
 - WebSocket for real-time status updates and instant notifications
 
-**Result:** Competitive players find tournament-caliber teammates in seconds vs hours of Discord searching
+**Result:** Competitive players find tournament-caliber teammates in seconds vs hours of Discord searching, and can verify skill through actual gameplay
 
 ---
 
@@ -598,8 +602,9 @@ A production-ready real-time player finding system with 8 core features, deploye
 
 ### Why It Matters
 - **Core Problem:** Competitive players waste 1-2 hours finding tournament-caliber teammates
-- **Solution:** Skill-verified platform with real-time discovery, messaging, and voice coordination
+- **Solution:** Platform where players showcase actual gameplay and connect in real-time
 - **Impact:** Reduces tournament team formation from hours to minutes
+- **Key Feature:** Players upload gameplay clips showing different scenarios (guns, maps, positions) to prove skill
 - **Market:** $2B+ esports industry + $500M+ gaming community platforms
 - **Evolution:** Started competitive, expanding to serve all gamers
 
