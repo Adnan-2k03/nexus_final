@@ -2734,5 +2734,110 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // DEMO ENDPOINT: Populate demo data for current user
+  app.post('/api/demo/populate', authMiddleware, async (req: any, res) => {
+    try {
+      const currentUserId = req.user.id;
+      console.log(`📊 Creating demo data for user: ${currentUserId}`);
+
+      // Get all users except current user
+      const allUsers = await storage.getAllUsers({ limit: 100 });
+      const dummyUsers = allUsers.users.filter(u => u.id !== currentUserId).slice(0, 5);
+
+      if (dummyUsers.length === 0) {
+        return res.status(400).json({ message: "Not enough dummy users available" });
+      }
+
+      let createdConnections = 0;
+      let createdMessages = 0;
+
+      // Create accepted connections to first 3 dummy users
+      for (let i = 0; i < Math.min(3, dummyUsers.length); i++) {
+        const dummyUser = dummyUsers[i];
+        
+        try {
+          // Create connection request (current user as sender)
+          const connectionRequest = await storage.createConnectionRequest({
+            senderId: currentUserId,
+            receiverId: dummyUser.id,
+          });
+
+          // Accept the connection immediately
+          await storage.updateConnectionRequestStatus(connectionRequest.id, 'accepted');
+          createdConnections++;
+          console.log(`✅ Created accepted connection with ${dummyUser.gamertag}`);
+
+          // Create sample messages
+          const messages = [
+            "Hey! Looking forward to playing together!",
+            "What's your rank in Valorant?",
+            "I'm usually online after 8pm EST",
+            "Let's queue up sometime this week!",
+            "Down for some ranked matches?",
+            "Your profile looks awesome!",
+          ];
+
+          for (let j = 0; j < 3; j++) {
+            const isSenderFirst = j % 2 === 0;
+            await storage.sendMessage({
+              connectionId: connectionRequest.id,
+              senderId: isSenderFirst ? currentUserId : dummyUser.id,
+              receiverId: isSenderFirst ? dummyUser.id : currentUserId,
+              message: messages[Math.floor(Math.random() * messages.length)],
+            });
+            createdMessages++;
+          }
+          console.log(`💬 Added 3 messages for connection with ${dummyUser.gamertag}`);
+        } catch (error: any) {
+          console.error(`Failed to create connection with ${dummyUser.gamertag}:`, error.message);
+        }
+      }
+
+      // Create match connections (applications) for remaining users
+      let createdApplications = 0;
+      for (let i = 3; i < Math.min(5, dummyUsers.length); i++) {
+        const dummyUser = dummyUsers[i];
+        
+        try {
+          // Get one of their match requests
+          const theirRequests = await storage.getMatchRequests({ limit: 100 });
+          const theirMatchRequest = theirRequests.matchRequests.find(mr => mr.userId === dummyUser.id);
+          
+          if (theirMatchRequest) {
+            // Create match application (current user applying to their match)
+            const matchConnection = await storage.createMatchConnection({
+              requestId: theirMatchRequest.id,
+              requesterId: currentUserId,
+              accepterId: dummyUser.id,
+            });
+
+            // Accept it immediately (50% chance)
+            if (Math.random() > 0.5) {
+              await storage.updateMatchConnectionStatus(matchConnection.id, 'accepted');
+            }
+            createdApplications++;
+            console.log(`🎮 Created match application with ${dummyUser.gamertag}`);
+          }
+        } catch (error: any) {
+          console.error(`Failed to create match with ${dummyUser.gamertag}:`, error.message);
+        }
+      }
+
+      console.log(`\n✨ Demo data created successfully!`);
+      res.json({
+        success: true,
+        message: "Demo data populated successfully",
+        stats: {
+          connectionsCreated: createdConnections,
+          messagesCreated: createdMessages,
+          applicationsCreated: createdApplications,
+        }
+      });
+    } catch (error) {
+      console.error("Error creating demo data:", error);
+      res.status(500).json({ message: "Failed to create demo data", error: String(error) });
+    }
+  });
+
   return httpServer;
 }
