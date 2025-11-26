@@ -74,6 +74,36 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
     window.location.reload();
   };
 
+  // Mutation to populate demo data
+  const populateDemoMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/demo/populate', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to populate demo data');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/connection-requests'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/user/connections'] });
+      toast({
+        title: "Demo Data Created",
+        description: `${data.stats.connectionsCreated} conversations, ${data.stats.messagesCreated} messages, ${data.stats.applicationsCreated} matches created!`,
+      });
+      setTimeout(() => refetch(), 500);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to create demo data",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Mutation to accept connection request
   const acceptConnectionMutation = useMutation({
     mutationFn: async (requestId: string) => {
@@ -209,6 +239,17 @@ export function Messages({ currentUserId, onNavigateToVoiceChannels }: MessagesP
           <Badge variant="secondary" className="text-sm">
             {filteredConnections.length} conversation{filteredConnections.length !== 1 ? 's' : ''}
           </Badge>
+          {filteredConnections.length === 0 && (
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => populateDemoMutation.mutate()}
+              disabled={populateDemoMutation.isPending}
+              data-testid="button-populate-demo"
+            >
+              {populateDemoMutation.isPending ? "Creating..." : "Demo Data"}
+            </Button>
+          )}
           {onNavigateToVoiceChannels && (
             <Button
               variant="default"
