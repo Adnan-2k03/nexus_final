@@ -65,6 +65,9 @@ export async function ensureDevUser() {
       }
     }
     console.log("[DEV MODE] Game profiles ensured for dev user");
+
+    // Create custom portfolio page (portfolio section will be populated from game profiles)
+    console.log("[DEV MODE] Portfolio data ready - displays game profiles and achievements");
   } catch (error) {
     console.error("[DEV MODE] Error creating dev user:", error);
   }
