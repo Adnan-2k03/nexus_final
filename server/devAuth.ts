@@ -66,120 +66,131 @@ export async function ensureDevUser() {
     }
     console.log("[DEV MODE] Game profiles ensured for dev user");
 
-    // Add hobbies/interests for the dev user
+    // Add interests for the dev user (using predefined categories from UI)
     const hobbies = [
       {
-        category: "music",
-        title: "Gaming Soundtracks & Lofi Hip Hop",
-        description: "Huge fan of competitive game soundtracks and lofi hip hop beats for streaming and ranked grind sessions",
-        link: "https://www.youtube.com/results?search_query=lofi+hip+hop+beats",
-      },
-      {
-        category: "streaming",
-        title: "Twitch Content Creator",
-        description: "Stream competitive gameplay on Twitch with 500+ regular viewers. Focus on educational content and tournament prep",
-        link: "https://twitch.tv",
+        category: "anime",
+        title: "Haikyu!!",
+        description: "Inspiring competitive volleyball anime. Relates to team coordination and clutch mentality in esports",
       },
       {
         category: "anime",
-        title: "Anime & Gaming Culture",
-        description: "Fan of anime with gaming themes, especially sports/competitive anime like Haikyu and Jujutsu Kaisen",
-        link: "https://myanimelist.net",
+        title: "Jujutsu Kaisen",
+        description: "Loves the intense tactical battles and character development",
       },
       {
-        category: "esports",
-        title: "Esports Following",
-        description: "Huge esports fan - follows VCT, LEC, and CS Major tournaments. Analyzes pro strategies to improve gameplay",
-        link: "https://esports.com",
+        category: "anime",
+        title: "My Hero Academia",
+        description: "Fan of the competitive tournament arcs and strategic combat",
       },
       {
-        category: "fitness",
-        title: "Gaming Fitness & Reflexes",
-        description: "Dedicated to physical fitness and reflex training to maintain competitive edge. Daily stretching and hand exercises",
-        link: "https://www.youtube.com",
+        category: "music",
+        title: "Lofi Hip Hop Beats",
+        description: "Perfect background music for ranked grinding sessions and practice",
+        link: "https://www.youtube.com/results?search_query=lofi+hip+hop+beats",
       },
       {
-        category: "education",
-        title: "Game Theory & Strategy",
-        description: "Studying competitive game theory, map control, and advanced strategies. Active in gaming communities and forums",
-        link: "https://reddit.com/r/competitiveesports",
+        category: "music",
+        title: "Synthwave & Electronic",
+        description: "High-energy synthetic music for competitive play and streaming",
       },
       {
-        category: "content",
-        title: "Video Editing & Content Creation",
-        description: "Passionate about creating highlight reels and educational gaming videos. Uses DaVinci Resolve and Adobe Premiere",
-        link: "https://www.youtube.com/channel/UCDaVinci",
+        category: "music",
+        title: "Gaming Soundtracks",
+        description: "Collector of iconic competitive game soundtracks and compositions",
       },
       {
-        category: "hardware",
-        title: "Gaming PC Building & Peripherals",
-        description: "Enthusiast PC builder and peripheral reviewer. Follows latest GPU/CPU releases. Currently using custom-built competitive rig",
-        link: "https://pcpartpicker.com",
+        category: "movies",
+        title: "The Social Network",
+        description: "Inspired by competitive drive and achieving excellence",
       },
       {
-        category: "mentoring",
-        title: "Coaching & Player Mentorship",
-        description: "Mentors new competitive players. Offers VOD reviews, strategy sessions, and personalized training programs",
-        link: "https://www.youtube.com",
+        category: "movies",
+        title: "Free Solo",
+        description: "Documentary about pushing human limits and mental resilience",
       },
       {
-        category: "psychology",
-        title: "Gaming Psychology & Mental Game",
-        description: "Studies competitive mindset, clutch performance, tilt management, and mental resilience in esports",
-        link: "https://reddit.com/r/learnprogramming",
+        category: "movies",
+        title: "Esports Documentaries",
+        description: "Follows documentaries about competitive gaming professionals",
       },
       {
-        category: "community",
-        title: "Gaming Community Leadership",
-        description: "Actively builds and manages competitive gaming communities. Organizes local tournaments and scrim matches",
-        link: "https://discord.com",
+        category: "books",
+        title: "The Art of War",
+        description: "Ancient strategy text applied to modern competitive gaming",
       },
       {
-        category: "culture",
-        title: "Gaming Culture & History",
-        description: "Deep interest in esports history, legendary players, iconic tournaments, and competitive gaming evolution",
-        link: "https://liquipedia.net",
+        category: "books",
+        title: "Mindset by Carol Dweck",
+        description: "Understanding growth mindset for competitive improvement",
+      },
+      {
+        category: "books",
+        title: "Peak Performance",
+        description: "Sports psychology and mental training for peak performance",
+      },
+      {
+        category: "writing",
+        title: "Strategy Guides",
+        description: "Writing detailed competitive gaming strategy guides",
+      },
+      {
+        category: "writing",
+        title: "Esports Analysis",
+        description: "Breaking down pro team strategies and meta shifts",
+      },
+      {
+        category: "art",
+        title: "Gaming Poster Design",
+        description: "Creates tournament posters and esports promotional art",
+      },
+      {
+        category: "art",
+        title: "Character Concept Art",
+        description: "Appreciates and creates game character concept art",
+      },
+      {
+        category: "cooking",
+        title: "Pre-Tournament Meal Prep",
+        description: "Specialized nutrition and meal prep for competitive tournaments",
+      },
+      {
+        category: "cooking",
+        title: "Energy Drink Recipes",
+        description: "Experimenting with healthy caffeine alternatives for gaming",
       },
       {
         category: "travel",
-        title: "Tournament Travel & LAN Events",
-        description: "Passionate about attending and competing in live LAN tournaments across North America",
-        link: "https://www.esportsearnings.com",
+        title: "International LAN Tournaments",
+        description: "Traveling to compete in major esports events worldwide",
       },
       {
-        category: "tech",
-        title: "Gaming Technology & Optimization",
-        description: "Focuses on FPS optimization, driver updates, latency reduction, and competitive settings for every game",
-        link: "https://www.nvidia.com",
+        category: "travel",
+        title: "Gaming Convention Visits",
+        description: "Attends major esports conventions and gaming expos",
       },
-      {
-        category: "coffee",
-        title: "Coffee & Energy Drinks Culture",
-        description: "Coffee enthusiast with custom espresso setup for late-night grind sessions. Exploring energy drink brands",
-        link: "https://www.coffeegeek.com",
-      },
-      {
-        category: "strategy",
-        title: "Competitive Analysis & Replays",
-        description: "Spends hours analyzing pro player replays, studying meta shifts, and developing counter-strategies",
-        link: "https://www.youtube.com/watch?v=competitive+analysis",
-      }
     ];
 
-    for (const hobby of hobbies) {
-      try {
-        await storage.createHobby({
-          userId: DEV_USER_ID,
-          category: hobby.category,
-          title: hobby.title,
-          description: hobby.description,
-          link: hobby.link,
-        });
-      } catch (e) {
-        console.log(`Hobby ${hobby.title} might already exist`);
+    // Only create hobbies if none exist yet
+    const existingHobbies = await storage.getUserHobbies(DEV_USER_ID);
+    if (!existingHobbies || existingHobbies.length === 0) {
+      for (const hobby of hobbies) {
+        try {
+          await storage.createHobby({
+            userId: DEV_USER_ID,
+            category: hobby.category,
+            title: hobby.title,
+            description: hobby.description,
+            link: hobby.link,
+          });
+        } catch (e) {
+          // Ignore duplicates
+        }
       }
+      console.log("[DEV MODE] Created hobbies/interests for dev user");
+    } else {
+      console.log("[DEV MODE] Hobbies/interests already exist, skipping creation");
     }
-    console.log("[DEV MODE] Created hobbies/interests for dev user");
   } catch (error) {
     console.error("[DEV MODE] Error creating dev user:", error);
   }
