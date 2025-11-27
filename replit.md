@@ -65,6 +65,13 @@ GameMatch (Nexus Match) is a real-time gaming matchmaking platform connecting ga
 - Simple, everyday language
 - Authentication optional for development (Google OAuth supported)
 - Mobile-first design with dark mode
+- **Color Theme Support**: 6 customizable themes available in Settings:
+  - **Neon Cyberpunk** (NEW) - Vibrant magenta & orange glow with dual-color shadows
+  - Gaming Dark - Classic blue-based dark theme
+  - Light Mode - Clean bright interface
+  - Neon Cyan - Cyan electric glow effects
+  - Vibrant Purple - Electric purple energy
+  - Electric Teal - Teal with glow effects
 
 ## System Architecture
 
