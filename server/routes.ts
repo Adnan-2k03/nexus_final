@@ -2750,6 +2750,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let createdConnections = 0;
       let createdMessages = 0;
+      let createdVoiceChannels = 0;
+      const connectedUserIds: string[] = [];
 
       // Create accepted connections to first 3 dummy users
       for (let i = 0; i < Math.min(3, dummyUsers.length); i++) {
@@ -2765,6 +2767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Accept the connection immediately
           await storage.updateConnectionRequestStatus(connectionRequest.id, 'accepted');
           createdConnections++;
+          connectedUserIds.push(dummyUser.id);
           console.log(`✅ Created accepted connection with ${dummyUser.gamertag}`);
 
           // Create sample messages
@@ -2791,6 +2794,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error: any) {
           console.error(`Failed to create connection with ${dummyUser.gamertag}:`, error.message);
         }
+      }
+
+      // Create group voice channels for demo
+      try {
+        const channelNames = [
+          "🎮 Tournament Practice",
+          "🏆 Ranked 5-Stack",
+          "⚔️ Scrimmage Team",
+        ];
+        
+        for (const channelName of channelNames) {
+          const groupChannel = await storage.createGroupVoiceChannel(channelName, currentUserId);
+
+          // Add connected users to the voice channel
+          for (const userId of connectedUserIds) {
+            try {
+              await storage.addGroupVoiceMember(groupChannel.id, userId);
+              console.log(`👥 Added user to voice channel: ${channelName}`);
+            } catch (error) {
+              console.log(`Could not add user to voice channel (might already exist)`);
+            }
+          }
+
+          createdVoiceChannels++;
+          console.log(`🎙️ Created voice channel: ${channelName}`);
+        }
+      } catch (error: any) {
+        console.error("Error creating voice channels:", error.message);
       }
 
       // Create match connections (applications) for remaining users
@@ -2831,6 +2862,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           connectionsCreated: createdConnections,
           messagesCreated: createdMessages,
           applicationsCreated: createdApplications,
+          voiceChannelsCreated: createdVoiceChannels,
         }
       });
     } catch (error) {
