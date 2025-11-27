@@ -25,8 +25,14 @@ const themes = [
     color: "bg-[hsl(230,85%,55%)]"
   },
   { 
+    value: "neon" as const, 
+    label: "Neon Cyberpunk", 
+    description: "Pink & orange glow",
+    color: "bg-gradient-to-r from-[hsl(280,100%,60%)] to-[hsl(40,100%,55%)]"
+  },
+  { 
     value: "midnight" as const, 
-    label: "Neon Cyber", 
+    label: "Neon Cyan", 
     description: "Cyan glow vibes",
     color: "bg-[hsl(180,100%,50%)]"
   },
