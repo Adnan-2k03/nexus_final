@@ -103,6 +103,66 @@ export async function ensureDevUser() {
         title: "Game Theory & Strategy",
         description: "Studying competitive game theory, map control, and advanced strategies. Active in gaming communities and forums",
         link: "https://reddit.com/r/competitiveesports",
+      },
+      {
+        category: "content",
+        title: "Video Editing & Content Creation",
+        description: "Passionate about creating highlight reels and educational gaming videos. Uses DaVinci Resolve and Adobe Premiere",
+        link: "https://www.youtube.com/channel/UCDaVinci",
+      },
+      {
+        category: "hardware",
+        title: "Gaming PC Building & Peripherals",
+        description: "Enthusiast PC builder and peripheral reviewer. Follows latest GPU/CPU releases. Currently using custom-built competitive rig",
+        link: "https://pcpartpicker.com",
+      },
+      {
+        category: "mentoring",
+        title: "Coaching & Player Mentorship",
+        description: "Mentors new competitive players. Offers VOD reviews, strategy sessions, and personalized training programs",
+        link: "https://www.youtube.com",
+      },
+      {
+        category: "psychology",
+        title: "Gaming Psychology & Mental Game",
+        description: "Studies competitive mindset, clutch performance, tilt management, and mental resilience in esports",
+        link: "https://reddit.com/r/learnprogramming",
+      },
+      {
+        category: "community",
+        title: "Gaming Community Leadership",
+        description: "Actively builds and manages competitive gaming communities. Organizes local tournaments and scrim matches",
+        link: "https://discord.com",
+      },
+      {
+        category: "culture",
+        title: "Gaming Culture & History",
+        description: "Deep interest in esports history, legendary players, iconic tournaments, and competitive gaming evolution",
+        link: "https://liquipedia.net",
+      },
+      {
+        category: "travel",
+        title: "Tournament Travel & LAN Events",
+        description: "Passionate about attending and competing in live LAN tournaments across North America",
+        link: "https://www.esportsearnings.com",
+      },
+      {
+        category: "tech",
+        title: "Gaming Technology & Optimization",
+        description: "Focuses on FPS optimization, driver updates, latency reduction, and competitive settings for every game",
+        link: "https://www.nvidia.com",
+      },
+      {
+        category: "coffee",
+        title: "Coffee & Energy Drinks Culture",
+        description: "Coffee enthusiast with custom espresso setup for late-night grind sessions. Exploring energy drink brands",
+        link: "https://www.coffeegeek.com",
+      },
+      {
+        category: "strategy",
+        title: "Competitive Analysis & Replays",
+        description: "Spends hours analyzing pro player replays, studying meta shifts, and developing counter-strategies",
+        link: "https://www.youtube.com/watch?v=competitive+analysis",
       }
     ];
 
