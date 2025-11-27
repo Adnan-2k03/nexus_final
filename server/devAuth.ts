@@ -66,8 +66,60 @@ export async function ensureDevUser() {
     }
     console.log("[DEV MODE] Game profiles ensured for dev user");
 
-    // Create custom portfolio page (portfolio section will be populated from game profiles)
-    console.log("[DEV MODE] Portfolio data ready - displays game profiles and achievements");
+    // Add hobbies/interests for the dev user
+    const hobbies = [
+      {
+        category: "music",
+        title: "Gaming Soundtracks & Lofi Hip Hop",
+        description: "Huge fan of competitive game soundtracks and lofi hip hop beats for streaming and ranked grind sessions",
+        link: "https://www.youtube.com/results?search_query=lofi+hip+hop+beats",
+      },
+      {
+        category: "streaming",
+        title: "Twitch Content Creator",
+        description: "Stream competitive gameplay on Twitch with 500+ regular viewers. Focus on educational content and tournament prep",
+        link: "https://twitch.tv",
+      },
+      {
+        category: "anime",
+        title: "Anime & Gaming Culture",
+        description: "Fan of anime with gaming themes, especially sports/competitive anime like Haikyu and Jujutsu Kaisen",
+        link: "https://myanimelist.net",
+      },
+      {
+        category: "esports",
+        title: "Esports Following",
+        description: "Huge esports fan - follows VCT, LEC, and CS Major tournaments. Analyzes pro strategies to improve gameplay",
+        link: "https://esports.com",
+      },
+      {
+        category: "fitness",
+        title: "Gaming Fitness & Reflexes",
+        description: "Dedicated to physical fitness and reflex training to maintain competitive edge. Daily stretching and hand exercises",
+        link: "https://www.youtube.com",
+      },
+      {
+        category: "education",
+        title: "Game Theory & Strategy",
+        description: "Studying competitive game theory, map control, and advanced strategies. Active in gaming communities and forums",
+        link: "https://reddit.com/r/competitiveesports",
+      }
+    ];
+
+    for (const hobby of hobbies) {
+      try {
+        await storage.createHobby({
+          userId: DEV_USER_ID,
+          category: hobby.category,
+          title: hobby.title,
+          description: hobby.description,
+          link: hobby.link,
+        });
+      } catch (e) {
+        console.log(`Hobby ${hobby.title} might already exist`);
+      }
+    }
+    console.log("[DEV MODE] Created hobbies/interests for dev user");
   } catch (error) {
     console.error("[DEV MODE] Error creating dev user:", error);
   }
