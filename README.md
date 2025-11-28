@@ -252,9 +252,9 @@ This project leverages industry-leading services with cost-efficient free/startu
 
 ### **100ms** - Voice & Video Communication
 - **Purpose:** Real-time voice channels for team coordination
-- **Why:** Free tier includes up to 100 concurrent users, production-ready infrastructure
+- **Why:** Free tier includes 10,000 minutes/month, production-ready infrastructure
 - **Features:** WebRTC-based, sub-100ms latency, scalable rooms, analytics
-- **Cost:** Free tier sufficient for MVP; enterprise pricing for scaling
+- **Cost:** Free tier (10K minutes/month) sufficient for MVP; enterprise pricing for scaling
 
 ### **Cloudflare R2** - Object Storage (Optional)
 - **Purpose:** User avatar and file storage
@@ -285,7 +285,7 @@ This project leverages industry-leading services with cost-efficient free/startu
 - **Vercel** - Free tier for static sites and serverless functions
 - **Railway** - Free starter credits ($5/month equivalent) for backend + database
 - **Firebase** - Free tier for SMS (50K/month)
-- **100ms** - Free tier for voice (100 concurrent users)
+- **100ms** - Free tier for voice (10,000 minutes/month)
 - **Cloudflare R2** - Free tier for object storage (10 GB)
 
 All services were chosen specifically for their free/trial plans, making the platform deployable at zero cost while maintaining production-grade reliability.
