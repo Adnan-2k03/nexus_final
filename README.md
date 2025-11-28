@@ -99,12 +99,8 @@ nexus_final/
 ├── shared/               # Shared code
 │   └── schema.ts         # Drizzle ORM models & Zod validation
 │
-├── docs/review/          # Documentation
-│   ├── REVIEW_3_GAMMA_PPT_READY.md
-│   ├── REVIEW_3_RUBRICS_ALIGNMENT.md
-│   └── ... (other review docs)
-│
-├── submissions/          # Review & proposal documents (local only)
+├── public/               # Static assets
+│   └── manifest.json     # PWA manifest
 │
 └── package.json         # Dependencies & scripts
 
