@@ -60,8 +60,7 @@ We can arrange a screenshare session to demonstrate the application live in the 
 
 **Deployment:**
 - **Frontend:** Vercel (serverless deployment)
-- **Backend:** Railway (containerized Node.js)
-- **Database:** Neon PostgreSQL (managed cloud database)
+- **Backend + Database:** Railway (Node.js + PostgreSQL)
 
 ### System Architecture
 
@@ -239,17 +238,11 @@ This project leverages industry-leading services with cost-efficient free/startu
 - **Features:** Git integration, environment variables, automatic HTTPS, analytics
 - **Cost:** Free for MVP scale; paid plans for high traffic
 
-### **Railway** - Backend Hosting
-- **Purpose:** Node.js backend deployment with containerization
-- **Why:** $5/month starter credit, simple Docker deployment, scales from zero, excellent for startups
-- **Features:** PostgreSQL database hosting, environment management, automatic deployments from GitHub
+### **Railway** - Backend + Database Hosting
+- **Purpose:** Node.js backend deployment with containerized PostgreSQL database
+- **Why:** $5/month starter credit, simple Docker deployment, scales from zero, integrated database hosting
+- **Features:** PostgreSQL database hosting, environment management, automatic deployments from GitHub, connection pooling
 - **Cost:** Free credits + pay-as-you-go pricing
-
-### **Neon** - PostgreSQL Database
-- **Purpose:** Managed cloud PostgreSQL with connection pooling
-- **Why:** Generous free tier (0.5 GB storage, branching for CI/CD), owned by the PostgreSQL community
-- **Features:** Autoscaling, point-in-time recovery, connection pooling, schema management
-- **Cost:** Free tier suitable for MVP; pay-as-you-grow model
 
 ### **Firebase** - Authentication & Services
 - **Purpose:** Phone number verification and OTP validation
@@ -290,8 +283,7 @@ This project leverages industry-leading services with cost-efficient free/startu
 
 **Why Free:** The entire production deployment is running on free trial plans and free tier services:
 - **Vercel** - Free tier for static sites and serverless functions
-- **Railway** - Free starter credits ($5/month equivalent)
-- **Neon** - Generous free tier (0.5 GB storage)
+- **Railway** - Free starter credits ($5/month equivalent) for backend + database
 - **Firebase** - Free tier for SMS (50K/month)
 - **100ms** - Free tier for voice (100 concurrent users)
 - **Cloudflare R2** - Free tier for object storage (10 GB)
