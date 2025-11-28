@@ -12,6 +12,10 @@ vite.config.ts.*
 migrations
 uploads
 
+# Replit
+.replit
+.replit.secrets.json
+
 # Capacitor
 android/
 ios/
