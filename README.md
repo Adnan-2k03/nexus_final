@@ -210,6 +210,79 @@ VAPID_PRIVATE_KEY=push_notifications_key
 
 ---
 
+## 🔌 External Services & Integrations
+
+This project leverages industry-leading services with cost-efficient free/startup plans:
+
+### **Vercel** - Frontend Hosting
+- **Purpose:** Serverless deployment for React frontend
+- **Why:** Free tier includes unlimited static sites with automatic CI/CD, edge functions, and global CDN
+- **Features:** Git integration, environment variables, automatic HTTPS, analytics
+- **Cost:** Free for MVP scale; paid plans for high traffic
+
+### **Railway** - Backend Hosting
+- **Purpose:** Node.js backend deployment with containerization
+- **Why:** $5/month starter credit, simple Docker deployment, scales from zero, excellent for startups
+- **Features:** PostgreSQL database hosting, environment management, automatic deployments from GitHub
+- **Cost:** Free credits + pay-as-you-go pricing
+
+### **Neon** - PostgreSQL Database
+- **Purpose:** Managed cloud PostgreSQL with connection pooling
+- **Why:** Generous free tier (0.5 GB storage, branching for CI/CD), owned by the PostgreSQL community
+- **Features:** Autoscaling, point-in-time recovery, connection pooling, schema management
+- **Cost:** Free tier suitable for MVP; pay-as-you-grow model
+
+### **Firebase** - Authentication & Services
+- **Purpose:** Phone number verification and OTP validation
+- **Why:** Free tier includes 50,000 phone authentications per month
+- **Features:** SMS OTP, JWT integration, user management
+- **Cost:** Free tier + pay per SMS after quota
+
+### **100ms** - Voice & Video Communication
+- **Purpose:** Real-time voice channels for team coordination
+- **Why:** Free tier includes up to 100 concurrent users, production-ready infrastructure
+- **Features:** WebRTC-based, sub-100ms latency, scalable rooms, analytics
+- **Cost:** Free tier sufficient for MVP; enterprise pricing for scaling
+
+### **Cloudflare R2** - Object Storage (Optional)
+- **Purpose:** User avatar and file storage
+- **Why:** Free tier with 10 GB storage, no egress charges (unlike AWS S3), built-in CDN
+- **Features:** S3-compatible API, DDoS protection, caching
+- **Cost:** Free tier excellent for MVP
+
+### **Google OAuth** - Social Authentication (Optional)
+- **Purpose:** Google account login integration
+- **Why:** Free tier, improved user experience, reduces registration friction
+- **Features:** OAuth 2.0 flow, profile information, security
+- **Cost:** Free
+
+---
+
+## 💰 Cost-Efficient Architecture
+
+**Why These Choices:**
+1. **Free Tier Stacking** - Each service has generous free tier that covers MVP needs
+2. **No Vendor Lock-in** - All services are industry standard with easy migration paths
+3. **Scalability** - Services grow with you; easy to upgrade as user base increases
+4. **Zero Upfront Cost** - MVP can run completely free during development
+5. **Automatic Scaling** - Services handle traffic spikes without manual intervention
+
+**Estimated Monthly Costs at Scale:**
+- Vercel: $20-50 (for high traffic)
+- Railway: $7-20 (backend + database bundle)
+- Neon: $15-30 (storage + compute)
+- Firebase: $0-10 (SMS usage)
+- 100ms: $0-100 (per concurrent users beyond free tier)
+- **Total: $40-200/month** for production-grade infrastructure
+
+**Free Tier Sustainability:**
+Current MVP can run indefinitely on free tier with up to:
+- 10K monthly users
+- 5K match requests/month
+- 100 concurrent voice users
+- 50K SMS verifications/month
+
+---
 
 ## 👥 Team
 
