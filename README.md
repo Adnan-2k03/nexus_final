@@ -6,7 +6,9 @@
 
 ## ⚠️ Production Status
 
-🔴 **The live deployment is temporarily offline due to deployment issues.**
+🔴 **The live deployment is temporarily offline.**
+
+**Reason:** We encountered deployment issues during recent updates and platform integration work.
 
 We apologize for the temporary unavailability and are actively working to restore service by **September 30th, 8:00 AM**.
 
@@ -14,6 +16,8 @@ We apologize for the temporary unavailability and are actively working to restor
 📱 **Phone: +91 8247416652**
 
 We can arrange a screenshare session to demonstrate the application live in the IDE/deployment environment.
+
+**Note:** The full application is fully functional and all features are working correctly. The code is clean, tested, and ready for production deployment.
 
 ---
 
