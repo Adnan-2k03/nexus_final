@@ -80,7 +80,11 @@ Complete project documentation is available in `.archive/submissions/`:
 
 ## Contact
 
-For any questions about the project status or technical implementation, please refer to:
+For any questions or doubts about the project, please reach out:
+
+**📱 Phone:** +91 8247416652
+
+Alternatively, refer to:
 - **README.md** - Complete project overview
 - **GitHub Repository** - Full source code
 - **Local Demo** - Running instance in Replit workspace
