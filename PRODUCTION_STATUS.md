@@ -22,8 +22,9 @@ We are actively developing an **Android mobile version** of Nexus using Capacito
 ## Timeline
 
 - **In Progress:** Android app integration using Capacitor
-- **Expected Resolution:** Within 48 hours
+- **Expected Resolution:** September 30th, 8:00 AM
 - **Current Focus:** Resolving build dependencies and deployment pipeline
+- **Status:** Working to get the website live by the deadline
 
 ---
 
