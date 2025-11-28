@@ -283,23 +283,10 @@ This project leverages industry-leading services with cost-efficient free/startu
 1. **Free Tier Stacking** - Each service has generous free tier that covers MVP needs
 2. **No Vendor Lock-in** - All services are industry standard with easy migration paths
 3. **Scalability** - Services grow with you; easy to upgrade as user base increases
-4. **Zero Upfront Cost** - MVP can run completely free during development
+4. **Zero Upfront Cost** - MVP runs completely free during development
 5. **Automatic Scaling** - Services handle traffic spikes without manual intervention
 
-**Estimated Monthly Costs at Scale:**
-- Vercel: $20-50 (for high traffic)
-- Railway: $7-20 (backend + database bundle)
-- Neon: $15-30 (storage + compute)
-- Firebase: $0-10 (SMS usage)
-- 100ms: $0-100 (per concurrent users beyond free tier)
-- **Total: $40-200/month** for production-grade infrastructure
-
-**Free Tier Sustainability:**
-Current MVP can run indefinitely on free tier with up to:
-- 10K monthly users
-- 5K match requests/month
-- 100 concurrent voice users
-- 50K SMS verifications/month
+**Current Status:** ₹0 cost - All services running on free tier with full functionality.
 
 ---
 
