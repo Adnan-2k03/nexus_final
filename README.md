@@ -2,6 +2,21 @@
 
 > A neon cyberpunk platform connecting competitive and skilled players for tournaments, matches, and skill improvement.
 
+---
+
+## ⚠️ Production Status
+
+🔴 **The live deployment is temporarily offline due to deployment issues.**
+
+We apologize for the temporary unavailability and are actively working to restore service by **September 30th, 8:00 AM**.
+
+**To see the working application before that date, please contact us:**
+📱 **Phone: +91 8247416652**
+
+We can arrange a screenshare session to demonstrate the application live in the IDE/deployment environment.
+
+---
+
 ## 🎮 Project Overview
 
 **Nexus** is an MVP platform designed to solve the problem of finding suitable teammates and opponents for competitive gaming. Whether you're looking for squad members for an esports tournament or skilled opponents for ranked matches, Nexus connects you with the right players in real-time.
