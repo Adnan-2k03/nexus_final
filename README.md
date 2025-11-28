@@ -167,9 +167,6 @@ Integrated 100ms voice channels for team coordination (when configured)
 - **Accessibility:** WCAG compliant dark/light mode
 - **Components:** shadcn/ui + custom Tailwind utilities
 
-### Design Files
-See `docs/review/SYSTEM_OVERLAY_GUIDE.md` for complete design documentation
-
 ---
 
 ## 📊 Database Schema
