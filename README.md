@@ -8,7 +8,7 @@
 
 🔴 **The live deployment is temporarily offline.**
 
-**Reason:** We encountered deployment issues during recent updates and platform integration work.
+**Reason:** We encountered deployment issues while converting the webapp into an Android app using Capacitor. The core application remains fully functional and is being restored.
 
 We apologize for the temporary unavailability and are actively working to restore service by **September 30th, 8:00 AM**.
 
