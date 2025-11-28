@@ -32,7 +32,7 @@ We encountered deployment issues with the production environment that temporaril
 
 **Full source code is available on our GitHub repository.** See `README.md` for complete architecture, features, and tech stack overview. All code is clean, documented, and production-ready.
 
-**Want to see the working code before September 30th?** Please call us at the contact number below, and we can arrange a screenshare session to demonstrate the application live in the IDE/deployment environment.
+**To see the working application live before September 30th, please contact us via the phone number below.** We apologize for the temporary unavailability and request you to reach out so we can arrange a screenshare session to demonstrate the application live in the IDE/deployment environment.
 
 ---
 
