@@ -77,48 +77,6 @@
 
 ---
 
-## 🚀 Getting Started
-
-### Prerequisites
-
-- Node.js 18+ or 20+
-- npm or yarn
-- PostgreSQL database (or use Neon for cloud database)
-
-### Local Development
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Adnan-2k03/nexus_final.git
-   cd nexus_final
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   # Create .env.local with:
-   DATABASE_URL=your_postgres_url
-   SESSION_SECRET=your_session_secret
-   # Optional: Firebase, Google OAuth, 100ms credentials
-   ```
-
-4. **Sync database schema**
-   ```bash
-   npm run db:push
-   ```
-
-5. **Start development server**
-   ```bash
-   npm run dev
-   ```
-   - Frontend: http://localhost:5000
-   - Backend API: http://localhost:5000/api/*
-
----
 
 ## 📂 Project Structure
 
@@ -154,26 +112,6 @@ nexus_final/
 
 ---
 
-## 🔧 Available Scripts
-
-```bash
-# Development
-npm run dev              # Start dev server (frontend + backend)
-
-# Database
-npm run db:push         # Sync database schema
-npm run db:studio       # Open Drizzle Studio GUI
-
-# Build & Deploy
-npm run build           # Build for production
-npm run start           # Start production server
-
-# Mobile
-npm run build:ios       # Build iOS app
-npm run build:android   # Build Android app
-```
-
----
 
 ## 📱 Features in Detail
 
@@ -276,30 +214,15 @@ VAPID_PRIVATE_KEY=push_notifications_key
 
 ---
 
-## 📚 Documentation
-
-- **[Review 3 - Project Ready](docs/review/REVIEW_3_GAMMA_PPT_READY.md)** - Final project status & features
-- **[Rubrics Alignment](docs/review/REVIEW_3_RUBRICS_ALIGNMENT.md)** - How project meets capstone requirements
-- **[System Design Guide](docs/review/SYSTEM_OVERLAY_GUIDE.md)** - UI/UX design details
-- **[Individual Reviews](docs/review/review-1/individual/)** - Team member contributions
-
----
-
-## 🧪 Testing
-
-To test the application locally with dev mode:
-1. Set `AUTH_DISABLED` secret (enables mock user mode)
-2. Run `npm run dev`
-3. Automatically logged in as `dev-user-123` for testing
-
----
 
 ## 👥 Team
 
-- **Adnan Hasshad Md** - Full-stack development
-- **Mayakuntla Lokesh** - Backend & database
-- **Tatikonda Srilekha** - Frontend & UI/UX
-- **Thokala Sravan** - Features & integration
+| Reg. No | Name | Major | Role |
+|---------|------|-------|------|
+| 22BCE9357 | Adnan Hasshad Md | CSE | Project Manager & Technical Lead |
+| 22BCE9911 | Mayakuntla Lokesh | CSE | Back-End Developer |
+| 22BCE9745 | Thokala Sravan | CSE | Front-End Developer |
+| 22BCE20420 | Tatikonda Srilekha | CSE | QA & Support Developer |
 
 ---
 
@@ -309,51 +232,6 @@ This project is part of a capstone coursework. All rights reserved.
 
 ---
 
-## 🔗 Quick Links
-
-- **Live Demo:** https://nexusfinal-tau-vercel.app (when deployed)
-- **GitHub:** https://github.com/Adnan-2k03/nexus_final
-- **Documentation:** See `/docs/review/` folder
-- **API Documentation:** Available via `/docs` endpoint (in development)
-
----
-
-## ⚡ Performance
-
-- **Frontend:** Optimized with code splitting and lazy loading
-- **Backend:** Caching with TanStack Query, database query optimization
-- **Real-time:** WebSocket connection pooling, efficient message broadcasting
-- **Database:** Indexed queries, connection pooling via Neon
-
----
-
-## 🐛 Troubleshooting
-
-**Can't connect to database?**
-- Verify `DATABASE_URL` is correct
-- Check database is accessible from Railway/Vercel
-
-**Frontend-backend connection issues?**
-- Ensure `VITE_API_URL` is set on Vercel
-- Verify `CORS_ORIGIN` on Railway matches Vercel domain
-
-**WebSocket not connecting?**
-- Check browser console for connection errors
-- Verify backend is running and accessible
-
-For more help, check the documentation or review logs in deployment services.
-
----
-
-## 🚀 Next Steps
-
-- [ ] Set up production database backup strategy
-- [ ] Implement advanced matching algorithm ML model
-- [ ] Add mobile app releases (iOS/Android)
-- [ ] Scale voice channels with more users
-- [ ] Community features & leaderboards
-
----
 
 **Last Updated:** November 28, 2025  
 **Status:** MVP Complete - Ready for Production
