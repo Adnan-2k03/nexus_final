@@ -9,21 +9,21 @@
 
 🔴 **Production Environment Temporarily Unavailable**
 
-The live deployment at `https://nexus-final-tau.vercel.app/` is currently **temporarily offline** while we're integrating Android app capabilities using Capacitor.
+The live deployment at `https://nexus-final-tau.vercel.app/` is currently **temporarily offline** due to deployment issues. We are working to restore it by **September 30th, 8:00 AM**.
 
 ---
 
 ## What Happened
 
-We are actively developing an **Android mobile version** of Nexus using Capacitor (a cross-platform framework that bridges web apps to native mobile platforms). During this integration process, we encountered compatibility issues that temporarily took the production environment offline.
+We encountered deployment issues with the production environment that temporarily took the website offline. We are actively working to resolve these issues and restore the live service.
 
 ---
 
 ## Timeline
 
-- **In Progress:** Android app integration using Capacitor
+- **Issue Identified:** Production deployment offline
 - **Expected Resolution:** September 30th, 8:00 AM
-- **Current Focus:** Resolving build dependencies and deployment pipeline
+- **Current Focus:** Fixing deployment issues and restoring live service
 - **Status:** Working to get the website live by the deadline
 
 ---
