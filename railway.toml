@@ -1,0 +1,9 @@
+[build]
+builder = "nixpacks"
+
+[build.config]
+nixpacks.pkgFlakeUrl = "github:nixos/nixpkgs/nixos-23.11"
+
+[deploy]
+startCommand = "npm run start"
+restartPolicyMaxRetries = 3
