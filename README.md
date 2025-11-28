@@ -286,7 +286,17 @@ This project leverages industry-leading services with cost-efficient free/startu
 4. **Zero Upfront Cost** - MVP runs completely free during development
 5. **Automatic Scaling** - Services handle traffic spikes without manual intervention
 
-**Current Status:** ₹0 cost - All services running on free tier with full functionality.
+**Current Deployment Cost:** ₹0
+
+**Why Free:** The entire production deployment is running on free trial plans and free tier services:
+- **Vercel** - Free tier for static sites and serverless functions
+- **Railway** - Free starter credits ($5/month equivalent)
+- **Neon** - Generous free tier (0.5 GB storage)
+- **Firebase** - Free tier for SMS (50K/month)
+- **100ms** - Free tier for voice (100 concurrent users)
+- **Cloudflare R2** - Free tier for object storage (10 GB)
+
+All services were chosen specifically for their free/trial plans, making the platform deployable at zero cost while maintaining production-grade reliability.
 
 ---
 
