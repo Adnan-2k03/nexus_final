@@ -30,26 +30,9 @@ We encountered deployment issues with the production environment that temporaril
 
 ## How to Review the Project
 
-### Option 1: View Code on GitHub
-- Full source code is available on our GitHub repository
-- See `README.md` for complete architecture, features, and tech stack overview
-- All code is clean, documented, and production-ready
+**Full source code is available on our GitHub repository.** See `README.md` for complete architecture, features, and tech stack overview. All code is clean, documented, and production-ready.
 
-### Option 2: Run Locally (Recommended for Code Review)
-The Replit workspace runs the full application locally:
-```bash
-npm run dev
-```
-- Backend: http://localhost:5000
-- Frontend: Accessible via Replit preview
-- Full functionality available for testing
-
-### Option 3: View Archived Documentation
-Complete project documentation is available in `.archive/submissions/`:
-- System design documents
-- Architecture diagrams
-- Feature specifications
-- API documentation
+**Want to see the working code before September 30th?** Please call us at the contact number below, and we can arrange a screenshare session to demonstrate the application live in the IDE/deployment environment.
 
 ---
 
