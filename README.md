@@ -1,15 +1,12 @@
 # Nexus: A Real-Time Player Finding System
 
-> A neon cyberpunk platform connecting competitive and skilled players for tournaments, matches, and skill improvement.
-
 ---
 
 ## ✅ Production Status
 
 🟢 **Live and fully operational!**
 
-**Frontend:** https://nexus-final-tau.vercel.app (Vercel)  
-**Backend:** Railway (PostgreSQL database)
+**Frontend:** https://nexus-final-tau.vercel.app (Vercel)
 
 All features are working correctly and the platform is ready for use.
 
