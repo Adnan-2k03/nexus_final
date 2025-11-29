@@ -38,6 +38,10 @@ export function useWebSocket() {
       }
     }
 
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+
     const connect = () => {
       try {
         const ws = new WebSocket(wsUrl);
@@ -46,9 +50,7 @@ export function useWebSocket() {
         ws.onopen = () => {
           console.log('WebSocket connected');
           setIsConnected(true);
-          
-          // Authentication is now handled automatically by the server via session cookies
-          // No need to send manual auth messages
+          reconnectAttempts = 0; // Reset on successful connection
         };
 
         ws.onmessage = (event) => {
@@ -67,12 +69,14 @@ export function useWebSocket() {
           console.log('WebSocket disconnected:', event.code, event.reason);
           setIsConnected(false);
           
-          // Attempt to reconnect after 3 seconds
-          setTimeout(() => {
-            if (wsRef.current?.readyState === WebSocket.CLOSED) {
+          // Exponential backoff: 1s, 2s, 4s, 8s, 16s
+          if (reconnectAttempts < maxReconnectAttempts) {
+            const delay = Math.pow(2, reconnectAttempts) * 1000;
+            reconnectAttempts++;
+            reconnectTimeout = setTimeout(() => {
               connect();
-            }
-          }, 3000);
+            }, delay);
+          }
         };
 
         ws.onerror = (error) => {
@@ -92,6 +96,7 @@ export function useWebSocket() {
 
     return () => {
       clearTimeout(initialConnectionTimeout);
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (wsRef.current) {
         wsRef.current.close();
       }
