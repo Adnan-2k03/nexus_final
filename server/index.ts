@@ -14,6 +14,11 @@ const defaultOrigins = isDev
 
 const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || defaultOrigins;
 
+console.log('🔐 [CORS DEBUG]');
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   CORS_ORIGIN env var:', process.env.CORS_ORIGIN);
+console.log('   Allowed origins:', corsOrigins);
+
 app.use(cors({
   origin: corsOrigins.length > 0 ? corsOrigins : true,
   credentials: true,
