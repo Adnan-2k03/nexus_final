@@ -4,20 +4,14 @@
 
 ---
 
-## ⚠️ Production Status
+## ✅ Production Status
 
-🔴 **The live deployment is temporarily offline.**
+🟢 **Live and fully operational!**
 
-**Reason:** We encountered deployment issues while converting the webapp into an Android app using Capacitor. The core application remains fully functional and is being restored.
+**Frontend:** https://nexus-final-tau.vercel.app (Vercel)  
+**Backend:** Railway (PostgreSQL database)
 
-We apologize for the temporary unavailability and are actively working to restore service by **September 30th, 8:00 AM**.
-
-**To see the working application before that date, please contact us:**
-📱 **Phone: +91 8247416652**
-
-We can arrange a screenshare session to demonstrate the application live in the IDE/deployment environment.
-
-**Note:** The full application is fully functional and all features are working correctly. The code is clean, tested, and ready for production deployment.
+All features are working correctly and the platform is ready for use.
 
 ---
 
