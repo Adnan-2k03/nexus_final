@@ -14,13 +14,24 @@ const defaultOrigins = isDev
 
 const corsOrigins = process.env.CORS_ORIGIN?.split(',').map(o => o.trim()) || defaultOrigins;
 
-console.log('🔐 [CORS DEBUG]');
-console.log('   NODE_ENV:', process.env.NODE_ENV);
-console.log('   CORS_ORIGIN env var:', process.env.CORS_ORIGIN);
-console.log('   Allowed origins:', corsOrigins);
-
 app.use(cors({
-  origin: corsOrigins.length > 0 ? corsOrigins : true,
+  origin: function(origin, callback) {
+    // Allow requests with no origin (mobile apps, curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (corsOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // In production with CORS_ORIGIN set, always allow
+      if (!isDev && corsOrigins.length > 0) {
+        callback(null, true);
+      } else if (isDev) {
+        callback(null, true); // Allow all in dev
+      } else {
+        callback(new Error('CORS not allowed'));
+      }
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
