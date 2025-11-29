@@ -24,6 +24,7 @@ All features are working correctly and the platform is ready for use.
 - **Notifications System** - Instant alerts for match requests and connections
 - **Voice Channels** - Built-in voice communication via 100ms integration
 - **Push Notifications** - Stay connected with browser push alerts
+- **Progressive Web App (PWA)** - Install as native app on desktop/mobile, offline support via service workers
 - **User Profiles** - Rich player profiles with game history, skills, and preferences
 - **Neon Cyberpunk UI** - Modern, accessible dark-themed interface with vibrant accents
 
