@@ -1,16 +1,7 @@
 # Nexus: A Real-Time Player Finding System
 
----
-
 ## ✅ Production Status
-
-🟢 **Live and fully operational!**
-
-**Frontend:** https://nexus-final-tau.vercel.app (Vercel)
-
-All features are working correctly and the platform is ready for use.
-
----
+🟢 **Live and fully operational!** | **Frontend:** https://nexus-final-tau.vercel.app (Vercel)
 
 ## 🎮 Project Overview
 
@@ -27,8 +18,6 @@ All features are working correctly and the platform is ready for use.
 - **Progressive Web App (PWA)** - Install as native app on desktop/mobile, offline support via service workers
 - **User Profiles** - Rich player profiles with game history, skills, and preferences
 - **Neon Cyberpunk UI** - Modern, accessible dark-themed interface with vibrant accents
-
----
 
 ## 🏗️ Architecture
 
@@ -85,9 +74,6 @@ All features are working correctly and the platform is ready for use.
                       └────────────┘
 ```
 
----
-
-
 ## 📂 Project Structure
 
 ```
@@ -113,11 +99,7 @@ nexus_final/
 │   └── manifest.json     # PWA manifest
 │
 └── package.json         # Dependencies & scripts
-
 ```
-
----
-
 
 ## 📱 Features in Detail
 
@@ -150,16 +132,12 @@ Algorithm considers:
 ### 5. Voice Communication
 Integrated 100ms voice channels for team coordination (when configured)
 
----
-
 ## 🎨 Design System
 
 ### Theme
 - **Color:** Neon Cyberpunk with accessible dual-color palette
 - **Accessibility:** WCAG compliant dark/light mode
 - **Components:** shadcn/ui + custom Tailwind utilities
-
----
 
 ## 📊 Database Schema
 
@@ -172,8 +150,6 @@ Integrated 100ms voice channels for team coordination (when configured)
 - `user_game_profiles` - Player stats per game
 
 See `shared/schema.ts` for detailed schema definition.
-
----
 
 ## 🌐 Deployment
 
@@ -215,8 +191,6 @@ VAPID_PUBLIC_KEY=push_notifications_key
 VAPID_PRIVATE_KEY=push_notifications_key
 ```
 
----
-
 ## 🔌 External Services & Integrations
 
 This project leverages industry-leading services with cost-efficient free/startup plans:
@@ -257,8 +231,6 @@ This project leverages industry-leading services with cost-efficient free/startu
 - **Features:** OAuth 2.0 flow, profile information, security
 - **Cost:** Free
 
----
-
 ## 💰 Cost-Efficient Architecture
 
 **Why These Choices:**
@@ -279,8 +251,6 @@ This project leverages industry-leading services with cost-efficient free/startu
 
 All services were chosen specifically for their free/trial plans, making the platform deployable at zero cost while maintaining production-grade reliability.
 
----
-
 ## 👥 Team
 
 | Reg. No | Name | Major | Role |
@@ -290,14 +260,8 @@ All services were chosen specifically for their free/trial plans, making the pla
 | 22BCE9745 | Thokala Sravan | CSE | Front-End Developer |
 | 22BCE20420 | Tatikonda Srilekha | CSE | QA & Support Developer |
 
----
-
 ## 📝 License
 
 This project is part of a capstone coursework. All rights reserved.
 
----
-
-
-**Last Updated:** November 28, 2025  
-**Status:** MVP Complete - Ready for Production
+**Last Updated:** November 28, 2025 | **Status:** MVP Complete - Ready for Production
