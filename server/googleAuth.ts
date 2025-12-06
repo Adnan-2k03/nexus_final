@@ -19,11 +19,25 @@ if (!process.env.SESSION_SECRET) {
 export function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
   const pgStore = connectPg(session);
+  
+  console.log("🔄 [Session Store] Initializing PostgreSQL session store...");
+  
   const sessionStore = new pgStore({
     conString: process.env.DATABASE_URL,
     createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
+    errorLog: (error) => {
+      console.error("❌ [Session Store Error]", error);
+    },
+  });
+  
+  sessionStore.on("connect", () => {
+    console.log("✅ [Session Store] Connected to database");
+  });
+  
+  sessionStore.on("error", (error) => {
+    console.error("❌ [Session Store Error Event]", error);
   });
   
   const isProduction = process.env.NODE_ENV === "production";
