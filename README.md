@@ -10,14 +10,14 @@
 ### Key Features
 
 - **Real-Time Match Finding** - Discover players instantly through WebSocket-powered live updates
-- **Smart Matching Algorithm** - Find compatible teammates based on skills, games, and preferences
+- **Smart filtering options** - Find compatible teammates based on skills, games, and preferences
 - **Match Requests & Connections** - Apply to matches and manage player connections
 - **Notifications System** - Instant alerts for match requests and connections
 - **Voice Channels** - Built-in voice communication via 100ms integration
 - **Push Notifications** - Stay connected with browser push alerts
 - **Progressive Web App (PWA)** - Install as native app on desktop/mobile, offline support via service workers
 - **User Profiles** - Rich player profiles with game history, skills, and preferences
-- **Neon Cyberpunk UI** - Modern, accessible dark-themed interface with vibrant accents
+
 
 ## 🏗️ Architecture
 
