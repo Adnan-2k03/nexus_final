@@ -5,7 +5,7 @@
 
 ## 🎮 Project Overview
 
-**Nexus** is an MVP platform designed to solve the problem of finding suitable teammates and opponents for competitive gaming. Whether you're looking for squad members for an esports tournament or skilled opponents for ranked matches, Nexus connects you with the right players in real-time.
+**Nexus** is an MVP platform designed to solve the problem of finding suitable teammates and opponents for competitive gaming. Whether you're looking for squad members for an esports tournament,ranked matches or skilled opponents for improving yourself, Nexus connects you with the right players in real-time.
 
 ### Key Features
 
