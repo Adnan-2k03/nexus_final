@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import session from "express-session";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
+import pg from "pg";
 import { storage } from "./storage";
 
 const hasGoogleAuth = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
@@ -22,8 +23,23 @@ export function getSession() {
   
   console.log("🔄 [Session Store] Initializing PostgreSQL session store...");
   
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+
+  pool.on("connect", () => {
+    console.log("✅ [Session Store] Pool connected to database");
+  });
+
+  pool.on("error", (err) => {
+    console.error("❌ [Session Store] Pool error:", err.message);
+  });
+  
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    pool: pool,
     createTableIfMissing: true,
     ttl: sessionTtl,
     tableName: "sessions",
