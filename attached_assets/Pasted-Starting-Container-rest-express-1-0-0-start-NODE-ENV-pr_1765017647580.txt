@@ -1,0 +1,67 @@
+Starting Container
+> rest-express@1.0.0 start
+> NODE_ENV=production node dist/index.js
+✅ 100ms voice service configured
+✅ Firebase Admin SDK initialized successfully
+🔐 [PRODUCTION MODE] Authentication is ENABLED
+   Google OAuth is required for all protected routes
+🔄 [Session Store] Initializing PostgreSQL session store...
+🍪 [Session Config]
+   Environment: production
+   Cross-Origin: YES
+   Cookie sameSite: none
+   Cookie secure: true
+[OAuth Debug] Callback URL: https://nexusfinal-production.up.railway.app/api/auth/google/callback
+[OAuth Debug] Client ID: 200246678955-teb86qn...
+[OAuth Debug] Client Secret exists: true
+[OAuth Debug] Client Secret length: 35
+⚠️  VAPID keys not configured. Using temporary keys for this session.
+📧 To persist keys, add VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, and VAPID_SUBJECT to your environment secrets.
+10:34:25 AM [express] serving on port 8080
+10:34:26 AM [express] GET /api/auth/user 500 in 467ms :: {"message":"Internal Server Error"}
+AggregateError [ETIMEDOUT]: 
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
+10:34:31 AM [express] GET /api/auth/google 500 in 3ms :: {"message":"Internal Server Error"}
+AggregateError [ETIMEDOUT]: 
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
+AggregateError [ETIMEDOUT]: 
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at /app/node_modules/pg-pool/index.js:45:11
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
+AggregateError [ETIMEDOUT]: 
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+10:34:43 AM [express] GET /api/auth/user 500 in 2ms :: {"message":"Internal Server Error"}
+AggregateError [ETIMEDOUT]: 
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
+10:34:46 AM [express] GET /api/auth/google 500 in 3ms :: {"message":"Internal Server Error"}
+AggregateError [ETIMEDOUT]: 
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
+10:39:59 AM [express] GET /api/auth/user 500 in 1ms :: {"message":"Internal Server Error"}
+AggregateError [ETIMEDOUT]: 
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:322:21)
+    at async PGStore._rawEnsureSessionStoreTable (/app/node_modules/connect-pg-simple/index.js:177:19)
+    at async PGStore._asyncQuery (/app/node_modules/connect-pg-simple/index.js:315:7)
