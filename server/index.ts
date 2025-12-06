@@ -5,14 +5,18 @@ import pg from "pg";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
-async function waitForDatabase(maxRetries = 10, delayMs = 2000): Promise<void> {
-  const pool = new pg.Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: 1,
-    connectionTimeoutMillis: 5000,
-  });
-
+async function waitForDatabase(maxRetries = 30, initialDelayMs = 3000): Promise<void> {
+  // Railway databases can take 30-90 seconds to wake from sleep
+  // Use exponential backoff with longer initial delays
+  
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const pool = new pg.Pool({
+      connectionString: process.env.DATABASE_URL,
+      max: 1,
+      connectionTimeoutMillis: 10000, // 10 second timeout per attempt
+      idleTimeoutMillis: 5000,
+    });
+
     try {
       console.log(`🔄 [Database] Connection attempt ${attempt}/${maxRetries}...`);
       const client = await pool.connect();
@@ -22,16 +26,24 @@ async function waitForDatabase(maxRetries = 10, delayMs = 2000): Promise<void> {
       console.log('✅ [Database] Connection established successfully');
       return;
     } catch (error: any) {
+      await pool.end().catch(() => {}); // Clean up pool
+      
+      const isRecovering = error.message?.includes('not yet accepting connections') || 
+                           error.message?.includes('recovery') ||
+                           error.code === '57P03';
+      
       console.log(`⚠️  [Database] Attempt ${attempt} failed: ${error.message}`);
+      
       if (attempt < maxRetries) {
-        console.log(`⏳ [Database] Waiting ${delayMs / 1000}s before retry...`);
+        // Exponential backoff: 3s, 4s, 5s, 6s... up to 15s max
+        const delayMs = Math.min(initialDelayMs + (attempt * 1000), 15000);
+        console.log(`⏳ [Database] ${isRecovering ? 'Database waking up...' : 'Retrying...'} Waiting ${delayMs / 1000}s...`);
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
     }
   }
   
-  await pool.end();
-  throw new Error(`Failed to connect to database after ${maxRetries} attempts`);
+  throw new Error(`Failed to connect to database after ${maxRetries} attempts. Database may still be sleeping - try again in a few minutes.`);
 }
 
 const app = express();
