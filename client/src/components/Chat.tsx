@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { 
-  selectIsLocalScreenShared, 
-  useHMSActions, 
   useHMSStore,
   selectIsConnectedToRoom
 } from "@100mslive/react-sdk";
@@ -12,7 +10,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { Send, Loader2, Users, Mic, MicOff, MonitorUp, MonitorOff } from "lucide-react";
+import { Send, Loader2, Users, Mic, MicOff } from "lucide-react";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -32,10 +30,8 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
   const { lastMessage: wsMessage } = useWebSocket();
   const { toast } = useToast();
   
-  // HMS hooks for screen sharing when in voice channel
-  const hmsActions = useHMSActions();
+  // HMS hooks for voice channel indicator
   const isConnected = useHMSStore(selectIsConnectedToRoom);
-  const isLocalScreenShared = useHMSStore(selectIsLocalScreenShared);
 
   // Fetch messages for this connection
   const { data: messages = [], isLoading } = useQuery<ChatMessageWithSender[]>({
@@ -126,34 +122,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
     sendMessageMutation.mutate(message.trim());
   };
 
-  const toggleScreenShare = async () => {
-    try {
-      if (!isLocalScreenShared) {
-        await hmsActions.setScreenShareEnabled(true);
-        toast({
-          title: "Screen sharing started",
-          description: "Your screen is now visible to others in the channel",
-        });
-      } else {
-        await hmsActions.setScreenShareEnabled(false);
-        toast({
-          title: "Screen sharing stopped",
-          description: "Your screen is no longer being shared",
-        });
-      }
-    } catch (error) {
-      console.error("Error toggling screen share:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to start screen sharing";
-      toast({
-        title: "Screen share error",
-        description: errorMessage.includes("Permission denied") 
-          ? "Screen sharing permission was denied. Please allow screen sharing to continue."
-          : "Failed to start screen sharing. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const formatMessageTime = (date: string | Date | null) => {
     if (!date) return "";
     const d = new Date(date);
@@ -166,7 +134,7 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
 
   return (
     <div className="flex flex-col h-full">
-      {/* Voice Channel Indicator with Screen Share Control */}
+      {/* Voice Channel Indicator */}
       {someoneIsWaiting && (
         <div className="border-b p-3 bg-muted/30">
           <div className="p-2 bg-primary/10 border border-primary/30 rounded-md">
@@ -191,29 +159,6 @@ export function Chat({ connectionId, currentUserId, otherUserId, otherUserName }
                 </div>
               ))}
             </div>
-            {isConnected && (
-              <div className="mt-2 pt-2 border-t border-primary/20">
-                <Button
-                  size="sm"
-                  variant={isLocalScreenShared ? "default" : "secondary"}
-                  onClick={toggleScreenShare}
-                  className="w-full"
-                  data-testid="button-toggle-screenshare-messages"
-                >
-                  {isLocalScreenShared ? (
-                    <>
-                      <MonitorOff className="h-4 w-4 mr-1" />
-                      Stop Sharing Screen
-                    </>
-                  ) : (
-                    <>
-                      <MonitorUp className="h-4 w-4 mr-1" />
-                      Share Screen
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
             <p className="text-xs text-muted-foreground mt-2">
               Switch to the Voice tab to join the call{isConnected && " or control audio"}
             </p>
