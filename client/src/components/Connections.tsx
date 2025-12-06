@@ -471,6 +471,7 @@ export function Connections({ currentUserId }: ConnectionsProps) {
                         currentUserId={currentUserId}
                         otherUserId={otherUserId}
                         otherUserName={displayName}
+                        hideScreenShare={true}
                       />
                     </TabsContent>
                   </Tabs>
