@@ -101,20 +101,21 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Wait for database to be ready before starting (important for Railway where DB might start after app)
-  if (process.env.NODE_ENV === 'production') {
-    await waitForDatabase(15, 2000); // 15 retries, 2 seconds apart = 30 seconds max wait
-  }
-  
-  const server = await registerRoutes(app);
+  try {
+    // Wait for database to be ready before starting (important for Railway where DB might start after app)
+    if (process.env.NODE_ENV === 'production') {
+      await waitForDatabase(15, 2000); // 15 retries, 2 seconds apart = 30 seconds max wait
+    }
+    
+    const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
-  });
+      res.status(status).json({ message });
+      console.error(`[Error] ${status}: ${message}`);
+    });
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
@@ -132,11 +133,15 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`serving on port ${port}`);
+    });
+  } catch (error: any) {
+    console.error('❌ [Startup Error]', error.message || error);
+    process.exit(1);
+  }
 })();
