@@ -1,8 +1,38 @@
 import 'dotenv/config';
 import express, { type Request, Response, NextFunction } from "express";
 import cors from "cors";
+import pg from "pg";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+
+async function waitForDatabase(maxRetries = 10, delayMs = 2000): Promise<void> {
+  const pool = new pg.Pool({
+    connectionString: process.env.DATABASE_URL,
+    max: 1,
+    connectionTimeoutMillis: 5000,
+  });
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 [Database] Connection attempt ${attempt}/${maxRetries}...`);
+      const client = await pool.connect();
+      await client.query('SELECT 1');
+      client.release();
+      await pool.end();
+      console.log('✅ [Database] Connection established successfully');
+      return;
+    } catch (error: any) {
+      console.log(`⚠️  [Database] Attempt ${attempt} failed: ${error.message}`);
+      if (attempt < maxRetries) {
+        console.log(`⏳ [Database] Waiting ${delayMs / 1000}s before retry...`);
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
+  }
+  
+  await pool.end();
+  throw new Error(`Failed to connect to database after ${maxRetries} attempts`);
+}
 
 const app = express();
 
@@ -71,6 +101,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Wait for database to be ready before starting (important for Railway where DB might start after app)
+  if (process.env.NODE_ENV === 'production') {
+    await waitForDatabase(15, 2000); // 15 retries, 2 seconds apart = 30 seconds max wait
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
