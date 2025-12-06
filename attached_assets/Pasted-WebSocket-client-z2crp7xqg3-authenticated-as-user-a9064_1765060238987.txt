@@ -1,0 +1,51 @@
+WebSocket client z2crp7xqg3 authenticated as user a906410d-3a4d-4896-a504-3fe00530b816
+WebSocket client disconnected: 7jvvzsegvml
+[Error] 500: Internal Server Error
+[Error] 500: Internal Server Error
+[Error] 500: Internal Server Error
+10:26:32 PM [express] GET /api/notifications 500 in 1564ms :: {"message":"Internal Server Error"}
+10:26:32 PM [express] GET /api/auth/user 500 in 92ms :: {"message":"Internal Server Error"}
+10:26:32 PM [express] GET /api/connection-requests 500 in 91ms :: {"message":"Internal Server Error"}
+WebSocket client disconnected: ykvq4bwpoj
+WebSocket client disconnected: um3ff0859g
+WebSocket client disconnected: j0c6yne5858
+WebSocket client disconnected: b6q9cm79d5d
+WebSocket client disconnected: mecd7db0u5o
+WebSocket client disconnected: 2gj4k14b9ji
+WebSocket client disconnected: 2wb2kn9mabh
+WebSocket client disconnected: gopunlp7wlt
+WebSocket client disconnected: z2crp7xqg3
+Error broadcasting offline status: error: the database system is not yet accepting connections
+    at /app/node_modules/pg-pool/index.js:45:11
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+  internalQuery: undefined,
+    at async DatabaseStorage.cleanupUserActiveStatus (file:///app/dist/index.js:1338:9)
+  where: undefined,
+    at async WebSocket.<anonymous> (file:///app/dist/index.js:3641:13) {
+  length: 176,
+  schema: undefined,
+  severity: 'FATAL',
+  table: undefined,
+  code: '57P03',
+  detail: 'Consistent recovery state has not been yet reached.',
+  column: undefined,
+  hint: undefined,
+  dataType: undefined,
+  position: undefined,
+  constraint: undefined,
+  internalPosition: undefined,
+  file: 'backend_startup.c',
+  line: '281',
+  routine: 'BackendInitialize'
+}
+[Error] 500: Internal Server Error
+10:29:23 PM [express] GET /api/auth/user 500 in 1ms :: {"message":"Internal Server Error"}
+[Error] 500: Internal Server Error
+10:29:27 PM [express] GET /api/auth/google 500 in 2ms :: {"message":"Internal Server Error"}
+[Error] 500: Internal Server Error
+[Error] 500: Internal Server Error
+10:29:52 PM [express] GET /api/auth/user 500 in 2ms :: {"message":"Internal Server Error"}
+[Error] 500: Internal Server Error
+10:29:55 PM [express] GET /api/auth/google 500 in 2ms :: {"message":"Internal Server Error"}
+[Error] 500: Internal Server Error
+✅ [Session Store] Pool connected to database
